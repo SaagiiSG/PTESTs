@@ -1,0 +1,31 @@
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IUser extends Document {
+  name: string;
+  phoneNumber: string;
+  password: string;
+  email?: string;
+  age?: number;
+  gender?: string;
+  verificationCode?: string;
+  isPhoneVerified?: boolean;
+  verificationCodeExpires?: Date;
+  isAdmin?: boolean;
+  purchasedCourses?: mongoose.Types.ObjectId[];
+}
+
+const UserSchema: Schema = new Schema({
+  name: { type: String, required: true },
+  phoneNumber: { type: String, required: false, unique: true, sparse: true },
+  password: { type: String, required: false },
+  email: { type: String, required: false, unique: true, sparse: true },
+  age: { type: Number },
+  gender: { type: String },
+  verificationCode: { type: String },
+  isPhoneVerified: { type: Boolean, default: false },
+  verificationCodeExpires: { type: Date },
+  isAdmin: { type: Boolean, default: false },
+  purchasedCourses: [{ type: Schema.Types.ObjectId, ref: 'Course' }],
+}, { timestamps: true });
+
+export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

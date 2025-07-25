@@ -1,0 +1,80 @@
+"use client";
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
+export default function PayPage({ params }: { params: { payId: string } }) {
+  const [paid, setPaid] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo") || "/";
+
+  const handleTogglePaid = () => {
+    setPaid((prev) => !prev);
+  };
+
+  const handleContinue = async () => {
+    if (paid) {
+      toast.success("Payment successful!");
+      let url = returnTo;
+      // Extract testId from returnTo if possible
+      let testId = null;
+      const testMatch = url.match(/\/ptests\/(\w+)/);
+      if (testMatch) {
+        testId = testMatch[1];
+      }
+      if (testId) {
+        try {
+          await fetch(`/api/tests/${testId}/taken`, { method: 'POST' });
+        } catch (e) {
+          // Optionally log or ignore
+        }
+        // Record the test purchase
+        try {
+          await fetch('/api/purchase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ testId }),
+          });
+        } catch (e) {
+          // Optionally log or ignore
+        }
+      }
+      // If returnTo is a course, rewrite to capital C
+      const courseMatch = url.match(/\/course\/(\w+)/);
+      if (courseMatch) {
+        url = url.replace('/course/', '/Course/');
+        // Record the course purchase
+        try {
+          await fetch('/api/purchase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ courseId: params.payId }),
+          });
+        } catch (e) {
+          // Optionally log or ignore
+        }
+      }
+      if (!url.includes('paid=1')) {
+        url += (url.includes('?') ? '&' : '?') + 'paid=1';
+      }
+      router.push(url);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+      <div className="bg-white p-8 rounded shadow max-w-md w-full">
+        <h1 className="text-2xl font-bold mb-4">Temporary Payment Page</h1>
+        <p className="mb-4">Payment status: <span className={paid ? "text-green-600" : "text-red-600"}>{paid ? "Paid" : "Not Paid"}</span></p>
+        <Button onClick={handleTogglePaid} className="mb-4">
+          {paid ? "Mark as Not Paid" : "Mark as Paid"}
+        </Button>
+        <Button onClick={handleContinue} disabled={!paid} className="ml-2">
+          Continue
+        </Button>
+      </div>
+    </div>
+  );
+}
