@@ -25,3 +25,16 @@ export async function connectMongoose() {
   cached.mongoose.conn = await cached.mongoose.promise;
   return cached.mongoose.conn;
 }
+
+// Safe connection function that doesn't throw during build time
+export async function safeConnectMongoose() {
+  try {
+    return await connectMongoose();
+  } catch (error) {
+    // During build time, just return null instead of throwing
+    if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
+      return null;
+    }
+    throw error;
+  }
+}

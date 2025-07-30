@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { connectMongoose } from "@/lib/mongodb";
+import { safeConnectMongoose } from "@/lib/mongodb";
 import User from "@/app/models/user";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
@@ -9,7 +9,13 @@ const JWT_SECRET = process.env.JWT_SECRET!;
 export async function POST(req: Request) {
   const { phoneNumber, password } = await req.json();
 
-  await connectMongoose();
+  const connection = await safeConnectMongoose();
+  if (!connection) {
+    return NextResponse.json(
+      { message: "Database connection failed." },
+      { status: 500 }
+    );
+  }
 
   const user = await User.findOne({ phoneNumber });
 
