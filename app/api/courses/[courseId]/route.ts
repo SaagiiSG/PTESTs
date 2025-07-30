@@ -3,9 +3,8 @@ import Course from '@/app/models/course';
 import { connectMongoose } from '@/lib/mongodb';
 import { Types } from 'mongoose';
 
-export async function GET(req: Request, context: { params: { courseId: string } }) {
-  const params = await context.params;
-  const { courseId } = params;
+export async function GET(req: Request, { params }: { params: Promise<{ courseId: string }> }) {
+  const { courseId } = await params;
   if (!courseId || !Types.ObjectId.isValid(courseId)) {
     return NextResponse.json({ error: 'Invalid course ID' }, { status: 400 });
   }

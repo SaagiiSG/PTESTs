@@ -5,8 +5,8 @@ import { auth } from '@/auth';
 import { decrypt } from '@/lib/encryption';
 import { Types } from 'mongoose';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id;
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   console.log('Params:', params); // Log for debugging
 
   // Validate ID

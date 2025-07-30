@@ -11,13 +11,13 @@ interface AdminUser {
 }
 
 // Update a test
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   const user = session?.user as AdminUser;
   if (!user?.isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
-  const { id } = params;
+  const { id } = await params;
   if (!id || !Types.ObjectId.isValid(id)) {
     return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
   }
@@ -50,13 +50,13 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 }
 
 // Delete a test
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   const user = session?.user as AdminUser;
   if (!user?.isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
-  const { id } = params;
+  const { id } = await params;
   if (!id || !Types.ObjectId.isValid(id)) {
     return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
   }

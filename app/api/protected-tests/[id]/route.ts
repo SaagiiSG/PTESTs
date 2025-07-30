@@ -3,8 +3,8 @@ import Test from "@/app/models/tests";
 import { connectMongoose } from "@/lib/mongodb";
 import { Types } from "mongoose";
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   // Log for debugging
   console.log("GET /api/protected-tests/[id] called with ID:", id);

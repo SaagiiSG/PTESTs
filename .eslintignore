@@ -1,0 +1,9 @@
+# Ignore these files/directories during linting
+scripts/
+examples/
+docs/
+*.config.js
+*.config.mjs
+*.config.ts
+lib/purchaseUtils.js
+app/api/user/route.js 

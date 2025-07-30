@@ -6,7 +6,8 @@ import { Play, Pause, Volume2, VolumeX, Maximize2, SkipForward, SkipBack } from 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default function LessonDetailPage({ params }: { params: { courseId: string, lessonIdx: string } }) {
+export default function LessonDetailPage({ params }: { params: Promise<{ courseId: string, lessonIdx: string }> }) {
+  const [resolvedParams, setResolvedParams] = useState<{ courseId: string; lessonIdx: string } | null>(null);
   const [lesson, setLesson] = useState<any>(null);
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -21,11 +22,16 @@ export default function LessonDetailPage({ params }: { params: { courseId: strin
   const testEmbedRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    params.then(setResolvedParams);
+  }, [params]);
+
+  useEffect(() => {
+    if (!resolvedParams) return;
     const fetchData = async () => {
       try {
         const [lessonRes, courseRes] = await Promise.all([
-          fetch(`/api/courses/${params.courseId}/lesson/${params.lessonIdx}`),
-          fetch(`/api/courses/${params.courseId}`),
+          fetch(`/api/courses/${resolvedParams.courseId}/lesson/${resolvedParams.lessonIdx}`),
+          fetch(`/api/courses/${resolvedParams.courseId}`),
         ]);
         if (!lessonRes.ok || !courseRes.ok) throw new Error('Failed to fetch');
         const lessonData = await lessonRes.json();
@@ -40,22 +46,19 @@ export default function LessonDetailPage({ params }: { params: { courseId: strin
       }
     };
     fetchData();
-  }, [params.courseId, params.lessonIdx]);
+  }, [resolvedParams]);
 
   useEffect(() => {
     if (showTest && testEmbedLoading && lesson?.embedCode) {
-      // Try to find an iframe and attach onLoad
       const div = testEmbedRef.current;
       if (div) {
         const iframe = div.querySelector('iframe');
         if (iframe) {
           iframe.onload = () => setTestEmbedLoading(false);
-          // If already loaded (cached), fire manually
           if (iframe.contentWindow?.document.readyState === 'complete') {
             setTestEmbedLoading(false);
           }
         } else {
-          // Fallback: hide spinner after 2s if no iframe
           setTimeout(() => setTestEmbedLoading(false), 2000);
         }
       }
@@ -114,7 +117,7 @@ export default function LessonDetailPage({ params }: { params: { courseId: strin
     setShowTest(true);
   };
 
-  if (loading) {
+  if (loading || !resolvedParams) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="container mx-auto px-4 py-8">
@@ -146,7 +149,7 @@ export default function LessonDetailPage({ params }: { params: { courseId: strin
   }
 
   const lessons = course.lessons || [];
-  const currentIdx = parseInt(params.lessonIdx, 10);
+  const currentIdx = parseInt(resolvedParams.lessonIdx, 10);
   const progress = lessons.length > 0 ? ((currentIdx + 1) / lessons.length) * 100 : 0;
 
   // Debugging logs
@@ -192,7 +195,7 @@ export default function LessonDetailPage({ params }: { params: { courseId: strin
                     {lessons.map((l: any, idx: number) => (
                       <Link
                         key={idx}
-                        href={`/Course/${params.courseId}/lesson/${idx}`}
+                        href={`/Course/${resolvedParams.courseId}/lesson/${idx}`}
                         className={`block px-3 py-2 rounded-lg transition-all duration-200 text-sm font-medium
                           ${idx === currentIdx 
                             ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-md' 
