@@ -11,8 +11,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         await connectMongoose();
 
-        const user = await User.findOne({ phoneNumber: credentials.phoneNumber });
-        console.log('LOOKUP BY PHONE:', user);
+        // Handle both email and phone number authentication
+        let user;
+        if (credentials.email) {
+          user = await User.findOne({ email: credentials.email });
+        } else if (credentials.phoneNumber) {
+          user = await User.findOne({ phoneNumber: credentials.phoneNumber });
+        }
+
+        console.log('AUTHORIZE - LOOKUP RESULT:', user);
 
         if (!user) throw new Error('User not found');
 
@@ -23,6 +30,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const isMatch = await bcrypt.compare(credentials.password, user.password);
         if (!isMatch) throw new Error('Incorrect password');
 
+        console.log('AUTHORIZE - RETURNING USER:', { id: user._id, name: user.name, isAdmin: user.isAdmin });
         return user;
       },
     }),
@@ -36,6 +44,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   callbacks: {
     async signIn({ user, account }) {
+      console.log('SIGNIN CALLBACK - user:', user);
       try {
         await connectMongoose();
 
@@ -56,79 +65,81 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         user._id = dbUser._id;
+        console.log('SIGNIN CALLBACK - returning true for user:', { id: dbUser._id, name: dbUser.name, isAdmin: dbUser.isAdmin });
         return true;
       } catch (error) {
         console.error('signIn callback error:', error);
         return false;
       }
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
+      console.log('JWT CALLBACK - trigger:', trigger);
+      console.log('JWT CALLBACK - user:', user ? { id: (user as any)._id, email: (user as any).email, phoneNumber: (user as any).phoneNumber, isAdmin: (user as any).isAdmin } : 'no user');
+      console.log('JWT CALLBACK - token before:', { id: token.id, email: token.email, phoneNumber: token.phoneNumber, isAdmin: token.isAdmin });
+      
       if (user) {
         const customUser = user as any;
-        if (customUser._id) {
-          token.id = customUser._id.toString();
-        }
-        if (customUser.phoneNumber) {
-          token.phoneNumber = customUser.phoneNumber;
-        }
-        token.email = customUser.email;
+        // Completely replace the token with new user data
+        const newToken = {
+          id: customUser._id.toString(),
+          email: customUser.email,
+          phoneNumber: customUser.phoneNumber,
+          isAdmin: customUser.isAdmin,
+          iat: Math.floor(Date.now() / 1000),
+          exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
+        };
+        console.log('JWT CALLBACK - COMPLETELY NEW TOKEN CREATED:', newToken);
+        return newToken;
       }
+      
+      // If no user is provided, return the existing token
+      console.log('JWT CALLBACK - token after (no user):', { id: token.id, email: token.email, phoneNumber: token.phoneNumber, isAdmin: token.isAdmin });
       return token;
     },
     async session({ session, token }) {
+      console.log('SESSION CALLBACK - token:', { id: token.id, email: token.email, phoneNumber: token.phoneNumber, isAdmin: token.isAdmin });
+      
       await connectMongoose();
 
-      if (token?.id) {
-        session.user.id = String(token.id);
+      // Always look up the user by phone number or email to ensure we get the correct user
+      let dbUser = null;
+      if (token?.phoneNumber) {
+        dbUser = await User.findOne({ phoneNumber: token.phoneNumber });
+        console.log('SESSION CALLBACK - found user by phoneNumber:', dbUser ? { id: dbUser._id, name: dbUser.name, isAdmin: dbUser.isAdmin } : 'not found');
+      } else if (token?.email) {
+        dbUser = await User.findOne({ email: token.email });
+        console.log('SESSION CALLBACK - found user by email:', dbUser ? { id: dbUser._id, name: dbUser.name, isAdmin: dbUser.isAdmin } : 'not found');
       }
 
-      if (token?.phoneNumber || token?.email) {
-        const dbUser = await User.findOne({
-          $or: [{ phoneNumber: token.phoneNumber }, { email: token.email }],
-        });
-        if (dbUser) {
-          const needsSetup = !dbUser.age || !dbUser.gender || !dbUser.phoneNumber;
-          (session.user as any).needsProfileSetup = needsSetup;
-          (session.user as any).name = dbUser.name;
-          (session.user as any).age = dbUser.age;
-          (session.user as any).gender = dbUser.gender;
-          (session.user as any).email = dbUser.email;
-          (session.user as any).phoneNumber = dbUser.phoneNumber;
-          (session.user as any).isAdmin = dbUser.isAdmin;
-        }
+      if (dbUser) {
+        session.user.id = String(dbUser._id);
+        const needsSetup = !dbUser.age || !dbUser.gender || !dbUser.phoneNumber;
+        (session.user as any).needsProfileSetup = needsSetup;
+        (session.user as any).name = dbUser.name;
+        (session.user as any).age = dbUser.age;
+        (session.user as any).gender = dbUser.gender;
+        (session.user as any).email = dbUser.email;
+        (session.user as any).phoneNumber = dbUser.phoneNumber;
+        (session.user as any).isAdmin = dbUser.isAdmin;
       }
 
+      console.log('SESSION CALLBACK - final session:', { id: session.user.id, name: (session.user as any).name, isAdmin: (session.user as any).isAdmin });
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Try to detect admin login and redirect to /admin
-      try {
-        const u = new URL(url, baseUrl);
-        if (u.pathname === "/profile" || u.pathname === "/" || u.pathname === "/home") {
-          // If session exists and isAdmin, redirect to /admin
-          // But we can't access session here, so only redirect if url is /profile or /home
-          // Let client-side logic handle further redirects if needed
-          // Always allow callback URLs on the same origin
-          if (url.startsWith("/admin") || url.startsWith("/profile") || url.startsWith("/home") || url === baseUrl || url === baseUrl + "/") {
-            // If the callback URL is /profile or /home, send admin to /admin
-            // Otherwise, allow
-            if (u.pathname === "/profile" || u.pathname === "/home" || u.pathname === "/") {
-              // This will redirect all logins to /admin, but only if the callback is /profile, /home, or root
-              return baseUrl + "/admin";
-            }
-            return url;
-          }
-        }
-        // Allow relative callback URLs
-        if (url.startsWith("/")) return `${baseUrl}${url}`;
-        // Allow callback URLs on the same origin
-        if (new URL(url).origin === baseUrl) return url;
-      } catch {}
+      // Allow relative callback URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Allow callback URLs on the same origin
+      if (new URL(url).origin === baseUrl) return url;
       return baseUrl;
     },
   },
   session: {
     strategy: 'jwt',
+    maxAge: 24 * 60 * 60, // 24 hours
+  },
+  jwt: {
+    maxAge: 24 * 60 * 60, // 24 hours
   },
   secret: process.env.NEXTAUTH_SECRET,
 });

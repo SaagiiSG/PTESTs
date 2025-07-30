@@ -28,17 +28,22 @@ export default function PayPage({ params }: { params: { payId: string } }) {
         try {
           await fetch(`/api/tests/${testId}/taken`, { method: 'POST' });
         } catch (e) {
-          // Optionally log or ignore
+          console.error('Error recording test taken:', e);
         }
         // Record the test purchase
         try {
-          await fetch('/api/purchase', {
+          const response = await fetch('/api/purchase', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ testId }),
           });
+          if (!response.ok) {
+            console.error('Test purchase failed:', await response.text());
+          } else {
+            console.log('Test purchase successful');
+          }
         } catch (e) {
-          // Optionally log or ignore
+          console.error('Error recording test purchase:', e);
         }
       }
       // If returnTo is a course, rewrite to capital C
@@ -47,13 +52,18 @@ export default function PayPage({ params }: { params: { payId: string } }) {
         url = url.replace('/course/', '/Course/');
         // Record the course purchase
         try {
-          await fetch('/api/purchase', {
+          const response = await fetch('/api/purchase', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ courseId: params.payId }),
           });
+          if (!response.ok) {
+            console.error('Course purchase failed:', await response.text());
+          } else {
+            console.log('Course purchase successful');
+          }
         } catch (e) {
-          // Optionally log or ignore
+          console.error('Error recording course purchase:', e);
         }
       }
       if (!url.includes('paid=1')) {

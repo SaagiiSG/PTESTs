@@ -10,6 +10,8 @@ import Image from "next/image";
 import bg from "@/public/bg-profile (1).png";
 import { Button } from '@/components/ui/button';
 import { BookOpen, Book, UserCog, KeyRound, Shield, Info } from 'lucide-react';
+import LangToggle from '@/components/LangToggle';
+import { useLanguage } from '@/lib/language';
 
 type User = {
   name: string;
@@ -28,6 +30,7 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
   const [user, setUser] = useState<User | null>(null);
   const [showSidebarMobile, setShowSidebarMobile] = useState(true);
   const router = useRouter();
+  const { t } = useLanguage();
 
   useEffect(() => {
     api
@@ -44,12 +47,12 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
 
   // Navigation links with icons
   const navLinks = [
-    { name: 'Test history', route: '/profile/testhistory', icon: <BookOpen className="w-4 h-4 mr-2" /> },
-    { name: 'Course history', route: '/profile/coursehistory', icon: <Book className="w-4 h-4 mr-2" /> },
-    { name: 'Edit profile', route: '/profile/editprofile', icon: <UserCog className="w-4 h-4 mr-2" /> },
-    { name: 'Change password', route: '/profile/changepassword', icon: <KeyRound className="w-4 h-4 mr-2" /> },
-    { name: 'Privacy', route: '/profile/privacy', icon: <Shield className="w-4 h-4 mr-2" /> },
-    { name: 'About', route: '/profile/about', icon: <Info className="w-4 h-4 mr-2" /> },
+    { name: t('testHistory'), route: '/profile/testhistory', icon: <BookOpen className="w-4 h-4 mr-2" /> },
+    { name: t('courseHistory'), route: '/profile/coursehistory', icon: <Book className="w-4 h-4 mr-2" /> },
+    { name: t('editProfile'), route: '/profile/editprofile', icon: <UserCog className="w-4 h-4 mr-2" /> },
+    { name: t('changePassword'), route: '/profile/changepassword', icon: <KeyRound className="w-4 h-4 mr-2" /> },
+    { name: t('privacy'), route: '/profile/privacy', icon: <Shield className="w-4 h-4 mr-2" /> },
+    { name: t('about'), route: '/profile/about', icon: <Info className="w-4 h-4 mr-2" /> },
   ];
 
   // Helper to handle navigation on mobile
@@ -70,6 +73,12 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
               className="w-full h-40 sm:h-64 object-cover lg:rounded-l-2xl lg:rounded-bl-none"
             />
             <aside className="h-full flex flex-col p-4 sm:p-8 bg-white border-r border-gray-200 rounded-b-md shadow min-h-[60vh]">
+              {/* Header with Language Toggle */}
+              <div className="flex justify-between items-center mb-4">
+                <h1 className="text-xl font-semibold text-gray-800">{t('profile')}</h1>
+                <LangToggle variant="compact" />
+              </div>
+              
               {user ? (
                 <div className="mb-8 flex flex-col items-center text-center">
                   <h2 className="text-2xl font-bold text-gray-800">
@@ -79,14 +88,14 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
                     {user.email || user.phoneNumber}
                   </p>
                   {user.age && (
-                    <p className="text-gray-600">Age: {user.age}</p>
+                    <p className="text-gray-600">{t('age')}: {user.age}</p>
                   )}
                   {user.gender && (
-                    <p className="text-gray-600">Gender: {user.gender}</p>
+                    <p className="text-gray-600">{t('gender')}: {user.gender}</p>
                   )}
                 </div>
               ) : (
-                <p className="mb-8">Loading profile...</p>
+                <p className="mb-8">{t('loading')}...</p>
               )}
               <nav className="flex flex-col items-start gap-4 w-full">
                 {navLinks.map(link => (
@@ -124,7 +133,7 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
             {/* Back button for mobile */}
             <div className="lg:hidden flex items-center p-2">
               <Button variant="ghost" onClick={() => setShowSidebarMobile(true)}>
-                ← Back
+                ← {t('back')}
               </Button>
             </div>
             {children}

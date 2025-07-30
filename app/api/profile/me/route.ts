@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import { connectMongoose } from "@/lib/mongodb";
-import User from "@/app/models/user";
+import User, { IUser } from "@/app/models/user";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -18,7 +18,7 @@ export async function GET(req: Request) {
 
   await connectMongoose();
 
-  const user = await User.findById(session.user.id).lean();
+  const user = await User.findById(session.user.id).lean() as IUser | null;
   if (!user) {
     return NextResponse.json(
       { message: "User not found." },
@@ -32,6 +32,7 @@ export async function GET(req: Request) {
     phoneNumber: user.phoneNumber,
     age: user.age,
     gender: user.gender,
+    isAdmin: user.isAdmin || false,
     purchasedCourses: user.purchasedCourses || [],
   });
 }

@@ -2,10 +2,12 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
 import api from '@/lib/axios';
+import { useLanguage } from '@/lib/language';
 
 export default function TestHistoryPage() {
   const [testHistory, setTestHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     api.get('/api/profile/purchase-history?type=test')
@@ -17,11 +19,11 @@ export default function TestHistoryPage() {
     <div className="h-full flex justify-start items-start min-h-[60vh] rounded-3xl">
       <Card className="w-full h-full rounded-3xl shadow-none bg-white/90">
         <CardHeader>
-          <CardTitle className='py-6'>Test History</CardTitle>
+          <CardTitle className='py-6'>{t('testHistory')}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-muted-foreground text-center py-8">Loading...</div>
+            <div className="text-muted-foreground text-center py-8">{t('loading')}</div>
           ) : testHistory.length === 0 ? (
             <div className="text-muted-foreground text-center py-8">No test purchases found.</div>
           ) : (

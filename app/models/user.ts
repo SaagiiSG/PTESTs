@@ -12,6 +12,7 @@ export interface IUser extends Document {
   verificationCodeExpires?: Date;
   isAdmin?: boolean;
   purchasedCourses?: mongoose.Types.ObjectId[];
+  purchasedTests?: mongoose.Types.ObjectId[];
 }
 
 const UserSchema: Schema = new Schema({
@@ -26,6 +27,7 @@ const UserSchema: Schema = new Schema({
   verificationCodeExpires: { type: Date },
   isAdmin: { type: Boolean, default: false },
   purchasedCourses: [{ type: Schema.Types.ObjectId, ref: 'Course' }],
+  purchasedTests: [{ type: Schema.Types.ObjectId, ref: 'Test' }],
 }, { timestamps: true });
 
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

@@ -1,8 +1,9 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { ChevronRight } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ChevronRight, GraduationCap, Clock, DollarSign } from 'lucide-react';
 
 interface Lesson {
   title: string;
@@ -22,42 +23,88 @@ interface CourseCardProps {
 
 const CourseCard: React.FC<CourseCardProps> = ({ _id, title, description, lessonCount, price, thumbnailUrl, lessons, compact }) => {
   const imageUrl = thumbnailUrl || "/ppnim_logo.svg";
+  
   return (
-    <Link href={`/Course/${_id}`} className={`block w-full group ${compact ? '' : ''}`}>
-      <Card className={`transition-transform hover:scale-[1.03] cursor-pointer py-0 bg-transparent shadow-none border-0 border hover:border-yellow-300 ${compact ? 'rounded-lg' : 'rounded-xl'}`}>
-        <div className={`relative w-full ${compact ? 'h-28' : 'h-40'} bg-muted ${compact ? 'rounded-lg' : 'rounded-xl'} overflow-hidden`}>
-          <Image src={imageUrl} alt={title} fill className="object-cover" />
+    <Link href={`/Course/${_id}`} className="block w-full group">
+      <Card className="overflow-hidden group cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-0 shadow-sm bg-white">
+        {/* Image Section */}
+        <div className={`relative w-full ${compact ? 'h-32' : 'h-48'} bg-gray-100 overflow-hidden`}>
+          <Image 
+            src={imageUrl} 
+            alt={title} 
+            fill 
+            className="object-cover transition-transform duration-300 group-hover:scale-105" 
+          />
+          {/* Overlay gradient */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          {/* Price badge */}
+          {typeof price === 'number' && (
+            <div className="absolute top-3 right-3">
+              <Badge className="bg-white/90 text-gray-900 font-semibold px-3 py-1">
+                <DollarSign className="w-3 h-3 mr-1" />
+                {price}
+              </Badge>
+            </div>
+          )}
         </div>
-        <CardHeader className={`pb-2 pt-0 ${compact ? 'px-3' : 'px-4'}`}>
-          <CardTitle className={`${compact ? 'text-base' : 'text-lg'} line-clamp-1`}>{title}</CardTitle>
-          <CardDescription className={`line-clamp-2 ${compact ? 'text-xs' : ''}`}>{description}</CardDescription>
-          {/* Subtle lesson list */}
+
+        {/* Content Section */}
+        <CardContent className="p-4">
+          {/* Title */}
+          <CardTitle className="text-lg font-bold text-gray-900 mb-2 line-clamp-1 group-hover:text-blue-600 transition-colors">
+            {title}
+          </CardTitle>
+          
+          {/* Description */}
+          <CardDescription className="text-sm text-gray-600 mb-3 line-clamp-2">
+            {description}
+          </CardDescription>
+
+          {/* Lessons Preview */}
           {lessons && lessons.length > 0 ? (
-            <div className="mt-1">
-              <h3 className="text-xs font-semibold text-muted-foreground mb-0.5">Lessons:</h3>
-              <ul className="flex flex-col gap-0.5">
-                {(compact ? lessons.slice(0, 2) : lessons).map((lesson, idx) => (
-                  <li key={idx} className="text-xs text-muted-foreground flex items-center gap-1">
-                    <span className="w-1 h-1 bg-muted-foreground rounded-full inline-block" />
-                    <span className="font-medium line-clamp-1">{lesson.title}</span>
-                  </li>
+            <div className="mb-3">
+              <div className="flex items-center gap-2 mb-2">
+                <GraduationCap className="w-4 h-4 text-blue-600" />
+                <span className="text-xs font-semibold text-gray-700">Course Content</span>
+              </div>
+              <div className="space-y-1">
+                {(compact ? lessons.slice(0, 3) : lessons.slice(0, 4)).map((lesson, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-xs text-gray-600">
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0" />
+                    <span className="line-clamp-1">{lesson.title}</span>
+                  </div>
                 ))}
-                {compact && lessons.length > 2 && (
-                  <li className="text-xs text-gray-400">+{lessons.length - 2} more lessons</li>
+                {compact && lessons.length > 3 && (
+                  <div className="text-xs text-gray-500 italic">
+                    +{lessons.length - 3} more lessons
+                  </div>
                 )}
-              </ul>
+                {!compact && lessons.length > 4 && (
+                  <div className="text-xs text-gray-500 italic">
+                    +{lessons.length - 4} more lessons
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
-            <span className="text-xs text-muted-foreground mt-1 block">Lessons: {lessonCount}</span>
+            <div className="flex items-center gap-2 mb-3">
+              <GraduationCap className="w-4 h-4 text-blue-600" />
+              <span className="text-sm text-gray-600">{lessonCount} lessons</span>
+            </div>
           )}
-        </CardHeader>
-        <CardContent className={`flex flex-row items-center justify-between ${compact ? 'px-3 pb-2 pt-0' : 'px-4 pb-2 pt-0'}`}>
-          {/* Remove lessonCount here, now shown above */}
-          {typeof price === 'number' && (
-            <span className="text-sm font-semibold text-blue-700">
-e{price}</span>
-          )}
-          <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-yellow-500 transition ml-2" />
+
+          {/* Footer */}
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <Clock className="w-3 h-3" />
+              <span>{lessonCount} lessons</span>
+            </div>
+            <div className="flex items-center gap-1 text-blue-600 group-hover:text-blue-700 transition-colors">
+              <span className="text-sm font-medium">View Course</span>
+              <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </div>
+          </div>
         </CardContent>
       </Card>
     </Link>

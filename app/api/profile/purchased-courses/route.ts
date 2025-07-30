@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import { connectMongoose } from "@/lib/mongodb";
-import Purchase from "@/app/models/purchase";
+import User from "@/app/models/user";
 import Course from "@/app/models/course";
 import Test from "@/app/models/tests";
 
@@ -14,21 +14,34 @@ export async function GET(req: Request) {
     );
   }
   await connectMongoose();
-  // Find the most recent course purchase for this user
-  const coursePurchase = await Purchase.findOne({ user: session.user.id, course: { $exists: true } })
-    .sort({ purchasedAt: -1 })
+  
+  // Get user with populated purchased courses and tests
+  const user = await User.findById(session.user.id)
+    .populate('purchasedCourses')
+    .populate('purchasedTests')
     .lean();
-  // Find the most recent test purchase for this user
-  const testPurchase = await Purchase.findOne({ user: session.user.id, test: { $exists: true } })
-    .sort({ purchasedAt: -1 })
-    .lean();
-  let course = null;
-  let test = null;
-  if (coursePurchase) {
-    course = await Course.findById(coursePurchase.course).lean();
+  
+  if (!user) {
+    return NextResponse.json(
+      { message: "User not found." },
+      { status: 404 }
+    );
   }
-  if (testPurchase) {
-    test = await Test.findById(testPurchase.test).lean();
-  }
-  return NextResponse.json({ course, test });
+  
+  // Format purchased courses
+  const purchasedCourses = (user.purchasedCourses || []).map((course: any) => ({
+    course,
+    purchasedAt: new Date() // Since we don't store purchase date in user model, use current date
+  }));
+  
+  // Format purchased tests
+  const purchasedTests = (user.purchasedTests || []).map((test: any) => ({
+    test,
+    purchasedAt: new Date() // Since we don't store purchase date in user model, use current date
+  }));
+  
+  return NextResponse.json({ 
+    courses: purchasedCourses,
+    tests: purchasedTests
+  });
 } 

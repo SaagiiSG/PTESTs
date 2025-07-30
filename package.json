@@ -12,6 +12,7 @@
     "@auth/core": "^0.40.0",
     "@auth/mongodb-adapter": "^3.10.0",
     "@hookform/resolvers": "^5.1.1",
+    "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@sendgrid/mail": "^8.1.5",
     "axios": "^1.10.0",

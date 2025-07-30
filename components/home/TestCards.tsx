@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ChevronRight } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ChevronRight, BookOpen, Clock, Users } from 'lucide-react';
 
 interface TestcardsProps {
   hr: string;
@@ -12,11 +13,13 @@ interface TestcardsProps {
   thumbnailUrl?: string;
   variant: "big" | "small";
   price?: number;
+  takenCount?: number;
+  questionCount?: number;
 }
 
 const MAX_DESC_LENGTH = 100;
 
-const TestCards = ({ hr, shortDes, slug, variant, thumbnailUrl, price }: TestcardsProps) => {
+const TestCards = ({ hr, shortDes, slug, variant, thumbnailUrl, price, takenCount, questionCount }: TestcardsProps) => {
   const [showFull, setShowFull] = useState(false);
   const her: string = hr;
   const shortDescription: string = shortDes;
@@ -26,19 +29,39 @@ const TestCards = ({ hr, shortDes, slug, variant, thumbnailUrl, price }: Testcar
 
   return (
     <Link href={`/ptests/${slug}`} className={`${variant === "big" ? "w-full max-w-xl" : "w-[48%]"} group`}>
-      <Card className={`cursor-pointer transition-all duration-300 border hover:border-yellow-300 ${variant === "big" ? "flex-col gap-4" : "flex-row items-center gap-6 w-full"} bg-transparent shadow-none`}>
-        <div className={`relative ${variant === "big" ? "w-full h-56" : "h-24 w-24 min-w-[6rem] min-h-[6rem]"} bg-gray-100 rounded-xl overflow-hidden`}>
+      <Card className={`overflow-hidden group cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-0 shadow-sm bg-white ${variant === "big" ? "flex-col" : "flex-row items-stretch"}`}>
+        {/* Image Section */}
+        <div className={`relative ${variant === "big" ? "w-full h-56" : "w-20 h-20 flex-shrink-0"} bg-gray-100 overflow-hidden h-full`}>
           <Image
             src={imageUrl}
             alt={hr}
             fill
-            className="object-cover"
+            className="object-cover transition-transform duration-300 group-hover:scale-105 h-full"
           />
+          {/* Overlay gradient */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          {/* Price badge - only show on big variant */}
+          {variant === "big" && typeof price === 'number' && (
+            <div className="absolute top-3 right-3">
+              <Badge className="bg-white/90 text-gray-900 font-semibold px-3 py-1">
+                ₮{price}
+              </Badge>
+            </div>
+          )}
         </div>
-        <CardHeader className={`pt-0 ${variant === "big" ? "pb-2 px-6" : "pb-2 px-4 flex-1"}`}>
-          <CardTitle className={`font-extrabold text-primary ${variant === "big" ? "text-lg sm:text-2xl mb-1" : "text-base sm:text-lg"}`}>{hr}</CardTitle>
-          <CardDescription className={`${variant === "big" ? "text-xs sm:text-base" : "text-xs sm:text-sm"} line-clamp-3`}>{displayDesc}
-            {isLong && !showFull && (
+
+        {/* Content Section */}
+        <CardContent className={`${variant === "big" ? "p-4 w-full" : "p-3 flex-1 min-w-0"}`}>
+          {/* Title */}
+          <CardTitle className={`font-bold text-gray-900 mb-2 line-clamp-1 group-hover:text-blue-600 transition-colors ${variant === "big" ? "text-xl" : "text-sm"}`}>
+            {hr}
+          </CardTitle>
+          
+          {/* Description */}
+          <CardDescription className={`text-gray-600 line-clamp-2 ${variant === "big" ? "text-base mb-3" : "text-xs mb-2"}`}>
+            {displayDesc}
+            {variant === "big" && isLong && !showFull && (
               <button
                 type="button"
                 className="ml-2 text-blue-600 underline text-xs"
@@ -50,7 +73,7 @@ const TestCards = ({ hr, shortDes, slug, variant, thumbnailUrl, price }: Testcar
                 See more
               </button>
             )}
-            {isLong && showFull && (
+            {variant === "big" && isLong && showFull && (
               <button
                 type="button"
                 className="ml-2 text-blue-600 underline text-xs"
@@ -63,14 +86,58 @@ const TestCards = ({ hr, shortDes, slug, variant, thumbnailUrl, price }: Testcar
               </button>
             )}
           </CardDescription>
-        </CardHeader>
-        <CardContent className={`flex flex-row items-center justify-between ${variant === "big" ? "px-6 pb-2 pt-0" : "px-4 pb-2 pt-0"}`}>
-          {typeof price === 'number' && (
-            <span className="text-xl font-bold text-blue-700">₮{price}</span>
+
+          {/* Test Stats - only show on big variant */}
+          {variant === "big" && (
+            <div className="flex items-center gap-4 mb-3 text-xs text-gray-600">
+              {questionCount && (
+                <div className="flex items-center gap-1">
+                  <BookOpen className="w-3 h-3 text-blue-600" />
+                  <span>{questionCount} questions</span>
+                </div>
+              )}
+              {takenCount && (
+                <div className="flex items-center gap-1">
+                  <Users className="w-3 h-3 text-green-600" />
+                  <span>{takenCount} attempts</span>
+                </div>
+              )}
+            </div>
           )}
-          {variant === 'small' && (
-            <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-yellow-500 transition ml-2" />
-          )}
+
+          {/* Footer */}
+          <div className={`flex items-center justify-between ${variant === "big" ? "pt-2 border-t border-gray-100" : ""}`}>
+            {variant === "big" ? (
+              <>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Clock className="w-3 h-3" />
+                  <span>Take Test</span>
+                </div>
+                <div className="flex items-center gap-1 text-blue-600 group-hover:text-blue-700 transition-colors">
+                  <span className="text-sm font-medium">Start Test</span>
+                  <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Clock className="w-3 h-3" />
+                  <span>Take Test</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {typeof price === 'number' && (
+                    <div className="flex items-center gap-1 text-xs text-gray-600">
+                      <span className="font-medium">₮{price}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1 text-blue-600 group-hover:text-blue-700 transition-colors">
+                    <span className="text-xs font-medium">Start Test</span>
+                    <ChevronRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
     </Link>
