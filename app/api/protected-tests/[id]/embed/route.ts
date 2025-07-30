@@ -5,7 +5,15 @@ import { auth } from '@/auth';
 import { decrypt } from '@/lib/encryption';
 import { Types } from 'mongoose';
 
+// Force this route to be dynamic only (not executed during build)
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  // Prevent execution during build time
+  if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
+    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
+  }
+
   const { id } = await params;
   console.log('Params:', params); // Log for debugging
 
