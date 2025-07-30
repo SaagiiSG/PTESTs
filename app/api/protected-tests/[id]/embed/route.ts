@@ -35,8 +35,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
-    // Check if embedCode exists and is not null/undefined
-    if (!test.embedCode || typeof test.embedCode !== 'string') {
+    // Robust check for embedCode
+    if (!test.embedCode || typeof test.embedCode !== 'string' || !test.embedCode.includes(':')) {
       console.log('No valid embed code found for test ID:', id, 'embedCode:', test.embedCode);
       return NextResponse.json({ error: 'No embed code available' }, { status: 404 });
     }
