@@ -36,7 +36,13 @@ export async function POST(req: Request) {
     if (!data.title || !data.description?.mn || !data.description?.en || !data.embedCode || typeof data.price !== 'number') {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
-    const encryptedEmbedCode = encrypt(data.embedCode);
+    let encryptedEmbedCode;
+    try {
+      encryptedEmbedCode = encrypt(data.embedCode);
+    } catch (error) {
+      return NextResponse.json({ error: 'Encryption failed - environment not properly configured' }, { status: 500 });
+    }
+    
     const test = await Test.create({
       title: data.title,
       description: {

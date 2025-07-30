@@ -40,7 +40,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (!data.title || !data.description?.mn || !data.description?.en || !data.embedCode) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
-    const encryptedEmbedCode = encrypt(data.embedCode);
+    let encryptedEmbedCode;
+    try {
+      encryptedEmbedCode = encrypt(data.embedCode);
+    } catch (error) {
+      return NextResponse.json({ error: 'Encryption failed - environment not properly configured' }, { status: 500 });
+    }
+    
     const updated = await Test.findByIdAndUpdate(
       id,
       {

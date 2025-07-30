@@ -60,6 +60,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       embedCode = decrypt(test.embedCode);
     } catch (e) {
       console.error('Decryption error:', e);
+      if (e instanceof Error && e.message.includes('EMBED_CODE_SECRET')) {
+        return NextResponse.json({ error: 'Service temporarily unavailable - encryption not configured' }, { status: 503 });
+      }
       return NextResponse.json({ error: 'Failed to decrypt embed code' }, { status: 500 });
     }
 
