@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import Test, { ITest } from '@/app/models/tests';
-import { connectMongoose } from '@/lib/mongodb';
+import { safeConnectMongoose } from '@/lib/mongodb';
 import { auth } from '@/auth';
 import { decrypt } from '@/lib/encryption';
 import { Types } from 'mongoose';
@@ -16,16 +16,26 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 
   try {
-    await connectMongoose();
+    const connection = await safeConnectMongoose();
+    if (!connection) {
+      return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+    }
+
     const test = await Test.findById(id).lean<ITest>();
     if (!test) {
       console.log('Test not found for ID:', id);
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
+    // Check if embedCode exists and is not null/undefined
+    if (!test.embedCode) {
+      console.log('No embed code found for test ID:', id);
+      return NextResponse.json({ error: 'No embed code available' }, { status: 404 });
+    }
+
     let embedCode = '';
     try {
-      embedCode = decrypt(test.embedCode); // Use typed embedCode
+      embedCode = decrypt(test.embedCode);
     } catch (e) {
       console.error('Decryption error:', e);
       return NextResponse.json({ error: 'Failed to decrypt embed code' }, { status: 500 });
