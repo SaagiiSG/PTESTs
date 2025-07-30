@@ -12,7 +12,12 @@ export function encrypt(text: string): string {
   return iv.toString('hex') + ':' + encrypted;
 }
 
-export function decrypt(encrypted: string): string {
+export function decrypt(encrypted: string | undefined | null): string {
+  // Handle undefined/null values gracefully
+  if (!encrypted) {
+    throw new Error('Cannot decrypt undefined or null value');
+  }
+  
   const [ivHex, encryptedText] = encrypted.split(':');
   const iv = Buffer.from(ivHex, 'hex');
   const decipher = crypto.createDecipheriv(algorithm, key, iv);

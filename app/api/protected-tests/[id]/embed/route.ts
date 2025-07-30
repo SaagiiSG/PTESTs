@@ -28,8 +28,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     // Check if embedCode exists and is not null/undefined
-    if (!test.embedCode) {
-      console.log('No embed code found for test ID:', id);
+    if (!test.embedCode || typeof test.embedCode !== 'string') {
+      console.log('No valid embed code found for test ID:', id, 'embedCode:', test.embedCode);
       return NextResponse.json({ error: 'No embed code available' }, { status: 404 });
     }
 
