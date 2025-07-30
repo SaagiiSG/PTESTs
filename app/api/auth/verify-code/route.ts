@@ -1,10 +1,21 @@
 import { NextResponse } from 'next/server';
 import User from '@/app/models/user';
-import { connectMongoose } from '@/lib/mongodb';
+import { safeConnectMongoose } from '@/lib/mongodb';
+
+// Force this route to be dynamic only (not executed during build)
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
+  // Prevent execution during build time
+  if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
+    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
+  }
+
   const { phoneNumber, code } = await req.json();
-  await connectMongoose();
+  const connection = await safeConnectMongoose();
+  if (!connection) {
+    return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+  }
 
   const user = await User.findOne({ phoneNumber });
 

@@ -31,6 +31,8 @@ const nextConfig: NextConfig = {
       // add more as needed
     ],
   },
+  // Disable page data collection for API routes during build
+  serverExternalPackages: ['mongoose'],
 };
 
 // const pwaConfig = {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import Test from '@/app/models/tests';
-import { connectMongoose } from '@/lib/mongodb';
+import { safeConnectMongoose } from '@/lib/mongodb';
 import { auth } from '@/auth';
 import { encrypt } from '@/lib/encryption';
 import { Types } from 'mongoose';
@@ -10,8 +10,16 @@ interface AdminUser {
   [key: string]: any;
 }
 
+// Force this route to be dynamic only (not executed during build)
+export const dynamic = 'force-dynamic';
+
 // Update a test
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  // Prevent execution during build time
+  if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
+    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
+  }
+
   const session = await auth();
   const user = session?.user as AdminUser;
   if (!user?.isAdmin) {
@@ -21,7 +29,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   if (!id || !Types.ObjectId.isValid(id)) {
     return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
   }
-  await connectMongoose();
+  
+  const connection = await safeConnectMongoose();
+  if (!connection) {
+    return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+  }
+
   try {
     const data = await req.json();
     if (!data.title || !data.description?.mn || !data.description?.en || !data.embedCode) {
@@ -51,6 +64,11 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
 // Delete a test
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  // Prevent execution during build time
+  if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
+    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
+  }
+
   const session = await auth();
   const user = session?.user as AdminUser;
   if (!user?.isAdmin) {
@@ -60,7 +78,12 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   if (!id || !Types.ObjectId.isValid(id)) {
     return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
   }
-  await connectMongoose();
+  
+  const connection = await safeConnectMongoose();
+  if (!connection) {
+    return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+  }
+
   try {
     const deleted = await Test.findByIdAndDelete(id);
     if (!deleted) {

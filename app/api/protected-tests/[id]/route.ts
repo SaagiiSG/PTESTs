@@ -1,9 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 import Test from "@/app/models/tests";
-import { connectMongoose } from "@/lib/mongodb";
+import { safeConnectMongoose } from '@/lib/mongodb';
 import { Types } from "mongoose";
 
+// Force this route to be dynamic only (not executed during build)
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  // Prevent execution during build time
+  if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
+    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
+  }
+
   const { id } = await params;
 
   // Log for debugging
@@ -16,7 +24,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   try {
     console.log("Connecting to MongoDB...");
-    await connectMongoose();
+    const connection = await safeConnectMongoose();
+    if (!connection) {
+      return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+    }
     console.log("Fetching test with ID:", id);
     
     const test = await Test.findById(id).lean();

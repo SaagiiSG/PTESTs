@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import Course from '@/app/models/course';
-import { connectMongoose } from '@/lib/mongodb';
+import { safeConnectMongoose } from '@/lib/mongodb';
 import { auth } from '@/auth';
+
+// Force this route to be dynamic only (not executed during build)
+export const dynamic = 'force-dynamic';
 
 interface AdminUser {
   isAdmin?: boolean;
@@ -10,12 +13,20 @@ interface AdminUser {
 
 // Create a new course
 export async function POST(req: Request) {
+  // Prevent execution during build time
+  if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
+    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
+  }
+
   const session = await auth();
   const user = session?.user as AdminUser;
   if (!user?.isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
-  await connectMongoose();
+  const connection = await safeConnectMongoose();
+  if (!connection) {
+    return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+  }
   try {
     const data = await req.json();
     if (!data.title || !data.description || typeof data.price !== 'number') {
@@ -36,7 +47,15 @@ export async function POST(req: Request) {
 
 // List all courses
 export async function GET() {
-  await connectMongoose();
+  // Prevent execution during build time
+  if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
+    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
+  }
+
+  const connection = await safeConnectMongoose();
+  if (!connection) {
+    return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+  }
   try {
     const courses = await Course.find().sort({ createdAt: -1 });
     return NextResponse.json(courses);

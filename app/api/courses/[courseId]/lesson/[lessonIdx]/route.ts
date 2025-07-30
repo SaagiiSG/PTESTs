@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
 import Course from '@/app/models/course';
-import { connectMongoose } from '@/lib/mongodb';
+import { safeConnectMongoose } from '@/lib/mongodb';
 import { Types } from 'mongoose';
 
+// Force this route to be dynamic only (not executed during build)
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request, { params }: { params: Promise<{ courseId: string, lessonIdx: string }> }) {
+  // Prevent execution during build time
+  if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
+    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
+  }
+
   const { courseId, lessonIdx } = await params;
   if (!courseId || !Types.ObjectId.isValid(courseId)) {
     return NextResponse.json({ error: 'Invalid course ID' }, { status: 400 });
@@ -12,7 +20,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ courseId
   if (isNaN(idx) || idx < 0) {
     return NextResponse.json({ error: 'Invalid lesson index' }, { status: 400 });
   }
-  await connectMongoose();
+  const connection = await safeConnectMongoose();
+  if (!connection) {
+    return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+  }
   try {
     const course = await Course.findById(courseId);
     if (!course) {

@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { connectMongoose } from "@/lib/mongodb";
+import { safeConnectMongoose } from '@/lib/mongodb';
 import User from "@/app/models/user";
 
+// Force this route to be dynamic only (not executed during build)
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
+  // Prevent execution during build time
+  if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
+    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
+  }
+
   const {
     name,
     phoneNumber,
@@ -13,7 +21,10 @@ export async function POST(req: Request) {
     gender,
   } = await req.json();
 
-  await connectMongoose();
+  const connection = await safeConnectMongoose();
+  if (!connection) {
+    return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+  }
 
   const existingUser = await User.findOne({ phoneNumber });
   if (existingUser) {
