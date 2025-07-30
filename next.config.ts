@@ -1,4 +1,4 @@
-import withPWA from 'next-pwa';
+// import withPWA from 'next-pwa';
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -31,12 +31,19 @@ const nextConfig: NextConfig = {
       // add more as needed
     ],
   },
-  pwa: {
-    dest: 'public',
-    register: true,
-    skipWaiting: true,
-    disable: process.env.NODE_ENV === 'development',
-  },
 };
 
-export default withPWA(nextConfig);
+// const pwaConfig = {
+//   dest: 'public',
+//   register: true,
+//   skipWaiting: true,
+//   disable: process.env.NODE_ENV === 'development',
+//   buildExcludes: [/middleware-manifest\.json$/],
+// };
+
+// export default withPWA({
+//   ...nextConfig,
+//   pwa: pwaConfig,
+// });
+
+export default nextConfig;
