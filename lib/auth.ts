@@ -143,5 +143,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   jwt: {
     maxAge: 24 * 60 * 60, // 24 hours
   },
-  secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-for-build-time',
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'fallback-secret-for-build-time',
 });
