@@ -18,12 +18,35 @@ export async function connectMongoose() {
   }
 
   if (!cached.mongoose.promise) {
-    cached.mongoose.promise = mongoose.connect(MONGODB_URI).then((mongoose) => {
+    // Improved connection options for Vercel
+    const options = {
+      maxPoolSize: 10, // Maintain up to 10 socket connections
+      serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+      bufferMaxEntries: 0, // Disable mongoose buffering
+      bufferCommands: false, // Disable mongoose buffering
+      connectTimeoutMS: 10000, // Give up initial connection after 10 seconds
+      retryWrites: true,
+      w: 'majority',
+    };
+
+    cached.mongoose.promise = mongoose.connect(MONGODB_URI, options).then((mongoose) => {
+      console.log('✅ MongoDB connected successfully');
       return mongoose;
+    }).catch((error) => {
+      console.error('❌ MongoDB connection failed:', error);
+      throw error;
     });
   }
-  cached.mongoose.conn = await cached.mongoose.promise;
-  return cached.mongoose.conn;
+  
+  try {
+    cached.mongoose.conn = await cached.mongoose.promise;
+    return cached.mongoose.conn;
+  } catch (error) {
+    // Reset the promise on error so we can retry
+    cached.mongoose.promise = null;
+    throw error;
+  }
 }
 
 // Safe connection function that doesn't throw during build time
@@ -37,4 +60,20 @@ export async function safeConnectMongoose() {
     }
     throw error;
   }
+}
+
+// Function to check if MongoDB is connected
+export function isConnected() {
+  return mongoose.connection.readyState === 1;
+}
+
+// Function to get connection status
+export function getConnectionStatus() {
+  const states = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting',
+  };
+  return states[mongoose.connection.readyState as keyof typeof states] || 'unknown';
 }
