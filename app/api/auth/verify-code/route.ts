@@ -28,7 +28,13 @@ export async function POST(req: Request) {
     user.verificationCode = undefined;
     user.verificationCodeExpires = undefined;
     await user.save();
-    return NextResponse.json({ message: 'Phone verified.' });
+    
+    // Return success with redirect information
+    return NextResponse.json({ 
+      message: 'Phone verified.',
+      redirectTo: '/profile-setup',
+      isNewUser: !user.name || !user.age || !user.gender
+    });
   }
 
   return NextResponse.json({ message: 'Invalid or expired code.' }, { status: 400 });

@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   try {
     const data = await req.json();
     // Validate required fields
-    if (!data.title || !data.description?.mn || !data.description?.en || !data.embedCode || typeof data.price !== 'number') {
+    if (!data.title || !data.description?.mn || !data.description?.en || !data.testType || !data.embedCode || typeof data.price !== 'number') {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
     let encryptedEmbedCode;
@@ -49,6 +49,7 @@ export async function POST(req: Request) {
         mn: data.description.mn,
         en: data.description.en,
       },
+      testType: data.testType,
       embedCode: encryptedEmbedCode,
       price: data.price,
       thumbnailUrl: data.thumbnailUrl,

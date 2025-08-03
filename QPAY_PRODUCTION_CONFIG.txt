@@ -1,0 +1,36 @@
+# QPay Production Configuration
+# Based on credentials received from QPay on July 30, 2025
+
+# QPay API Credentials (Production)
+QPAY_CLIENT_ID=JAVZAN_B
+QPAY_CLIENT_SECRET=fGJp4FEz
+QPAY_BASE_URL=https://merchant.qpay.mn/v2
+QPAY_INVOICE_CODE=JAVZAN_B_INVOICE
+
+# Callback URL (Update this to your actual domain)
+QPAY_CALLBACK_URL=https://yourdomain.com/api/qpay-callback
+
+# Optional QPay Settings (if needed)
+QPAY_BRANCH_CODE=
+QPAY_STAFF_CODE=
+QPAY_TERMINAL_CODE=
+
+# Public Merchant ID (for admin dashboard)
+NEXT_PUBLIC_MERCHANT_ID=JAVZAN_B
+
+# Instructions:
+# 1. Copy this content to a new file named .env.local
+# 2. Update QPAY_CALLBACK_URL to your actual domain
+# 3. Make sure .env.local is in your .gitignore file
+# 4. Restart your development server after making changes
+
+# Important Notes from QPay Email:
+# - Token should be obtained only once per timestamp
+# - Always check payment status after receiving callback
+# - This is for production use with real payments
+# - QR codes can be scanned by bank apps and other wallets
+
+# Security Warning:
+# - Never commit these credentials to version control
+# - Keep these credentials secure and confidential
+# - Use environment variables in production 

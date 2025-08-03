@@ -30,6 +30,8 @@ const nextConfig: NextConfig = {
       },
       // add more as needed
     ],
+    // Allow local images from public directory
+    unoptimized: true,
   },
   // Disable page data collection for API routes during build
   serverExternalPackages: ['mongoose'],

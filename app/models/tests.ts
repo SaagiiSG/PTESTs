@@ -6,6 +6,7 @@ export interface ITest extends Document {
     mn: string;
     en: string;
   };
+  testType: 'Talent' | 'Aptitude' | 'Clinic' | 'Personality';
   embedCode: string;
   takenCount?: number;
   price: number;
@@ -26,13 +27,19 @@ const TestSchema: Schema = new Schema({
     mn: { type: String, required: true },
     en: { type: String, required: true },
   },
+  testType: { 
+    type: String, 
+    required: true, 
+    enum: ['Talent', 'Aptitude', 'Clinic', 'Personality'],
+    default: 'Talent'
+  },
   embedCode: { type: String, required: true },
   takenCount: { type: Number, default: 0 },
   price: { type: Number, required: true },
   thumbnailUrl: { type: String, required: false },
   uniqueCodes: [
     {
-      code: { type: String, required: true },
+      code: { type: String, required: false },
       assignedTo: { type: Schema.Types.ObjectId, ref: 'User' },
       assignedAt: { type: Date },
       used: { type: Boolean, default: false },

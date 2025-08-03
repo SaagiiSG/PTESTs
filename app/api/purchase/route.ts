@@ -4,6 +4,8 @@ import User from "@/app/models/user";
 import Course from "@/app/models/course";
 import Test from "@/app/models/tests";
 import { auth } from "@/auth";
+import { getPaymentStatus } from "@/lib/payment-storage";
+import Payment from "@/app/models/payment";
 
 export async function POST(req: Request) {
   try {
@@ -12,11 +14,52 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Not logged in." }, { status: 401 });
     }
     
-    const { courseId, testId } = await req.json();
-    console.log('Purchase request:', { courseId, testId, userId: session.user.id });
+    const { courseId, testId, itemId, itemType, amount, paymentId, paymentData } = await req.json();
+    console.log('Purchase request:', { courseId, testId, itemId, itemType, amount, paymentId, userId: session.user.id });
     
-    if (!courseId && !testId) {
+    // Support both old format (courseId/testId) and new format (itemId/itemType)
+    let finalCourseId = courseId;
+    let finalTestId = testId;
+    
+    if (itemId && itemType) {
+      if (itemType === 'course') {
+        finalCourseId = itemId;
+      } else if (itemType === 'test') {
+        finalTestId = itemId;
+      }
+    }
+    
+    if (!finalCourseId && !finalTestId) {
       return NextResponse.json({ message: "Missing courseId or testId." }, { status: 400 });
+    }
+    
+    // Verify payment if paymentId is provided
+    if (paymentId) {
+      console.log('Verifying payment:', paymentId);
+      
+      // Check if payment status is stored (from callback)
+      // Note: paymentId is the invoice_id, which is stored as object_id in the payment storage
+      let paymentInfo = await getPaymentStatus(paymentId);
+      
+      if (!paymentInfo) {
+        console.log('Payment not found in local storage. This could be a timing issue.');
+        console.log('Payment might still be processing. Please wait a moment and try again.');
+        
+        return NextResponse.json({ 
+          message: "Payment verification in progress. Please wait a moment and try again, or check your payment status.",
+          code: "PAYMENT_PROCESSING"
+        }, { status: 202 }); // 202 Accepted - processing
+      }
+      
+      if (paymentInfo.payment_status !== 'PAID') {
+        console.error('Payment not completed:', paymentInfo.payment_status);
+        return NextResponse.json({ 
+          message: "Payment not completed. Please complete the payment first.",
+          status: paymentInfo.payment_status
+        }, { status: 402 });
+      }
+      
+      console.log('Payment verified successfully:', paymentInfo);
     }
     
     await connectMongoose();
@@ -26,71 +69,73 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "User not found." }, { status: 404 });
     }
     
-    if (courseId) {
-      const course = await Course.findById(courseId);
+    if (finalCourseId) {
+      const course = await Course.findById(finalCourseId);
       if (!course) {
-        console.error('Course not found:', courseId);
         return NextResponse.json({ message: "Course not found." }, { status: 404 });
       }
       
-      // Initialize arrays if they don't exist
-      if (!user.purchasedCourses) user.purchasedCourses = [];
-      
-      // Check if user already purchased this course
-      const alreadyPurchased = user.purchasedCourses.some((id: any) => id.toString() === courseId);
-      if (alreadyPurchased) {
-        console.log('Course already purchased by user:', { courseId, userId: session.user.id });
+      if (user.purchasedCourses.includes(finalCourseId)) {
         return NextResponse.json({ message: "Course already purchased." }, { status: 409 });
       }
       
-      // Add course to user's purchased courses
-      user.purchasedCourses.push(courseId);
+      user.purchasedCourses.push(finalCourseId);
       await user.save();
-      console.log('Course added to user purchases:', { courseId, userId: session.user.id });
       
-      return NextResponse.json({ message: "Course purchase recorded." });
+      console.log(`Course purchase recorded: ${finalCourseId} for user ${session.user.id}`);
+      
+      return NextResponse.json({ 
+        message: "Course purchased successfully.",
+        courseId: finalCourseId,
+        amount: amount || course.price
+      });
     }
     
-    if (testId) {
-      const test = await Test.findById(testId);
+    if (finalTestId) {
+      const test = await Test.findById(finalTestId);
       if (!test) {
-        console.error('Test not found:', testId);
         return NextResponse.json({ message: "Test not found." }, { status: 404 });
       }
       
-      // Initialize arrays if they don't exist
-      if (!user.purchasedTests) user.purchasedTests = [];
-      
-      // Check if user already purchased this test
-      const alreadyPurchased = user.purchasedTests.some((id: any) => id.toString() === testId);
-      if (alreadyPurchased) {
-        console.log('Test already purchased by user:', { testId, userId: session.user.id });
+      if (user.purchasedTests.includes(finalTestId)) {
         return NextResponse.json({ message: "Test already purchased." }, { status: 409 });
       }
       
-      // Find an unused code
-      const codeObj = test.uniqueCodes?.find((c: any) => !c.used);
-      if (!codeObj) {
-        return NextResponse.json({ message: "No unique codes available for this test." }, { status: 400 });
+      // Find an unused unique code for the test
+      let uniqueCode = null;
+      if (test.uniqueCodes && test.uniqueCodes.length > 0) {
+        const availableCode = test.uniqueCodes.find((code: any) => !code.used);
+        if (availableCode) {
+          // Assign the code to the user
+          availableCode.used = true;
+          availableCode.assignedTo = user._id;
+          availableCode.assignedAt = new Date();
+          uniqueCode = availableCode.code;
+          
+          // Save the test to update the code status
+          await test.save();
+          console.log(`Unique code ${uniqueCode} assigned to user ${session.user.id} for test ${finalTestId}`);
+        } else {
+          console.warn(`No available unique codes for test ${finalTestId}`);
+        }
       }
       
-      // Assign code to user
-      codeObj.used = true;
-      codeObj.assignedTo = user._id;
-      codeObj.assignedAt = new Date();
-      await test.save();
-      
       // Add test to user's purchased tests
-      user.purchasedTests.push(testId);
+      user.purchasedTests.push(finalTestId);
       await user.save();
-      console.log('Test added to user purchases:', { testId, userId: session.user.id });
       
-      return NextResponse.json({ message: "Test purchase recorded.", code: codeObj.code });
+      console.log(`Test purchase recorded: ${finalTestId} for user ${session.user.id}`);
+      
+      return NextResponse.json({ 
+        message: "Test purchased successfully.",
+        testId: finalTestId,
+        amount: amount || test.price,
+        uniqueCode: uniqueCode
+      });
     }
     
-    return NextResponse.json({ message: "Invalid request." }, { status: 400 });
   } catch (error) {
-    console.error('Purchase API error:', error);
+    console.error('Purchase error:', error);
     return NextResponse.json({ message: "Internal server error." }, { status: 500 });
   }
 } 

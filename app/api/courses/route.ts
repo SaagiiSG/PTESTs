@@ -29,18 +29,28 @@ export async function POST(req: Request) {
   }
   try {
     const data = await req.json();
+    console.log('📥 Received course data:', data);
+    
     if (!data.title || !data.description || typeof data.price !== 'number') {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
-    const course = await Course.create({
+    
+    const courseData = {
       title: data.title,
       description: data.description,
       price: data.price,
-      thumbnailUrl: data.thumbnailUrl,
+      thumbnailUrl: data.thumbnailUrl || '',
       lessons: data.lessons || [],
-    });
+    };
+    
+    console.log('💾 Saving course data:', courseData);
+    
+    const course = await Course.create(courseData);
+    console.log('✅ Course created:', course);
+    
     return NextResponse.json(course, { status: 201 });
   } catch (error: any) {
+    console.error('❌ Course creation error:', error);
     return NextResponse.json({ error: 'Failed to create course', details: error?.message }, { status: 500 });
   }
 }

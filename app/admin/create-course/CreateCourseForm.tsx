@@ -39,24 +39,33 @@ export default function CreateCourseForm() {
   const handleThumbnailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    console.log('📁 File selected:', file.name, file.size, file.type);
+    
     setThumbnailFile(file);
     setThumbnailPreview(URL.createObjectURL(file));
+    
     // Upload to server
     const formData = new FormData();
     formData.append('file', file);
     try {
+      console.log('📤 Uploading thumbnail...');
       const res = await fetch('/api/upload-thumbnail', {
         method: 'POST',
         body: formData,
       });
       if (res.ok) {
         const data = await res.json();
+        console.log('✅ Thumbnail uploaded:', data);
         setThumbnailUrl(data.url);
         toast.success('Thumbnail uploaded successfully!');
       } else {
+        const error = await res.json();
+        console.error('❌ Thumbnail upload failed:', error);
         toast.error('Failed to upload thumbnail.');
       }
-    } catch {
+    } catch (error) {
+      console.error('❌ Thumbnail upload error:', error);
       toast.error('Failed to upload thumbnail.');
     }
   };
@@ -64,13 +73,21 @@ export default function CreateCourseForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    
+    // Debug: Log the data being sent
+    const courseData = { title, description, price, thumbnailUrl, lessons };
+    console.log('🚀 Submitting course data:', courseData);
+    
     try {
       const res = await fetch("/api/courses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description, price, thumbnailUrl, lessons }),
+        body: JSON.stringify(courseData),
       });
+      
       if (res.ok) {
+        const result = await res.json();
+        console.log('✅ Course created successfully:', result);
         toast.success("Course created successfully!");
         setTitle("");
         setDescription("");
@@ -79,9 +96,11 @@ export default function CreateCourseForm() {
         setLessons([{ title: "", description: "", embedCode: "", video: "" }]);
       } else {
         const err = await res.json();
+        console.error('❌ Course creation failed:', err);
         toast.error(err.error || "Failed to create course.");
       }
-    } catch {
+    } catch (error) {
+      console.error('❌ Course creation error:', error);
       toast.error("Failed to create course.");
     }
     setLoading(false);
@@ -196,7 +215,19 @@ export default function CreateCourseForm() {
             <div>
               <p className="text-sm font-medium">Thumbnail Preview</p>
               <p className="text-xs text-gray-500">This is how your course will appear</p>
+              {thumbnailUrl && (
+                <p className="text-xs text-blue-600 mt-1">URL: {thumbnailUrl}</p>
+              )}
             </div>
+          </div>
+        )}
+        
+        {/* Debug info */}
+        {thumbnailUrl && (
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-xs text-blue-800">
+              <strong>Debug:</strong> Current thumbnailUrl: "{thumbnailUrl}"
+            </p>
           </div>
         )}
       </div>
@@ -218,10 +249,11 @@ export default function CreateCourseForm() {
             variant="outline" 
             size="sm" 
             onClick={addLesson}
-            className="flex items-center gap-2"
+            className="flex flex-row items-center gap-2"
           >
-            <Plus className="w-4 h-4" />
-            Add Lesson
+            <span className="flex flex-row items-center justify-center">
+              <span> Add Lesson </span>
+            </span>
           </Button>
         </div>
 

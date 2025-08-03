@@ -91,7 +91,7 @@ export default function LoginPage() {
                 </span>
                 <Input
                   {...form.register('countryCodeDigits')}
-                  className="h-full rounded-none rounded-r-lg w-20 text-lg"
+                  className="h-full rounded-none rounded-r-lg w-20 text-sm"
                   placeholder="976"
                 />
               </div>
@@ -99,7 +99,7 @@ export default function LoginPage() {
             <Input
               {...form.register('identifier')}
               placeholder="Email or Phone Number"
-              className="h-full text-2xl rounded-xl"
+              className="h-full text-sm rounded-xl "
             />
           </div>
           {form.formState.errors.identifier && (
@@ -118,6 +118,17 @@ export default function LoginPage() {
             <p className="text-red-600 text-sm">{form.formState.errors.password.message}</p>
           )}
         </div>
+        
+        {/* Forgot Password Link */}
+        <div className="text-right">
+          <a 
+            href="/forgot-password" 
+            className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+          >
+            Forgot your password?
+          </a>
+        </div>
+        
         <Button type="submit" className="w-full h-12 text-md rounded-xl">
           Login
         </Button>
@@ -132,8 +143,10 @@ export default function LoginPage() {
           onClick={() => signIn('google', { callbackUrl: '/home' })}
           className="h-12 rounded-xl w-full"
         >
-          <Image src={GLogo} alt="Google Logo" width={32} height={32} className="mr-2" />
-          <p className="text-md">Sign in with Google</p>
+          <span className="flex flex-row items-center justify-center gap-2">
+            <Image src={GLogo} alt="Google Logo" width={32} height={32} className="" />
+            <p className="text-md">Sign in with Google</p>
+          </span>
         </Button>
       </div>
 

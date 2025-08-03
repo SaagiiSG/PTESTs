@@ -120,8 +120,10 @@ function CoursesPageContent() {
           <p className="text-gray-600 mt-1">Manage all courses on the platform</p>
         </div>
         <Button onClick={() => setIsCreateModalOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create Course
+          <span className="flex flex-row items-center justify-center">
+            <Plus className="w-4 h-4 mr-2" />
+            Create Course
+          </span>
         </Button>
       </div>
 

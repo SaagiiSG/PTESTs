@@ -19,7 +19,7 @@ export default function CreateCourseModal({ isOpen, onClose, onSuccess }: Create
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState(0);
   const [lessons, setLessons] = useState([
-    { title: "", description: "", embedCode: "", video: "" },
+    { title: "", description: "", embedCode: "", video: "", testEmbedCode: "", testId: "" },
   ]);
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
@@ -35,7 +35,7 @@ export default function CreateCourseModal({ isOpen, onClose, onSuccess }: Create
   };
 
   const addLesson = () => {
-    setLessons((prev) => [...prev, { title: "", description: "", embedCode: "", video: "" }]);
+    setLessons((prev) => [...prev, { title: "", description: "", embedCode: "", video: "", testEmbedCode: "", testId: "" }]);
   };
 
   const removeLesson = (idx: number) => {
@@ -83,7 +83,7 @@ export default function CreateCourseModal({ isOpen, onClose, onSuccess }: Create
         setDescription("");
         setPrice(0);
         setThumbnailUrl("");
-        setLessons([{ title: "", description: "", embedCode: "", video: "" }]);
+        setLessons([{ title: "", description: "", embedCode: "", video: "", testEmbedCode: "", testId: "" }]);
         setThumbnailPreview("");
         onSuccess?.();
         onClose();
@@ -264,8 +264,10 @@ export default function CreateCourseModal({ isOpen, onClose, onSuccess }: Create
                   onClick={addLesson}
                   className="flex items-center gap-2"
                 >
-                  <Plus className="w-4 h-4" />
-                  Add Lesson
+                  <span className="flex flex-row items-center justify-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    Add Lesson
+                  </span>
                 </Button>
               </div>
 
@@ -318,15 +320,41 @@ export default function CreateCourseModal({ isOpen, onClose, onSuccess }: Create
                       </div>
                       
                       <div className="space-y-1">
-                        <Label className="text-xs font-medium">Embed Code *</Label>
+                        <Label className="text-xs font-medium">Video Embed Code (Optional)</Label>
                         <Textarea
-                          placeholder="<iframe>...</iframe> or script..."
+                          placeholder="<iframe>...</iframe> or video embed code..."
                           value={lesson.embedCode}
                           onChange={e => handleLessonChange(idx, "embedCode", e.target.value)}
-                          required
                           className="font-mono text-xs resize-none"
                           rows={3}
                         />
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium">Test Embed Code (Optional)</Label>
+                        <Textarea
+                          placeholder="<script>...</script> or test embed code..."
+                          value={lesson.testEmbedCode}
+                          onChange={e => handleLessonChange(idx, "testEmbedCode", e.target.value)}
+                          className="font-mono text-xs resize-none"
+                          rows={3}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Paste the embed code from your test platform (e.g., Google Forms, Typeform, etc.)
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium">Test ID (Optional)</Label>
+                        <Input
+                          placeholder="Enter test ID for reference"
+                          value={lesson.testId || ""}
+                          onChange={e => handleLessonChange(idx, "testId", e.target.value)}
+                          className="h-8 text-sm"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Optional: Add a test ID for easier management
+                        </p>
                       </div>
                       
                       <div className="space-y-1">

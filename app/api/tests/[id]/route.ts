@@ -100,3 +100,47 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     return NextResponse.json({ error: 'Failed to delete test', details: error?.message }, { status: 500 });
   }
 } 
+
+// Update a test (PATCH for partial updates)
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  // Prevent execution during build time
+  if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
+    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
+  }
+
+  const session = await auth();
+  const user = session?.user as AdminUser;
+  if (!user?.isAdmin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  }
+  const { id } = await params;
+  if (!id || !Types.ObjectId.isValid(id)) {
+    return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
+  }
+  
+  const connection = await safeConnectMongoose();
+  if (!connection) {
+    return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+  }
+
+  try {
+    const data = await req.json();
+    console.log('📝 Updating test:', id, 'with data:', data);
+    
+    const updatedTest = await Test.findByIdAndUpdate(
+      id,
+      { $set: data },
+      { new: true, runValidators: true }
+    );
+    
+    if (!updatedTest) {
+      return NextResponse.json({ error: 'Test not found' }, { status: 404 });
+    }
+    
+    console.log('✅ Test updated successfully:', updatedTest.title);
+    return NextResponse.json(updatedTest);
+  } catch (error: any) {
+    console.error('❌ Error updating test:', error);
+    return NextResponse.json({ error: 'Failed to update test', details: error?.message }, { status: 500 });
+  }
+} 

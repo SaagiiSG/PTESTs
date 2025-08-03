@@ -1,25 +1,51 @@
 "use client";
 import React, { useEffect, useState, useRef } from 'react';
-import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import Link from 'next/link';
-import { Play, Pause, Volume2, VolumeX, Maximize2, SkipForward, SkipBack } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { 
+  Play, 
+  ChevronLeft, 
+  ChevronRight, 
+  BookOpen, 
+  Clock, 
+  CheckCircle, 
+  Lock, 
+  Menu, 
+  X,
+  GraduationCap,
+  Target,
+  Award,
+  ArrowLeft,
+  Video,
+  FileText,
+  Users,
+  Star,
+  Loader2
+} from 'lucide-react';
 
 export default function LessonDetailPage({ params }: { params: Promise<{ courseId: string, lessonIdx: string }> }) {
+  const router = useRouter();
   const [resolvedParams, setResolvedParams] = useState<{ courseId: string; lessonIdx: string } | null>(null);
   const [lesson, setLesson] = useState<any>(null);
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [testLoading, setTestLoading] = useState(true);
-  const [showTest, setShowTest] = useState(false);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [testEmbedLoading, setTestEmbedLoading] = useState(false);
-  const testEmbedRef = useRef<HTMLDivElement>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
+  const [completedLessons, setCompletedLessons] = useState<Set<number>>(new Set([0, 1])); // Mock completed lessons
+  
+  // Test embed states
+  const [embedCode, setEmbedCode] = useState<string | null>(null);
+  const [loadingEmbed, setLoadingEmbed] = useState(false);
+  const [showEmbed, setShowEmbed] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [uniqueCode, setUniqueCode] = useState<string | null>(null);
+  
+
 
   useEffect(() => {
     params.then(setResolvedParams);
@@ -38,6 +64,7 @@ export default function LessonDetailPage({ params }: { params: Promise<{ courseI
         const courseData = await courseRes.json();
         setLesson(lessonData);
         setCourse(courseData);
+        setCurrentLessonIndex(parseInt(resolvedParams.lessonIdx));
       } catch (e) {
         setLesson(null);
         setCourse(null);
@@ -48,84 +75,65 @@ export default function LessonDetailPage({ params }: { params: Promise<{ courseI
     fetchData();
   }, [resolvedParams]);
 
-  useEffect(() => {
-    if (showTest && testEmbedLoading && lesson?.embedCode) {
-      const div = testEmbedRef.current;
-      if (div) {
-        const iframe = div.querySelector('iframe');
-        if (iframe) {
-          iframe.onload = () => setTestEmbedLoading(false);
-          if (iframe.contentWindow?.document.readyState === 'complete') {
-            setTestEmbedLoading(false);
-          }
-        } else {
-          setTimeout(() => setTestEmbedLoading(false), 2000);
-        }
-      }
-    }
-  }, [showTest, testEmbedLoading, lesson?.embedCode]);
-
-  const handleVideoLoad = () => {
-    if (videoRef.current) {
-      setDuration(videoRef.current.duration);
+  const handleNextLesson = () => {
+    if (course?.lessons && currentLessonIndex < course.lessons.length - 1) {
+      const nextIndex = currentLessonIndex + 1;
+      window.location.href = `/Course/${resolvedParams?.courseId}/lesson/${nextIndex}`;
     }
   };
 
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
+  const handlePrevLesson = () => {
+    if (currentLessonIndex > 0) {
+      const prevIndex = currentLessonIndex - 1;
+      window.location.href = `/Course/${resolvedParams?.courseId}/lesson/${prevIndex}`;
     }
   };
 
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (videoRef.current.paused) {
-        videoRef.current.play();
+
+
+  const isLessonCompleted = (index: number) => completedLessons.has(index);
+  const isLessonAccessible = (index: number) => index === 0 || completedLessons.has(index - 1);
+
+  // Function to load test embed
+  const handleStartTest = async () => {
+    if (!lesson.testEmbedCode) {
+      toast.error('No test embed code available for this lesson');
+      return;
+    }
+    
+    setLoadingEmbed(true);
+    setShowEmbed(true);
+    
+    try {
+      console.log('🔍 Loading test embed code from lesson data');
+      
+      // Use the test embed code directly from the lesson
+      if (lesson.testEmbedCode) {
+        console.log('✅ Test embed code found in lesson data');
+        setEmbedCode(lesson.testEmbedCode);
+        setHasAccess(true); // Since it's part of the course, user has access
       } else {
-        videoRef.current.pause();
+        console.log('❌ No test embed code available');
+        toast.error('No test content available for this lesson');
       }
+    } catch (error) {
+      console.error('Error loading test embed:', error);
+      toast.error('Failed to load test');
+    } finally {
+      setLoadingEmbed(false);
     }
-  };
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const time = parseFloat(e.target.value);
-    if (videoRef.current) {
-      videoRef.current.currentTime = time;
-      setCurrentTime(time);
-    }
-  };
-
-  const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  const handleTestLoad = () => {
-    setTestLoading(false);
-  };
-
-  const handleShowTest = () => {
-    setTestEmbedLoading(true);
-    setShowTest(true);
   };
 
   if (loading || !resolvedParams) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
-            <div className="h-64 bg-gray-200 rounded-lg mb-6"></div>
-            <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto mb-6"></div>
+          <p className="text-gray-600 text-lg">Loading lesson...</p>
+          <div className="mt-4 flex justify-center space-x-2">
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
           </div>
         </div>
       </div>
@@ -134,235 +142,415 @@ export default function LessonDetailPage({ params }: { params: Promise<{ courseI
 
   if (!lesson || !course) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-8 text-center">
-            <h2 className="text-xl font-semibold mb-2">Lesson Not Found</h2>
-            <p className="text-gray-600 mb-4">The lesson you're looking for doesn't exist.</p>
-            <Link href="/Course">
-              <Button>Back to Courses</Button>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-md border border-gray-100">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <BookOpen className="w-8 h-8 text-red-600" />
+            </div>
+            <h2 className="text-xl font-bold mb-2">Lesson Not Found</h2>
+            <p className="text-gray-600 mb-6">The lesson you're looking for doesn't exist.</p>
+            <Link href={`/Course/${resolvedParams?.courseId}`} className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+              Back to Course
             </Link>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
 
-  const lessons = course.lessons || [];
-  const currentIdx = parseInt(resolvedParams.lessonIdx, 10);
-  const progress = lessons.length > 0 ? ((currentIdx + 1) / lessons.length) * 100 : 0;
-
-  // Debugging logs
-  console.log('lesson:', lesson);
-  console.log('course:', course);
-  console.log('lessons[currentIdx]?.title:', lessons[currentIdx]?.title);
+  const progressPercentage = course.lessons ? ((currentLessonIndex + 1) / course.lessons.length) * 100 : 0;
 
   return (
-    <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-8">
-        {/* Breadcrumbs - Fixed positioning */}
-        <div className="mb-8">
-          <Breadcrumbs courseName={course?.title} lessonName={lessons[currentIdx]?.title} />
-        </div>
+    <div className="flex h-[90vh] my-8 overflow-hidden">
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
-          <aside className="lg:col-span-1"> 
-            <Card className="sticky top-8 py-6">
-              <CardHeader>
-                <CardTitle className="text-lg">Course Progress</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm text-gray-600 mb-2">
-                    <span>Progress</span>
-                    <span>{Math.round(progress)}%</span>
-                  </div>
-                  <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full transition-all duration-300"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                  <div className="text-xs text-gray-500 mt-2">
-                    {currentIdx + 1} of {lessons.length} lessons
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold mb-3 text-gray-800">Lessons</h3>
-                  <div className="space-y-1 max-h-96 overflow-y-auto">
-                    {lessons.map((l: any, idx: number) => (
-                      <Link
-                        key={idx}
-                        href={`/Course/${resolvedParams.courseId}/lesson/${idx}`}
-                        className={`block px-3 py-2 rounded-lg transition-all duration-200 text-sm font-medium
-                          ${idx === currentIdx 
-                            ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-md' 
-                            : 'hover:bg-yellow-50 text-gray-700 hover:text-gray-900'
-                          }`}
-                      >
-                        {l.title}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </aside>
-
-          {/* Main content */}
-          <main className="lg:col-span-3">
-            <Card className="mb-8 py-4">
-              <CardHeader>
-                <CardTitle className="text-3xl font-bold text-gray-800">{lesson.title}</CardTitle>
-                <p className="text-gray-600 text-lg leading-relaxed">{lesson.description}</p>
-              </CardHeader>
-            </Card>
-
-            {/* Video Section */}
-            {lesson.video && (
-              <Card className="mb-8 overflow-hidden pt-6">
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold">Video Lesson</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="relative bg-black rounded-lg overflow-hidden">
-                    {lesson.video.startsWith('http') ? (
-                      <>
-                        <video
-                          ref={videoRef}
-                          className="w-full h-auto"
-                          onLoadedMetadata={handleVideoLoad}
-                          onTimeUpdate={handleTimeUpdate}
-                          onPlay={() => setIsPlaying(true)}
-                          onPause={() => setIsPlaying(false)}
-                        >
-                          <source src={lesson.video} type="video/mp4" />
-                          Your browser does not support the video tag.
-                        </video>
-                        
-                        {/* Custom Video Controls */}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                          <div className="flex items-center gap-4">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={togglePlay}
-                              className="text-white hover:bg-white/20"
-                            >
-                              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                            </Button>
-                            
-                            <div className="flex-1">
-                              <input
-                                type="range"
-                                min="0"
-                                max={duration || 0}
-                                value={currentTime}
-                                onChange={handleSeek}
-                                className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
-                              />
-                            </div>
-                            
-                            <div className="text-white text-sm min-w-[60px]">
-                              {formatTime(currentTime)} / {formatTime(duration)}
-                            </div>
-                            
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={toggleMute}
-                              className="text-white hover:bg-white/20"
-                            >
-                              {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-                            </Button>
-                            
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => videoRef.current?.requestFullscreen()}
-                              className="text-white hover:bg-white/20"
-                            >
-                              <Maximize2 className="w-5 h-5" />
-                            </Button>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <div 
-                        className="w-full aspect-video"
-                        dangerouslySetInnerHTML={{ __html: lesson.video }} 
-                      />
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Test Section */}
-            <Card className='py-6'>
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold">Lesson Test</CardTitle>
-                <p className="text-gray-600">Complete the test to check your understanding of this lesson.</p>
-              </CardHeader>
-              <CardContent>
-                {!showTest ? (
-                  <div className="text-center py-12">
-                    <Button 
-                      onClick={handleShowTest}
-                      className="w-full py-3 text-lg font-semibold bg-green-600 text-white rounded-xl hover:bg-green-700 transition"
-                    >
-                      Start Test
-                    </Button>
-                  </div>
-                ) : (
-                  <div style={{ position: 'relative' }}>
-                    {testEmbedLoading && (
-                      <div style={{
-                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                        background: 'rgba(255,255,255,0.7)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
-                      }}>
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
-                      </div>
-                    )}
-                    <Button className='relative'>
-                      Start Test
-                    <div
-                      className='text-transparent absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10'
-                      ref={testEmbedRef}
-                      dangerouslySetInnerHTML={{ __html: lesson.embedCode || '<p>No test available for this lesson.</p>' }}
-                    />
-                    </Button>
-                  </div>
-                  
-                )}
-              </CardContent>
-            </Card>
+      {/* Sidebar */}
+      <div className={`fixed h-full rounded-3xl inset-y-0 left-0 z-0 w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        <div className="flex flex-col h-full">
+          {/* Sidebar Header */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <Link 
+                href={`/Course/${resolvedParams.courseId}`}
+                className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="font-semibold">Back to Course</span>
+              </Link>
+              <button 
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
             
-          </main>
+            <div className="space-y-2">
+              <h2 className="text-lg font-bold text-gray-900 line-clamp-2">{course.title}</h2>
+              <div className="flex items-center gap-4 text-sm text-gray-600">
+                <span className="flex items-center gap-1">
+                  <GraduationCap className="w-4 h-4" />
+                  {course.lessons?.length || 0} lessons
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  Self-paced
+                </span>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+                <span>Progress</span>
+                <span>{Math.round(progressPercentage)}%</span>
+              </div>
+              <Progress value={progressPercentage} className="h-2" />
+            </div>
+          </div>
+
+          {/* Lessons List */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              Course Content
+            </h3>
+            
+            <div className="space-y-2">
+              {course.lessons?.map((lessonItem: any, index: number) => {
+                const isCompleted = isLessonCompleted(index);
+                const isAccessible = isLessonAccessible(index);
+                const isCurrent = index === currentLessonIndex;
+                
+                return (
+                  <Link
+                    key={index}
+                    href={isAccessible ? `/Course/${resolvedParams.courseId}/lesson/${index}` : '#'}
+                    className={`block p-3 rounded-lg transition-all duration-200 ${
+                      isCurrent 
+                        ? 'bg-blue-50 border border-blue-200' 
+                        : isAccessible 
+                          ? 'hover:bg-gray-50 border border-transparent hover:border-gray-200' 
+                          : 'opacity-50 cursor-not-allowed'
+                    }`}
+                    onClick={!isAccessible ? (e) => e.preventDefault() : undefined}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-200 ${
+                        isCompleted 
+                          ? 'bg-green-500 text-white' 
+                          : isCurrent 
+                            ? 'bg-blue-500 text-white' 
+                            : 'bg-gray-200 text-gray-600'
+                      }`}>
+                        {isCompleted ? (
+                          <CheckCircle className="w-4 h-4" />
+                        ) : (
+                          index + 1
+                        )}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h4 className={`font-medium text-sm line-clamp-1 ${
+                          isCurrent ? 'text-blue-900' : 'text-gray-900'
+                        }`}>
+                          {lessonItem.title}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                            <Video className="w-3 h-3" />
+                            Video
+                          </span>
+                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            15 min
+                          </span>
+                        </div>
+                      </div>
+
+                      {!isAccessible && (
+                        <Lock className="w-4 h-4 text-gray-400" />
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Sidebar Footer */}
+          <div className="p-4 border-t border-gray-200">
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-xl">
+              <div className="flex items-center gap-2 mb-2">
+                <Award className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-semibold text-gray-900">Course Certificate</span>
+              </div>
+              <p className="text-xs text-gray-600">Complete all lessons to earn your certificate</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <style jsx>{`
-        .slider::-webkit-slider-thumb {
-          appearance: none;
-          height: 16px;
-          width: 16px;
-          border-radius: 50%;
-          background: #fbbf24;
-          cursor: pointer;
-        }
-        
-        .slider::-moz-range-thumb {
-          height: 16px;
-          width: 16px;
-          border-radius: 50%;
-          background: #fbbf24;
-          cursor: pointer;
-          border: none;
-        }
-      `}</style>
+      {/* Main Content */}
+      <div className="ml-8 w-full h-full overflow-y-scroll">
+        {/* Top Navigation Bar */}
+        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-30 rounded-3xl ">
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              
+              <div className="hidden lg:flex items-center gap-4">
+                <span className="text-sm text-gray-600">
+                  Lesson {currentLessonIndex + 1} of {course.lessons?.length || 0}
+                </span>
+                <div className="w-32">
+                  <Progress value={progressPercentage} className="h-2" />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrevLesson}
+                disabled={currentLessonIndex === 0}
+                className="flex items-center gap-1"
+              >
+                <span className="flex items-center gap-2">
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Previous</span>
+                </span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextLesson}
+                disabled={!course.lessons || currentLessonIndex >= course.lessons.length - 1}
+                className="flex items-center gap-1"
+              >
+                <span className="flex items-center gap-2">
+                  <span>Next</span>
+                  <ChevronRight className="w-4 h-4" />
+                </span>
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Lesson Content */}
+        <div className="p-6 w-[100%] mx-auto py-7">
+          {/* Lesson Header */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+              <Badge variant="outline" className="text-xs">
+                Lesson {currentLessonIndex + 1}
+              </Badge>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                15 minutes
+              </span>
+            </div>
+            
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">{lesson.title}</h1>
+            <p className="text-lg text-gray-600 leading-relaxed">{lesson.description}</p>
+          </div>
+
+          {/* Video Section */}
+          {lesson.video && (
+            <Card className="mb-8 border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Video className="w-5 h-5 text-blue-600" />
+                  Video Lesson
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="bg-black rounded-lg overflow-hidden">
+                  {lesson.video.startsWith('http') ? (
+                    <video className="w-full h-auto" controls>
+                      <source src={lesson.video} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : (
+                    <div 
+                      className="w-full aspect-video"
+                      dangerouslySetInnerHTML={{ __html: lesson.video }} 
+                    />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Test Section */}
+          <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm rounded-3xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="w-5 h-5 text-blue-600" />
+                Lesson Test
+              </CardTitle>
+              <CardDescription>
+                Complete this test to mark the lesson as finished
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {lesson.testEmbedCode ? (
+                !showEmbed ? (
+                  <div className="text-center p-8">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Target className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Ready to Test?</h3>
+                    <p className="text-gray-600 mb-6">Complete the lesson test to continue to the next lesson</p>
+                    
+                    <Button 
+                      onClick={handleStartTest}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Play className="w-5 h-5" />
+                        Start Test
+                      </span>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Unique Code Display */}
+                    {uniqueCode && (
+                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
+                              <span className="text-green-600 dark:text-green-400 text-sm font-bold">✓</span>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-semibold text-green-800 dark:text-green-300">Your Access Code</h3>
+                              <p className="text-xs text-green-600 dark:text-green-400">Use this code to access your test results</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-lg font-mono font-bold text-green-700 dark:text-green-300 bg-white dark:bg-gray-800 px-3 py-1 rounded border border-green-300 dark:border-green-700">
+                              {uniqueCode}
+                            </div>
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText(uniqueCode);
+                                toast.success('Access code copied to clipboard!');
+                              }}
+                              className="text-xs text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200 mt-1 underline"
+                            >
+                              Copy Code
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Test Embed */}
+                    {loadingEmbed ? (
+                      <div className="text-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600 dark:text-gray-400">Loading test...</p>
+                      </div>
+                    ) : embedCode ? (
+                      <div 
+                        className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden p-8"
+                        style={{
+                          userSelect: 'none',
+                          WebkitUserSelect: 'none',
+                          MozUserSelect: 'none',
+                          msUserSelect: 'none'
+                        }}
+                        onContextMenu={(e) => e.preventDefault()}
+                        ref={(el) => {
+                          if (el && embedCode) {
+                            el.innerHTML = embedCode;
+                            // Execute any scripts in the embed code
+                            const scripts = el.querySelectorAll('script');
+                            scripts.forEach(script => {
+                              const newScript = document.createElement('script');
+                              if (script.src) {
+                                newScript.src = script.src;
+                              } else {
+                                newScript.textContent = script.textContent;
+                              }
+                              document.head.appendChild(newScript);
+                            });
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="text-center py-12">
+                        <p className="text-gray-600 dark:text-gray-400">Failed to load test content</p>
+                        <Button 
+                          onClick={handleStartTest}
+                          variant="outline"
+                          className="mt-4"
+                        >
+                          Retry Loading Test
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-gray-500">No test available for this lesson.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Navigation Footer */}
+          <div className="mt-8 flex items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={handlePrevLesson}
+              disabled={currentLessonIndex === 0}
+              className="flex items-center gap-2"
+            >
+              <span className="flex items-center gap-2">
+                <ChevronLeft className="w-4 h-4" />
+                <span>Previous Lesson</span>
+              </span>
+            </Button>
+
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-600">
+                {currentLessonIndex + 1} of {course.lessons?.length || 0} lessons
+              </span>
+              
+              <Button
+                onClick={handleNextLesson}
+                disabled={!course.lessons || currentLessonIndex >= course.lessons.length - 1}
+                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              >
+                <span className="flex items-center gap-2">
+                  {currentLessonIndex >= (course.lessons?.length || 0) - 1 ? 'Complete Course' : 'Next Lesson'}
+                  <ChevronRight className="w-4 h-4" />
+                </span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 } 

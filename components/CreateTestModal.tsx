@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Upload, Plus, BookOpen, DollarSign, Image as ImageIcon, Code, Languages, X } from "lucide-react";
+import { Upload, Plus, BookOpen, DollarSign, Image as ImageIcon, Code, Languages, X, Star, Brain, Stethoscope, User } from "lucide-react";
 
 interface CreateTestModalProps {
   isOpen: boolean;
@@ -18,6 +18,7 @@ export default function CreateTestModal({ isOpen, onClose, onSuccess }: CreateTe
   const [title, setTitle] = useState("");
   const [descriptionMn, setDescriptionMn] = useState("");
   const [descriptionEn, setDescriptionEn] = useState("");
+  const [testType, setTestType] = useState<'Talent' | 'Aptitude' | 'Clinic' | 'Personality'>('Talent');
   const [embedCode, setEmbedCode] = useState("");
   const [price, setPrice] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -36,6 +37,7 @@ export default function CreateTestModal({ isOpen, onClose, onSuccess }: CreateTe
         body: JSON.stringify({
           title,
           description: { mn: descriptionMn, en: descriptionEn },
+          testType,
           embedCode,
           price,
           thumbnailUrl,
@@ -51,6 +53,7 @@ export default function CreateTestModal({ isOpen, onClose, onSuccess }: CreateTe
         setTitle("");
         setDescriptionMn("");
         setDescriptionEn("");
+        setTestType('Talent');
         setEmbedCode("");
         setPrice(0);
         setThumbnailUrl("");
@@ -169,6 +172,76 @@ export default function CreateTestModal({ isOpen, onClose, onSuccess }: CreateTe
                       className="h-10 pl-10"
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Test Type Selector */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Test Type *</Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setTestType('Talent')}
+                    className={`p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center gap-2 ${
+                      testType === 'Talent'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:bg-blue-50'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-lg ${testType === 'Talent' ? 'bg-blue-500' : 'bg-gray-100'}`}>
+                      <Star className={`w-4 h-4 ${testType === 'Talent' ? 'text-white' : 'text-gray-600'}`} />
+                    </div>
+                    <span className="text-sm font-medium">Talent</span>
+                    <span className="text-xs text-gray-500">Талант</span>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setTestType('Aptitude')}
+                    className={`p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center gap-2 ${
+                      testType === 'Aptitude'
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-emerald-300 hover:bg-emerald-50'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-lg ${testType === 'Aptitude' ? 'bg-emerald-500' : 'bg-gray-100'}`}>
+                      <Brain className={`w-4 h-4 ${testType === 'Aptitude' ? 'text-white' : 'text-gray-600'}`} />
+                    </div>
+                    <span className="text-sm font-medium">Aptitude</span>
+                    <span className="text-xs text-gray-500">Ур чадвар</span>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setTestType('Clinic')}
+                    className={`p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center gap-2 ${
+                      testType === 'Clinic'
+                        ? 'border-purple-500 bg-purple-50 text-purple-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-purple-300 hover:bg-purple-50'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-lg ${testType === 'Clinic' ? 'bg-purple-500' : 'bg-gray-100'}`}>
+                      <Stethoscope className={`w-4 h-4 ${testType === 'Clinic' ? 'text-white' : 'text-gray-600'}`} />
+                    </div>
+                    <span className="text-sm font-medium">Clinic</span>
+                    <span className="text-xs text-gray-500">Клиник</span>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setTestType('Personality')}
+                    className={`p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center gap-2 ${
+                      testType === 'Personality'
+                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-orange-300 hover:bg-orange-50'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-lg ${testType === 'Personality' ? 'bg-orange-500' : 'bg-gray-100'}`}>
+                      <User className={`w-4 h-4 ${testType === 'Personality' ? 'text-white' : 'text-gray-600'}`} />
+                    </div>
+                    <span className="text-sm font-medium">Personality</span>
+                    <span className="text-xs text-gray-500">Төрх байдал</span>
+                  </button>
                 </div>
               </div>
 

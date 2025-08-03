@@ -10,6 +10,11 @@ export interface IUser extends Document {
   verificationCode?: string;
   isPhoneVerified?: boolean;
   verificationCodeExpires?: Date;
+  isEmailVerified?: boolean;
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
   isAdmin?: boolean;
   purchasedCourses?: mongoose.Types.ObjectId[];
   purchasedTests?: mongoose.Types.ObjectId[];
@@ -25,6 +30,11 @@ const UserSchema: Schema = new Schema({
   verificationCode: { type: String },
   isPhoneVerified: { type: Boolean, default: false },
   verificationCodeExpires: { type: Date },
+  isEmailVerified: { type: Boolean, default: false },
+  emailVerificationToken: { type: String },
+  emailVerificationExpires: { type: Date },
+  passwordResetToken: { type: String },
+  passwordResetExpires: { type: Date },
   isAdmin: { type: Boolean, default: false },
   purchasedCourses: [{ type: Schema.Types.ObjectId, ref: 'Course' }],
   purchasedTests: [{ type: Schema.Types.ObjectId, ref: 'Test' }],

@@ -1,0 +1,24 @@
+# QPay Configuration
+# Get these credentials from QPay merchant portal
+QPAY_CLIENT_ID=your_client_id_here
+QPAY_CLIENT_SECRET=your_client_secret_here
+QPAY_BASE_URL=https://merchant-sandbox.qpay.mn/v2
+QPAY_INVOICE_CODE=your_invoice_code_here
+QPAY_CALLBACK_URL=https://yourdomain.com/api/qpay-callback
+
+# Optional QPay Settings
+QPAY_BRANCH_CODE=your_branch_code
+QPAY_STAFF_CODE=your_staff_code
+QPAY_TERMINAL_CODE=your_terminal_code
+
+# Public Merchant ID (for admin dashboard)
+NEXT_PUBLIC_MERCHANT_ID=your_merchant_id
+
+# Other existing environment variables
+# Add your other environment variables here
+
+# Instructions:
+# 1. Copy this content to a new file named .env.local
+# 2. Replace the placeholder values with your actual QPay credentials
+# 3. Make sure .env.local is in your .gitignore file
+# 4. Restart your development server after making changes 

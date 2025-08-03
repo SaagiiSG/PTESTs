@@ -1,76 +1,55 @@
-import React, { useState } from 'react';
+import React from 'react';
+import QPayPayment from '@/components/QPayPayment';
+import { Toaster } from 'sonner';
 
 export default function PayPage() {
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
-  const [qr, setQr] = useState<string | null>(null);
-  const [deeplink, setDeeplink] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const handlePaymentSuccess = (paymentData: any) => {
+    console.log('Payment successful:', paymentData);
+    // Handle successful payment - update database, send confirmation, etc.
+  };
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setQr(null);
-    setDeeplink(null);
-    try {
-      const res = await fetch('/api/create-invoice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, description }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to create invoice');
-      setQr(data.qr_image);
-      setDeeplink(data.deeplink);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const handlePaymentError = (error: string) => {
+    console.error('Payment error:', error);
+    // Handle payment error
+  };
 
   return (
-    <div style={{ maxWidth: 400, margin: '2rem auto', padding: 24, border: '1px solid #eee', borderRadius: 8 }}>
-      <h2>Pay with QPay</h2>
-      <form onSubmit={handleSubmit}>
-        <label>
-          Amount (₮):
-          <input
-            type="number"
-            min="1"
-            required
-            value={amount}
-            onChange={e => setAmount(e.target.value)}
-            style={{ width: '100%', marginBottom: 12 }}
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container mx-auto px-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              QPay Payment Gateway
+            </h1>
+            <p className="text-gray-600">
+              Secure and fast payments using QPay mobile app
+            </p>
+          </div>
+
+          <QPayPayment
+            amount={1000}
+            description="Test payment"
+            receiverCode="TEST_RECEIVER"
+            onSuccess={handlePaymentSuccess}
+            onError={handlePaymentError}
           />
-        </label>
-        <label>
-          Description (optional):
-          <input
-            type="text"
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            style={{ width: '100%', marginBottom: 12 }}
-          />
-        </label>
-        <button type="submit" disabled={loading} style={{ width: '100%', padding: 8 }}>
-          {loading ? 'Generating QR...' : 'Generate QPay QR'}
-        </button>
-      </form>
-      {error && <div style={{ color: 'red', marginTop: 12 }}>{error}</div>}
-      {qr && (
-        <div style={{ marginTop: 24, textAlign: 'center' }}>
-          <h4>Scan to Pay</h4>
-          <img src={`data:image/png;base64,${qr}`} alt="QPay QR" style={{ width: 200, height: 200 }} />
-          {deeplink && (
-            <div style={{ marginTop: 8 }}>
-              <a href={deeplink} target="_blank" rel="noopener noreferrer">Pay in Bank App</a>
-            </div>
-          )}
+
+          <div className="mt-8 text-center text-sm text-gray-500">
+            <p>
+              Powered by{' '}
+              <a 
+                href="https://developer.qpay.mn/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                QPay API
+              </a>
+            </p>
+          </div>
         </div>
-      )}
+      </div>
+      <Toaster position="top-right" />
     </div>
   );
 } 

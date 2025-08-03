@@ -83,6 +83,12 @@ const translations = {
     continue: 'Continue',
     noPurchasedCourses: 'No purchased courses yet.',
     startLearning: 'Start your learning journey!',
+    // Test type translations
+    allTypes: 'All Types',
+    talent: 'Talent',
+    aptitude: 'Aptitude',
+    clinic: 'Clinic',
+    personality: 'Personality',
   },
   mn: {
     home: 'Нүүр',
@@ -163,6 +169,12 @@ const translations = {
     continue: 'Үргэлжлүүлэх',
     noPurchasedCourses: 'Харилцагдсан курс олдсонгүй.',
     startLearning: 'Сургалтын яамыг эхлэх!',
+    // Test type translations
+    allTypes: 'Бүх төрөл',
+    talent: 'Талант',
+    aptitude: 'Ур чадвар',
+    clinic: 'Клиник',
+    personality: 'Төрх байдал',
   }
 };
 

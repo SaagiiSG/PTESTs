@@ -7,7 +7,7 @@ const layout = ({
     children: React.ReactNode;
   }>) => {
   return (
-    <section className='flex flex-col items-center pt-8'>
+    <section className='flex flex-col items-center pt-8 '>
       <div className='w-[87vw]'>
           <Navbar />
 
