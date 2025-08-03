@@ -43,9 +43,5 @@
         }
       ]
     }
-  ],
-  "public": true,
-  "protectionBypass": {
-    "public": true
-  }
+  ]
 } 
