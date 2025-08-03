@@ -13,7 +13,9 @@ export async function POST(req: NextRequest) {
                     qpayClientSecret === 'SET' || 
                     qpayClientSecret === 'NOT_SET' ||
                     qpayClientId === 'SYCHOMETRICS' || // This seems to be a placeholder
-                    qpayClientId === 'PSYCHOMETRICS'; // This also seems to be a placeholder
+                    qpayClientId === 'PSYCHOMETRICS' || // This also seems to be a placeholder
+                    qpayClientSecret.length < 10 || // Too short to be a real secret
+                    qpayClientId.length < 5; // Too short to be a real client ID
 
     console.log('Public create invoice endpoint - QPay client secret:', qpayClientSecret ? 'SET' : 'NOT_SET');
     console.log('Public create invoice endpoint - QPay client ID:', qpayClientId);
@@ -73,8 +75,50 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Receiver code is required' }, { status: 400 });
     }
 
-    // Always use test mode for now to ensure the payment flow works
-    console.log('Using test mode to ensure payment flow works');
+    // Try to use real QPay if credentials are properly configured
+    if (!isTestMode) {
+      try {
+        console.log('Attempting to create real QPay invoice...');
+        
+        const qpayService = getQPayService();
+        
+        const invoiceRequest: QPayInvoiceRequest = {
+          invoice_code: `INV_${Date.now()}`,
+          sender_invoice_no: `INV_${Date.now()}`,
+          invoice_receiver_code: receiverCode,
+          invoice_description: description,
+          amount: numericAmount,
+          callback_url: `${process.env.NEXTAUTH_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app'}/api/qpay-callback`
+        };
+
+        const qpayInvoice = await qpayService.createInvoice(invoiceRequest);
+        
+        console.log('Real QPay invoice created successfully:', qpayInvoice);
+        
+        return NextResponse.json({
+          success: true,
+          message: 'Real QPay invoice created successfully',
+          isTestMode: false,
+          invoice_id: qpayInvoice.invoice_id,
+          qr_image: qpayInvoice.qr_image,
+          qr_text: qpayInvoice.qr_text,
+          deeplink: qpayInvoice.urls?.deeplink || qpayInvoice.qr_text,
+          web_url: qpayInvoice.urls?.web || qpayInvoice.qr_text,
+          deeplink_url: qpayInvoice.urls?.deeplink || qpayInvoice.qr_text,
+          amount: numericAmount,
+          testMode: false,
+          note: 'Real QPay payment - scan QR code to pay'
+        });
+        
+      } catch (qpayError: any) {
+        console.error('Real QPay invoice creation failed:', qpayError);
+        console.log('Falling back to test mode...');
+        // Fall back to test mode if real QPay fails
+      }
+    }
+    
+    // Use test mode if real QPay failed or is disabled
+    console.log('Using test mode to ensure the payment flow works');
     
     // Return a mock invoice for testing
     const mockInvoiceId = `TEST_INV_${Date.now()}`;
