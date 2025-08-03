@@ -368,4 +368,23 @@ class QPayService {
   }
 }
 
-export const qpayService = new QPayService(); 
+// Lazy initialization to avoid instantiation during build
+let qpayServiceInstance: QPayService | null = null;
+
+export function getQPayService(): QPayService {
+  if (!qpayServiceInstance) {
+    qpayServiceInstance = new QPayService();
+  }
+  return qpayServiceInstance;
+}
+
+export const qpayService = {
+  createInvoice: (data: QPayInvoiceRequest) => getQPayService().createInvoice(data),
+  getInvoice: (id: string) => getQPayService().getInvoice(id),
+  cancelInvoice: (id: string, callbackUrl?: string, note?: string) => getQPayService().cancelInvoice(id, callbackUrl, note),
+  createPayment: (data: QPayPaymentRequest) => getQPayService().createPayment(data),
+  checkPayment: (id: string) => getQPayService().checkPayment(id),
+  cancelPayment: (id: string, callbackUrl?: string, note?: string) => getQPayService().cancelPayment(id, callbackUrl, note),
+  refundPayment: (id: string, callbackUrl?: string, note?: string) => getQPayService().refundPayment(id, callbackUrl, note),
+  getPaymentList: (data: QPayPaymentListRequest) => getQPayService().getPaymentList(data),
+}; 
