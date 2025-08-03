@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { qpayService, QPayInvoiceRequest } from '@/lib/qpay';
+import { getQPayService, QPayInvoiceRequest } from '@/lib/qpay';
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,10 +21,6 @@ export async function POST(req: NextRequest) {
       invoiceId,
       regenerate
     });
-
-
-
-
 
     // Handle free courses (amount = 0)
     if (amount === 0) {
@@ -89,6 +85,7 @@ export async function POST(req: NextRequest) {
 
         // Create invoice using production endpoint
         console.log('Creating QPay invoice...');
+        const qpayService = getQPayService();
         invoice = await qpayService.createInvoice(invoiceData);
         console.log('QPay invoice created successfully:', invoice.invoice_id);
         break; // Success, exit the loop
