@@ -55,9 +55,16 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Validate amount
-    if (!amount || isNaN(amount) || amount <= 0) {
-      console.log('Invalid amount detected:', { amount, amountType: typeof amount, isNaN: isNaN(amount) });
+    // Validate amount - convert to number if it's a string
+    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    
+    if (!numericAmount || isNaN(numericAmount) || numericAmount <= 0) {
+      console.log('Invalid amount detected:', { 
+        originalAmount: amount, 
+        amountType: typeof amount, 
+        numericAmount,
+        isNaN: isNaN(numericAmount) 
+      });
       return NextResponse.json({ 
         error: 'Invalid amount', 
         details: `Amount must be a positive number. Received: ${amount} (type: ${typeof amount})` 
@@ -85,7 +92,7 @@ export async function POST(req: NextRequest) {
       deeplink: mockQrText,
       web_url: mockQrText,
       deeplink_url: mockQrText,
-      amount: amount,
+      amount: numericAmount,
       testMode: true,
       note: 'Payment flow is working! Configure QPay credentials for real payments.'
     });

@@ -121,7 +121,7 @@ export default function PaymentOptionsModal({
       // Handle free items
       if (!price || price === 0 || price === null || price === undefined) {
         // For free items, directly mark as purchased
-        const purchaseResponse = await fetch('/api/purchase', {
+        const purchaseResponse = await fetch('/api/public/purchase-free', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
