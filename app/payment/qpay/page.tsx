@@ -93,8 +93,8 @@ function QPayPaymentContent() {
         throw new Error(invoiceData.error || 'Failed to get invoice details');
       }
 
-      // Now create a new invoice with the same details to get the QR code
-      const response = await fetch('/api/create-invoice', {
+      // Now create a new invoice with the same details to get the QR code using PUBLIC API
+      const response = await fetch('/api/public/create-invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -128,77 +128,37 @@ function QPayPaymentContent() {
   };
 
   const startPaymentCheck = (invoiceId: string) => {
-    console.log('Starting payment monitoring for invoice:', invoiceId);
-    setIsMonitoring(true);
-    setCheckCount(0);
-    setLastError('');
-    setTimeLeft(600); // Reset timer
-    
-    // Check payment status every 10 seconds
+    if (checkInterval) {
+      clearInterval(checkInterval);
+    }
+
     const interval = setInterval(async () => {
       try {
-        setCheckCount(prev => prev + 1);
-        const currentCheck = checkCount + 1;
-        
-        console.log(`Payment check #${currentCheck} for invoice:`, invoiceId);
-        
-        const response = await fetch('/api/qpay/payment/check', {
+        const response = await fetch('/api/public/payment/check', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ payment_id: invoiceId }),
+          body: JSON.stringify({ invoiceId })
         });
 
         const data = await response.json();
-        const checkTime = new Date().toLocaleTimeString();
-        setLastCheckTime(checkTime);
-        
-        console.log(`Check #${currentCheck} response:`, data);
 
         if (response.ok && data.success) {
-          if (data.payment && data.payment.count > 0 && data.payment.rows.length > 0) {
+          if (data.payment && data.payment.count > 0) {
+            // Payment found
             const payment = data.payment.rows[0];
-            const status = payment.payment_status;
+            console.log('Payment found:', payment);
             
-            console.log(`Payment found with status: ${status}`);
-            setLastError('');
+            clearInterval(interval);
+            setCheckInterval(null);
             
-            if (status === 'PAID') {
-              console.log('Payment completed successfully!');
-              await handlePaymentSuccess(payment, invoiceId);
-            } else if (status === 'FAILED') {
-              console.log('Payment failed');
-              setPaymentStatus({ status: 'failed', error: 'Payment was declined or failed' });
-              stopPaymentMonitoring();
-              toast.error('Payment failed. Please try again.');
-            } else {
-              console.log(`Payment status: ${status} - continuing to monitor...`);
-            }
-          } else {
-            console.log(`Check #${currentCheck}: No payment completed yet, continuing to monitor...`);
-            setLastError('');
-          }
-        } else if (response.status === 404) {
-          console.log(`Check #${currentCheck}: Payment not found yet, continuing to check...`);
-          setLastError('');
-        } else {
-          const errorMsg = data.error || data.message || 'Unknown API error';
-          console.error(`Check #${currentCheck} failed:`, errorMsg);
-          setLastError(errorMsg);
-          
-          if (currentCheck % 3 === 0) {
-            toast.error(`Payment check error: ${errorMsg}`);
+            // Handle successful payment
+            handlePaymentSuccess(payment, invoiceId);
           }
         }
-      } catch (error: any) {
-        const errorMsg = error.message || 'Network error';
-        console.error(`Check #${checkCount + 1} network error:`, errorMsg);
-        setLastError(errorMsg);
-        
-        if ((checkCount + 1) % 3 === 0) {
-          toast.error(`Network error: ${errorMsg}`);
-        }
+      } catch (error) {
+        console.error('Payment check error:', error);
       }
-    }, 10000);
+    }, 5000); // Check every 5 seconds
 
     setCheckInterval(interval);
   };
@@ -253,58 +213,39 @@ function QPayPaymentContent() {
   };
 
   const manuallyCheckPayment = async () => {
-    if (!paymentStatus.qrData?.invoice_id) {
-      toast.error('No payment ID available for checking');
-      return;
-    }
-    
+    if (!invoiceId) return;
+
     setCheckingPayment(true);
+    setLastCheckTime(new Date().toLocaleTimeString());
+
     try {
-      console.log('Manual payment check for:', paymentStatus.qrData.invoice_id);
-      
-      const response = await fetch('/api/qpay/payment/check', {
+      const response = await fetch('/api/public/payment/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payment_id: paymentStatus.qrData.invoice_id }),
+        body: JSON.stringify({ invoiceId })
       });
 
       const data = await response.json();
-      const checkTime = new Date().toLocaleTimeString();
-      setLastCheckTime(checkTime);
-      
-      console.log('Manual payment check response:', data);
 
       if (response.ok && data.success) {
-        if (data.payment && data.payment.count > 0 && data.payment.rows.length > 0) {
+        if (data.payment && data.payment.count > 0) {
+          // Payment found
           const payment = data.payment.rows[0];
-          const status = payment.payment_status;
+          console.log('Payment found:', payment);
           
-          console.log('Manual check - Payment found with status:', status);
-          setLastError('');
-          
-          if (status === 'PAID') {
-            await handlePaymentSuccess(payment, paymentStatus.qrData.invoice_id);
-          } else if (status === 'FAILED') {
-            setPaymentStatus({ status: 'failed', error: 'Payment was declined or failed' });
-            stopPaymentMonitoring();
-            toast.error('Payment failed. Please try again.');
-          } else {
-            toast.info(`Payment status: ${status}. Continuing to monitor...`);
-          }
+          // Handle successful payment
+          handlePaymentSuccess(payment, invoiceId);
         } else {
-          toast.info('No payment completed yet. Please complete the payment in your QPay app and try again.');
-          setLastError('');
+          setLastError('Payment not found yet. Please try again.');
+          setCheckCount(prev => prev + 1);
         }
       } else {
-        const errorMsg = data.error || data.message || 'Unable to check payment status';
-        toast.error(errorMsg);
-        setLastError(errorMsg);
+        setLastError(data.error || 'Failed to check payment status');
+        setCheckCount(prev => prev + 1);
       }
     } catch (error: any) {
-      const errorMsg = error.message || 'Failed to check payment status';
-      console.error('Manual payment check error:', errorMsg);
-      toast.error(errorMsg);
-      setLastError(errorMsg);
+      setLastError(error.message || 'Failed to check payment status');
+      setCheckCount(prev => prev + 1);
     } finally {
       setCheckingPayment(false);
     }

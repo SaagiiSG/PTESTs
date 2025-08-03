@@ -103,7 +103,7 @@ export default function PaymentGateway({
     setPaymentStatus({ status: 'loading' });
 
     try {
-      const response = await fetch('/api/create-invoice', {
+      const response = await fetch('/api/public/create-invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

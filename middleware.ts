@@ -29,12 +29,15 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow public API routes
+  // Allow public API routes (these should bypass Vercel Authentication)
   if (
+    request.nextUrl.pathname.startsWith('/api/public/') ||
     request.nextUrl.pathname.startsWith('/api/courses') ||
     request.nextUrl.pathname.startsWith('/api/protected-tests') ||
     request.nextUrl.pathname.startsWith('/api/debug-env') ||
-    request.nextUrl.pathname.startsWith('/api/test-connection')
+    request.nextUrl.pathname.startsWith('/api/test-connection') ||
+    request.nextUrl.pathname.startsWith('/api/test-invoice') ||
+    request.nextUrl.pathname.startsWith('/api/test-qpay')
   ) {
     return NextResponse.next();
   }

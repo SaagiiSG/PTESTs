@@ -112,17 +112,15 @@ export default function PaymentOptionsModal({
   const handleQPayPayment = async () => {
     if (!session?.user?.id) {
       toast.error('Please log in to make a purchase');
-      router.push('/login');
       return;
     }
 
     setIsProcessing(true);
+
     try {
-      // Handle free courses/tests
+      // Handle free items
       if (price === 0) {
-        console.log('🔄 Processing free enrollment:', { itemId, itemType, price });
-        
-        // Create purchase record for free item
+        // For free items, directly mark as purchased
         const purchaseResponse = await fetch('/api/purchase', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -130,53 +128,22 @@ export default function PaymentOptionsModal({
             itemId,
             itemType,
             amount: 0,
-            paymentId: `free-${Date.now()}`,
-            paymentData: { isFree: true, amount: 0 }
+            paymentMethod: 'free'
           }),
         });
 
         if (purchaseResponse.ok) {
-          const purchaseData = await purchaseResponse.json();
-          toast.success(`Free ${itemType} enrolled successfully!`);
-          
-          // Call success callback
-          onSuccess?.({ isFree: true, amount: 0 }, purchaseData.uniqueCode);
-          
-          // Close modal
+          toast.success('Free item purchased successfully!');
+          onSuccess?.();
           onClose();
-          
-          // Redirect to the item page after a short delay
-          setTimeout(() => {
-            if (itemType === 'test') {
-              router.push(`/ptests/${itemId}`);
-            } else {
-              router.push(`/Course/${itemId}`);
-            }
-          }, 1000);
-          
           return;
         } else {
-          const errorData = await purchaseResponse.json();
-          if (purchaseResponse.status === 409) {
-            // Already purchased
-            toast.info(`${itemType === 'test' ? 'Test' : 'Course'} already purchased! Redirecting...`);
-            onClose();
-            setTimeout(() => {
-              if (itemType === 'test') {
-                router.push(`/ptests/${itemId}`);
-              } else {
-                router.push(`/Course/${itemId}`);
-              }
-            }, 1000);
-            return;
-          } else {
-            throw new Error(errorData.message || 'Failed to enroll in free item');
-          }
+          throw new Error('Failed to purchase free item');
         }
       }
 
-      // Create payment invoice for paid items
-      const response = await fetch('/api/create-invoice', {
+      // Create payment invoice for paid items using PUBLIC API route
+      const response = await fetch('/api/public/create-invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
