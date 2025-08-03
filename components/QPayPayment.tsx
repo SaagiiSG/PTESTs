@@ -75,7 +75,7 @@ export default function QPayPayment({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: Number(amount),
+          amount: Number(amount) || 1000, // Fallback amount
           description: description || 'Payment via QPay',
           receiverCode: receiverCode.trim(),
           invoiceCode

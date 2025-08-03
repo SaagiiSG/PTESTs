@@ -98,7 +98,7 @@ function QPayPaymentContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: invoiceData.invoice.total_amount || invoiceData.invoice.gross_amount,
+          amount: invoiceData.invoice.total_amount || invoiceData.invoice.gross_amount || 1000, // Fallback amount
           description: invoiceData.invoice.invoice_description || 'Payment for course/test',
           receiverCode: 'JAVZAN_B',
         }),
