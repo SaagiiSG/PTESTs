@@ -1,4 +1,4 @@
-http://localhost:3000/Course/688b982b95a9db5ee46123ee"use client";
+"use client";
 import React from 'react';
 
 export default function TestSimpleDashboard() {
