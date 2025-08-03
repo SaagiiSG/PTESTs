@@ -3,6 +3,14 @@ import { qpayService, QPayInvoiceRequest } from '@/lib/qpay';
 
 export async function POST(req: NextRequest) {
   try {
+    // Check if QPay credentials are configured
+    if (!process.env.QPAY_CLIENT_ID || !process.env.QPAY_CLIENT_SECRET) {
+      console.error('QPay credentials not configured');
+      return NextResponse.json({ 
+        error: 'Payment service not configured. Please contact support.' 
+      }, { status: 503 });
+    }
+
     const { amount, description, receiverCode, invoiceCode, invoiceId, regenerate } = await req.json();
     
     console.log('Create invoice request received:', {

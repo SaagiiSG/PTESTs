@@ -6,14 +6,16 @@ import Course from "@/app/models/course";
 import Test from "@/app/models/tests";
 
 export async function GET(req: Request) {
-  const session = await auth();
-  if (!session || !session.user || !session.user.id) {
-    return NextResponse.json(
-      { message: "Not logged in." },
-      { status: 401 }
-    );
-  }
-  await connectMongoose();
+  try {
+    const session = await auth();
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json(
+        { message: "Not logged in." },
+        { status: 401 }
+      );
+    }
+    
+    await connectMongoose();
   
   // Get user with populated purchased courses and tests
   const user = await User.findById(session.user.id)
@@ -44,4 +46,11 @@ export async function GET(req: Request) {
     courses: purchasedCourses,
     tests: purchasedTests
   });
+  } catch (error) {
+    console.error('Error in purchased-courses API:', error);
+    return NextResponse.json(
+      { message: "Internal server error." },
+      { status: 500 }
+    );
+  }
 } 

@@ -101,7 +101,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       console.log('SESSION CALLBACK - token:', { id: token.id, email: token.email, phoneNumber: token.phoneNumber, isAdmin: token.isAdmin });
       
-      await connectMongoose();
+      try {
+        await connectMongoose();
 
       // Always look up the user by phone number or email to ensure we get the correct user
       let dbUser = null;
@@ -127,6 +128,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       console.log('SESSION CALLBACK - final session:', { id: session.user.id, name: (session.user as any).name, isAdmin: (session.user as any).isAdmin });
       return session;
+      } catch (error) {
+        console.error('Session callback error:', error);
+        return session;
+      }
     },
     async redirect({ url, baseUrl }) {
       // Allow relative callback URLs
