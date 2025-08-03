@@ -81,7 +81,33 @@ function QPayPaymentContent() {
     setPaymentStatus({ status: 'loading' });
 
     try {
-      // Get the existing invoice details first to get the amount
+      // Check if this is a test invoice
+      if (invoiceId.startsWith('TEST_INV_')) {
+        console.log('Test invoice detected, using mock QR data');
+        
+        // For test invoices, create mock QR data directly
+        const mockQrData = {
+          invoice_id: invoiceId,
+          qr_image: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzAwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlRFU1QgUVJDb2RlPC90ZXh0Pjwvc3ZnPg==',
+          qr_text: `https://test.qpay.mn/pay/${invoiceId}`,
+          deeplink: `https://test.qpay.mn/pay/${invoiceId}`,
+          web_url: `https://test.qpay.mn/pay/${invoiceId}`,
+          deeplink_url: `https://test.qpay.mn/pay/${invoiceId}`,
+          amount: 1000,
+          testMode: true
+        };
+
+        setPaymentStatus({
+          status: 'qr_generated',
+          qrData: mockQrData
+        });
+
+        toast.success('Test QR Code loaded successfully!');
+        startPaymentCheck(invoiceId);
+        return;
+      }
+
+      // For real invoices, get the existing invoice details first
       const invoiceResponse = await fetch(`/api/qpay/invoice/${invoiceId}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
@@ -93,12 +119,24 @@ function QPayPaymentContent() {
         throw new Error(invoiceData.error || 'Failed to get invoice details');
       }
 
-      // Now create a new invoice with the same details to get the QR code using PUBLIC API
+      // Use the invoice data directly if it has QR information
+      if (invoiceData.invoice && invoiceData.invoice.qr_image) {
+        setPaymentStatus({
+          status: 'qr_generated',
+          qrData: invoiceData.invoice
+        });
+
+        toast.success('QR Code loaded successfully!');
+        startPaymentCheck(invoiceId);
+        return;
+      }
+
+      // If no QR data, create a new invoice with the same details
       const response = await fetch('/api/public/create-invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: invoiceData.invoice.total_amount || invoiceData.invoice.gross_amount || 1000, // Fallback amount
+          amount: invoiceData.invoice.total_amount || invoiceData.invoice.gross_amount || 1000,
           description: invoiceData.invoice.invoice_description || 'Payment for course/test',
           receiverCode: 'JAVZAN_B',
         }),
@@ -116,8 +154,6 @@ function QPayPaymentContent() {
       });
 
       toast.success('QR Code loaded successfully!');
-      
-      // Start checking payment status
       startPaymentCheck(invoiceId);
 
     } catch (error: any) {
