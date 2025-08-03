@@ -3,10 +3,10 @@ import { getQPayService } from '@/lib/qpay';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { invoiceId: string } }
+  { params }: { params: Promise<{ invoiceId: string }> }
 ) {
   try {
-    const { invoiceId } = params;
+    const { invoiceId } = await params;
 
     if (!invoiceId) {
       return NextResponse.json({ error: 'Invoice ID is required' }, { status: 400 });

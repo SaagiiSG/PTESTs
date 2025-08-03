@@ -143,20 +143,26 @@ export default function PaymentOptionsModal({
       }
 
       // Create payment invoice for paid items using PUBLIC API route
+      console.log('Creating payment invoice with:', { price, itemType, itemTitle, itemId });
+      
+      const requestBody = {
+        amount: price || 0,
+        description: `${itemType === 'test' ? 'Test' : 'Course'} Purchase: ${itemTitle}`,
+        receiverCode: 'JAVZAN_B', // Use the correct QPay merchant code
+        metadata: {
+          itemId,
+          itemType,
+          userId: session.user.id,
+          itemTitle
+        }
+      };
+      
+      console.log('Request body:', requestBody);
+      
       const response = await fetch('/api/public/create-invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: price,
-          description: `${itemType === 'test' ? 'Test' : 'Course'} Purchase: ${itemTitle}`,
-          receiverCode: 'JAVZAN_B', // Use the correct QPay merchant code
-          metadata: {
-            itemId,
-            itemType,
-            userId: session.user.id,
-            itemTitle
-          }
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
