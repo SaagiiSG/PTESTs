@@ -78,11 +78,13 @@ export async function POST(req: NextRequest) {
         
         const invoiceRequest: QPayInvoiceRequest = {
           invoice_code: `PSYCHOMETRICS_INVOICE_${Date.now()}`,
-          sender_invoice_no: `PSYCHOMETRICS_INVOICE_${Date.now()}`,
+          sender_invoice_no: `SINV${Date.now()}`,
           invoice_receiver_code: receiverCode,
           invoice_description: description,
           amount: numericAmount,
-          callback_url: `${process.env.NEXTAUTH_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app'}/api/qpay-callback`
+          callback_url: `${process.env.NEXTAUTH_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app'}/api/qpay-callback`,
+          calculate_vat: false,
+          enable_expiry: false
         };
 
         const qpayInvoice = await qpayService.createInvoice(invoiceRequest);
