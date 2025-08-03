@@ -68,54 +68,57 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Receiver code is required' }, { status: 400 });
     }
 
-    // Try to use real QPay if credentials are properly configured
-    console.log('Test mode check result:', isTestMode);
-    if (!isTestMode) {
-      try {
-        console.log('Attempting to create real QPay invoice...');
-        
-        const qpayService = getQPayService();
-        
-        const invoiceRequest: QPayInvoiceRequest = {
-          invoice_code: `PSYCHOMETRICS_INVOICE_${Date.now()}`,
-          sender_invoice_no: `SINV${Date.now()}`,
-          invoice_receiver_code: receiverCode,
-          invoice_description: description,
-          amount: numericAmount,
-          callback_url: `${process.env.NEXTAUTH_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app'}/api/qpay-callback`,
-          calculate_vat: false,
-          enable_expiry: false
-        };
+        // Try to use real QPay - use the exact same working code as test-qpay-simple
+    try {
+      console.log('Attempting to create real QPay invoice...');
+      
+      const qpayService = getQPayService();
+      
+      // Use the exact same parameters as the working test endpoint
+      const invoiceRequest = {
+        invoice_code: `PSYCHOMETRICS_INVOICE_${Date.now()}`,
+        sender_invoice_no: `SINV${Date.now()}`,
+        invoice_receiver_code: receiverCode,
+        invoice_description: description,
+        amount: numericAmount,
+        callback_url: `${process.env.NEXTAUTH_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app'}/api/qpay-callback`,
+        calculate_vat: false,
+        enable_expiry: false
+      };
 
-        const qpayInvoice = await qpayService.createInvoice(invoiceRequest);
-        
-        console.log('Real QPay invoice created successfully:', qpayInvoice);
-        
-        return NextResponse.json({
-          success: true,
-          message: 'Real QPay invoice created successfully',
-          isTestMode: false,
-          invoice_id: qpayInvoice.invoice_id,
-          qr_image: qpayInvoice.qr_image,
-          qr_text: qpayInvoice.qr_text,
-          deeplink: qpayInvoice.urls?.deeplink || qpayInvoice.qr_text,
-          web_url: qpayInvoice.urls?.web || qpayInvoice.qr_text,
-          deeplink_url: qpayInvoice.urls?.deeplink || qpayInvoice.qr_text,
-          amount: numericAmount,
-          testMode: false,
-          note: 'Real QPay payment - scan QR code to pay'
-        });
-        
-             } catch (qpayError: any) {
-         console.error('Real QPay invoice creation failed:', qpayError);
-         console.error('QPay error details:', {
-           message: qpayError.message,
-           stack: qpayError.stack,
-           name: qpayError.name
-         });
-         console.log('Falling back to test mode...');
-         // Fall back to test mode if real QPay fails
-       }
+      console.log('Creating real invoice with data:', invoiceRequest);
+      const qpayInvoice = await qpayService.createInvoice(invoiceRequest);
+      
+      console.log('Real QPay invoice created successfully:', {
+        invoice_id: qpayInvoice.invoice_id,
+        qr_image: qpayInvoice.qr_image ? 'Generated' : 'Not generated',
+        qr_text: qpayInvoice.qr_text ? 'Generated' : 'Not generated'
+      });
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Real QPay invoice created successfully',
+        isTestMode: false,
+        invoice_id: qpayInvoice.invoice_id,
+        qr_image: qpayInvoice.qr_image,
+        qr_text: qpayInvoice.qr_text,
+        deeplink: qpayInvoice.urls?.deeplink || qpayInvoice.qr_text,
+        web_url: qpayInvoice.urls?.web || qpayInvoice.qr_text,
+        deeplink_url: qpayInvoice.urls?.deeplink || qpayInvoice.qr_text,
+        amount: numericAmount,
+        testMode: false,
+        note: 'Real QPay payment - scan QR code to pay'
+      });
+      
+    } catch (qpayError: any) {
+      console.error('Real QPay invoice creation failed:', qpayError);
+      console.error('QPay error details:', {
+        message: qpayError.message,
+        stack: qpayError.stack,
+        name: qpayError.name
+      });
+      console.log('Falling back to test mode...');
+      // Fall back to test mode if real QPay fails
     }
     
     // Use test mode if real QPay failed or is disabled
