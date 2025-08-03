@@ -72,11 +72,15 @@ export async function POST(req: NextRequest) {
     try {
       console.log('Attempting to create real QPay invoice...');
       
+      // Test authentication first (like the working endpoint)
       const qpayService = getQPayService();
+      const token = await qpayService['getAccessToken']();
+      console.log('QPay authentication successful, token obtained');
       
       // Use the exact same parameters as the working test endpoint
+      const envInvoiceCode = process.env.QPAY_INVOICE_CODE || 'JAVZAN_B_INVOICE';
       const invoiceRequest = {
-        invoice_code: `PSYCHOMETRICS_INVOICE_${Date.now()}`,
+        invoice_code: envInvoiceCode,
         sender_invoice_no: `SINV${Date.now()}`,
         invoice_receiver_code: receiverCode,
         invoice_description: description,
