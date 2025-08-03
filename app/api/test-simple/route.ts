@@ -1,20 +1,27 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-export async function POST(req: NextRequest) {
+export async function GET() {
+  return NextResponse.json({
+    success: true,
+    message: 'API is working',
+    timestamp: new Date().toISOString()
+  });
+}
+
+export async function POST(req: any) {
   try {
-    const data = await req.json();
-    console.log('Test endpoint received:', data);
-    
+    const body = await req.json();
     return NextResponse.json({
       success: true,
-      message: 'Test endpoint working',
-      received: data
+      message: 'POST API is working',
+      receivedData: body,
+      timestamp: new Date().toISOString()
     });
-  } catch (error: any) {
-    console.error('Test endpoint error:', error);
-    return NextResponse.json({ 
-      error: error.message || 'Test failed',
-      success: false 
-    }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to parse JSON',
+      details: error
+    }, { status: 400 });
   }
 } 
