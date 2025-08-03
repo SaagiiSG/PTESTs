@@ -5,9 +5,17 @@ export async function POST(req: NextRequest) {
   try {
     // Check if QPay credentials are properly configured FIRST
     const qpayClientSecret = process.env.QPAY_CLIENT_SECRET;
-    const isTestMode = !qpayClientSecret || qpayClientSecret === 'SET' || qpayClientSecret === 'NOT_SET';
+    const qpayClientId = process.env.QPAY_CLIENT_ID;
+    
+    // Enable test mode if credentials are missing or seem incorrect
+    const isTestMode = !qpayClientSecret || 
+                      !qpayClientId || 
+                      qpayClientSecret === 'SET' || 
+                      qpayClientSecret === 'NOT_SET' ||
+                      qpayClientId === 'SYCHOMETRICS'; // This seems to be a placeholder
 
     console.log('Public create invoice endpoint - QPay client secret:', qpayClientSecret ? 'SET' : 'NOT_SET');
+    console.log('Public create invoice endpoint - QPay client ID:', qpayClientId);
     console.log('Test mode enabled:', isTestMode);
 
     const { amount, description, receiverCode, invoiceCode, invoiceId, regenerate } = await req.json();
@@ -49,7 +57,7 @@ export async function POST(req: NextRequest) {
       
       return NextResponse.json({
         success: true,
-        message: 'Test mode - QPay credentials not configured',
+        message: 'Test mode - QPay credentials need to be configured for real payments',
         isTestMode: true,
         invoice_id: mockInvoiceId,
         qr_image: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzAwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlRFU1QgUVJDb2RlPC90ZXh0Pjwvc3ZnPg==',
@@ -59,7 +67,7 @@ export async function POST(req: NextRequest) {
         deeplink_url: mockQrText,
         amount: amount,
         testMode: true,
-        note: 'This is a test invoice. QPay credentials need to be configured for real payments.'
+        note: 'This is a test invoice. Please configure QPay credentials for real payments.'
       });
     }
 
