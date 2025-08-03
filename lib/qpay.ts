@@ -378,7 +378,11 @@ export function getQPayService(): QPayService {
   return qpayServiceInstance;
 }
 
-export const qpayService = {
+// Export the service instance directly
+export const qpayService = getQPayService();
+
+// Also export individual methods for backward compatibility
+export const qpayServiceMethods = {
   createInvoice: (data: QPayInvoiceRequest) => getQPayService().createInvoice(data),
   getInvoice: (id: string) => getQPayService().getInvoice(id),
   cancelInvoice: (id: string, callbackUrl?: string, note?: string) => getQPayService().cancelInvoice(id, callbackUrl, note),

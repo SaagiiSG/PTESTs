@@ -1,51 +1,76 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { qpayService } from '@/lib/qpay';
+import { NextResponse } from 'next/server';
+import { getQPayService } from '@/lib/qpay';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    console.log('Testing QPay connection...');
+    console.log('Testing QPay authentication...');
     
-    // Test authentication
-    const token = await qpayService['getAccessToken']();
-    console.log('QPay token obtained:', token ? 'SUCCESS' : 'FAILED');
-    
-    // Generate proper invoice code format
-    const timestamp = Date.now();
-    const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const invoiceCode = `TEST${timestamp}${randomStr}`;
-    const senderInvoiceNo = `SINV${timestamp}${randomStr}`;
-    
-    // Test invoice creation with minimal data
-    const testInvoiceData = {
-      invoice_code: invoiceCode,
-      sender_invoice_no: senderInvoiceNo,
-      invoice_receiver_code: 'JAVZAN_B', // Use the correct QPay merchant code
-      invoice_description: 'Test payment',
-      amount: 1000,
-      callback_url: 'https://example.com/callback',
-      calculate_vat: false,
-      enable_expiry: false,
+    // Check environment variables
+    const envCheck = {
+      QPAY_CLIENT_ID: process.env.QPAY_CLIENT_ID || 'NOT_SET',
+      QPAY_CLIENT_SECRET: process.env.QPAY_CLIENT_SECRET || 'NOT_SET',
+      QPAY_BASE_URL: process.env.QPAY_BASE_URL || 'NOT_SET',
+      QPAY_INVOICE_CODE: process.env.QPAY_INVOICE_CODE || 'NOT_SET',
+      NODE_ENV: process.env.NODE_ENV || 'development'
     };
-    
-    console.log('Creating test invoice with data:', testInvoiceData);
-    
-    const invoice = await qpayService.createInvoice(testInvoiceData);
-    
-    console.log('Test invoice created successfully:', invoice);
-    
-    return NextResponse.json({
-      success: true,
-      message: 'QPay connection test successful',
-      invoice: invoice
+
+    console.log('Environment variables:', {
+      ...envCheck,
+      QPAY_CLIENT_SECRET: envCheck.QPAY_CLIENT_SECRET === 'SET' ? 'PLACEHOLDER_VALUE' : '***'
     });
-    
+
+    // Check if credentials are properly set
+    if (envCheck.QPAY_CLIENT_SECRET === 'SET' || envCheck.QPAY_CLIENT_SECRET === 'NOT_SET') {
+      return NextResponse.json({
+        success: false,
+        error: 'QPay credentials not properly configured',
+        details: 'QPAY_CLIENT_SECRET is set to placeholder value "SET"',
+        envCheck: {
+          ...envCheck,
+          QPAY_CLIENT_SECRET: 'PLACEHOLDER_VALUE'
+        }
+      }, { status: 400 });
+    }
+
+    // Try to get QPay service instance
+    try {
+      const qpayService = getQPayService();
+      console.log('QPay service instance created successfully');
+      
+      // Try to get access token (this will test authentication)
+      const accessToken = await (qpayService as any).getAccessToken();
+      
+      return NextResponse.json({
+        success: true,
+        message: 'QPay authentication successful',
+        accessToken: accessToken ? '***' : 'NOT_OBTAINED',
+        envCheck: {
+          ...envCheck,
+          QPAY_CLIENT_SECRET: '***'
+        }
+      });
+      
+    } catch (authError: any) {
+      console.error('QPay authentication failed:', authError);
+      
+      return NextResponse.json({
+        success: false,
+        error: 'QPay authentication failed',
+        details: authError.message,
+        envCheck: {
+          ...envCheck,
+          QPAY_CLIENT_SECRET: '***'
+        }
+      }, { status: 500 });
+    }
+
   } catch (error: any) {
-    console.error('QPay test failed:', error);
+    console.error('QPay test error:', error);
     
     return NextResponse.json({
       success: false,
-      error: error.message,
-      details: error.toString()
+      error: 'QPay test failed',
+      details: error.message
     }, { status: 500 });
   }
 } 
