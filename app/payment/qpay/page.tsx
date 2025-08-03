@@ -505,37 +505,69 @@ function QPayPaymentContent() {
                       Auto-checking every 10 seconds • Last check: {lastCheckTime || 'Not started yet'}
                     </p>
                     
-                    {isMonitoring && (
-                      <div className="flex gap-2">
-                        <Button 
-                          onClick={stopPaymentMonitoring}
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 text-xs"
-                        >
-                          Stop Monitoring
-                        </Button>
-                        <Button 
-                          onClick={manuallyCheckPayment}
-                          disabled={checkingPayment}
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 text-xs"
-                        >
-                          {checkingPayment ? (
-                            <>
-                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                              Checking...
-                            </>
-                          ) : (
-                            <>
-                              <RefreshCw className="w-3 h-3 mr-1" />
-                              Check Now
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    )}
+                    <div className="flex gap-2">
+                      {isMonitoring ? (
+                        <>
+                          <Button 
+                            onClick={stopPaymentMonitoring}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 text-xs"
+                          >
+                            Stop Monitoring
+                          </Button>
+                          <Button 
+                            onClick={manuallyCheckPayment}
+                            disabled={checkingPayment}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 text-xs"
+                          >
+                            {checkingPayment ? (
+                              <>
+                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                Checking...
+                              </>
+                            ) : (
+                              <>
+                                <RefreshCw className="w-3 h-3 mr-1" />
+                                Check Now
+                              </>
+                            )}
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button 
+                            onClick={() => startPaymentCheck(invoiceId!)}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 text-xs"
+                          >
+                            Start Monitoring
+                          </Button>
+                          <Button 
+                            onClick={manuallyCheckPayment}
+                            disabled={checkingPayment}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 text-xs"
+                          >
+                            {checkingPayment ? (
+                              <>
+                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                Checking...
+                              </>
+                            ) : (
+                              <>
+                                <RefreshCw className="w-3 h-3 mr-1" />
+                                Check Now
+                              </>
+                            )}
+                          </Button>
+                        </>
+                      )}
+                    </div>
 
 
                   </div>
