@@ -168,7 +168,13 @@ function QPayPaymentContent() {
       clearInterval(checkInterval);
     }
 
+    // Start monitoring
+    setIsMonitoring(true);
+    setTimeLeft(600); // Reset timer to 10 minutes
+    console.log('🔄 Payment monitoring started for invoice:', invoiceId);
+
     const interval = setInterval(async () => {
+      console.log('🔍 Checking payment status for invoice:', invoiceId);
       try {
         const response = await fetch('/api/public/payment/check', {
           method: 'POST',
@@ -194,7 +200,7 @@ function QPayPaymentContent() {
       } catch (error) {
         console.error('Payment check error:', error);
       }
-    }, 5000); // Check every 5 seconds
+    }, 10000); // Check every 10 seconds
 
     setCheckInterval(interval);
   };
