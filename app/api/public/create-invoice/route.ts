@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Try to use real QPay if credentials are properly configured
+    console.log('Test mode check result:', isTestMode);
     if (!isTestMode) {
       try {
         console.log('Attempting to create real QPay invoice...');
