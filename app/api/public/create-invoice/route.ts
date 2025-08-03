@@ -19,8 +19,21 @@ export async function POST(req: NextRequest) {
     console.log('Public create invoice endpoint - QPay client ID:', qpayClientId);
     console.log('Test mode enabled:', isTestMode);
 
-    const { amount, description, receiverCode, invoiceCode, invoiceId, regenerate } = await req.json();
+    const requestBody = await req.json();
+    console.log('Received request body:', requestBody);
     
+    const { amount, description, receiverCode, invoiceCode, invoiceId, regenerate } = requestBody;
+    
+    console.log('Parsed values:', {
+      amount,
+      amountType: typeof amount,
+      description,
+      receiverCode,
+      invoiceCode,
+      invoiceId,
+      regenerate
+    });
+
     console.log('Public create invoice request received:', {
       amount,
       description,
@@ -32,6 +45,7 @@ export async function POST(req: NextRequest) {
 
     // Handle free courses (amount = 0)
     if (amount === 0) {
+      console.log('Free course detected (amount = 0)');
       return NextResponse.json({
         success: true,
         message: 'Free course - no payment required',
@@ -41,8 +55,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Validate amount
     if (!amount || isNaN(amount) || amount <= 0) {
-      return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
+      console.log('Invalid amount detected:', { amount, amountType: typeof amount, isNaN: isNaN(amount) });
+      return NextResponse.json({ 
+        error: 'Invalid amount', 
+        details: `Amount must be a positive number. Received: ${amount} (type: ${typeof amount})` 
+      }, { status: 400 });
     }
 
     if (!receiverCode) {
