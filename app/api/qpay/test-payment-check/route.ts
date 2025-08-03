@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { qpayService } from '@/lib/qpay';
+import { getQPayService } from '@/lib/qpay';
 
 export async function GET(req: NextRequest) {
   try {
@@ -11,7 +11,8 @@ export async function GET(req: NextRequest) {
     console.log('Testing with invoice ID:', testInvoiceId);
     
     try {
-      const result = await qpayService.checkPayment(testInvoiceId);
+      const qpayService = getQPayService();
+  const result = await qpayService.checkPayment(testInvoiceId);
       console.log('Payment check result:', result);
       
       return NextResponse.json({

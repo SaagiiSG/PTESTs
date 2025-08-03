@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { qpayService } from '@/lib/qpay';
+import { getQPayService } from '@/lib/qpay';
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,7 +9,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Payment ID is required' }, { status: 400 });
     }
 
-    const refundResult = await qpayService.refundPayment(payment_id, callback_url, note);
+    const qpayService = getQPayService();
+  const refundResult = await qpayService.refundPayment(payment_id, callback_url, note);
     
     return NextResponse.json({
       success: true,

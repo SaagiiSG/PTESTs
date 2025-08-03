@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { qpayService, QPayPaymentListRequest } from '@/lib/qpay';
+import { getQPayService, QPayPaymentListRequest } from '@/lib/qpay';
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,7 +31,8 @@ export async function POST(req: NextRequest) {
       }
     };
 
-    const paymentList = await qpayService.getPaymentList(listData);
+    const qpayService = getQPayService();
+  const paymentList = await qpayService.getPaymentList(listData);
     
     return NextResponse.json({
       success: true,
