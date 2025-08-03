@@ -7,12 +7,10 @@ export async function POST(req: NextRequest) {
     const qpayClientSecret = process.env.QPAY_CLIENT_SECRET;
     const qpayClientId = process.env.QPAY_CLIENT_ID;
     
-    // Enable test mode if credentials are missing or seem incorrect
+    // Enable test mode only if credentials are completely missing
     let isTestMode = !qpayClientSecret || 
                     !qpayClientId || 
-                    qpayClientSecret === 'NOT_SET' ||
-                    qpayClientSecret === 'SET' || // This is a placeholder, not real secret
-                    qpayClientId === 'SYCHOMETRICS'; // This seems to be a placeholder
+                    qpayClientSecret === 'NOT_SET';
 
     console.log('Public create invoice endpoint - QPay client secret:', qpayClientSecret ? 'SET' : 'NOT_SET');
     console.log('Public create invoice endpoint - QPay client ID:', qpayClientId);
