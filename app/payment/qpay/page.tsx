@@ -1,5 +1,6 @@
 'use client';
 
+// Payment page with QPay integration and monitoring
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
