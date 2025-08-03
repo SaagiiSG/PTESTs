@@ -49,7 +49,7 @@ export default function RootLayout({
       <head>
         <meta
           httpEquiv="Content-Security-Policy"
-          content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com https://player.vimeo.com https://psychometricsmongolia-my.sharepoint.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https://www.youtube.com https://player.vimeo.com https://psychometricsmongolia-my.sharepoint.com; connect-src 'self' https:;"
+          content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.youtube.com https://player.vimeo.com https://psychometricsmongolia-my.sharepoint.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' https: blob:; frame-src 'self' https://www.youtube.com https://player.vimeo.com https://psychometricsmongolia-my.sharepoint.com; connect-src 'self' https:; worker-src 'self' blob:;"
         />
         <script
           dangerouslySetInnerHTML={{
@@ -68,6 +68,13 @@ export default function RootLayout({
                 if (e.filename && (e.filename.includes('sharebx.js') || e.filename.includes('css.js'))) {
                   e.preventDefault();
                   console.warn('External script blocked:', e.filename);
+                }
+              });
+              
+              // Handle blob script loading
+              window.addEventListener('message', function(e) {
+                if (e.data && e.data.type === 'blob-script') {
+                  console.log('Blob script message received:', e.data);
                 }
               });
             `,

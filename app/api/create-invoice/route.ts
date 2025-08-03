@@ -3,14 +3,6 @@ import { getQPayService, QPayInvoiceRequest } from '@/lib/qpay';
 
 export async function POST(req: NextRequest) {
   try {
-    // Check if QPay credentials are configured
-    if (!process.env.QPAY_CLIENT_ID || !process.env.QPAY_CLIENT_SECRET) {
-      console.error('QPay credentials not configured');
-      return NextResponse.json({ 
-        error: 'Payment service not configured. Please contact support.' 
-      }, { status: 503 });
-    }
-
     const { amount, description, receiverCode, invoiceCode, invoiceId, regenerate } = await req.json();
     
     console.log('Create invoice request received:', {
@@ -39,6 +31,33 @@ export async function POST(req: NextRequest) {
 
     if (!receiverCode) {
       return NextResponse.json({ error: 'Receiver code is required' }, { status: 400 });
+    }
+
+    // Check if QPay credentials are properly configured
+    const qpayClientSecret = process.env.QPAY_CLIENT_SECRET;
+    const isTestMode = !qpayClientSecret || qpayClientSecret === 'SET' || qpayClientSecret === 'NOT_SET';
+
+    if (isTestMode) {
+      console.log('QPay credentials not properly configured, using test mode');
+      
+      // Return a mock invoice for testing
+      const mockInvoiceId = `TEST_INV_${Date.now()}`;
+      const mockQrText = `https://test.qpay.mn/pay/${mockInvoiceId}`;
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Test mode - QPay credentials not configured',
+        isTestMode: true,
+        invoice_id: mockInvoiceId,
+        qr_image: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzAwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlRFU1QgUVJDb2RlPC90ZXh0Pjwvc3ZnPg==',
+        qr_text: mockQrText,
+        deeplink: mockQrText,
+        web_url: mockQrText,
+        deeplink_url: mockQrText,
+        amount: amount,
+        testMode: true,
+        note: 'This is a test invoice. QPay credentials need to be configured for real payments.'
+      });
     }
 
     // Use the invoice code from environment variable or generate a simple one

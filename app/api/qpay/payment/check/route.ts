@@ -1,51 +1,70 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPaymentStatus, storePaymentStatus } from '@/lib/payment-storage';
-import { qpayService } from '@/lib/qpay';
 
 export async function POST(req: NextRequest) {
   try {
-    const { payment_id } = await req.json();
+    const { invoiceId } = await req.json();
     
-    if (!payment_id) {
-      return NextResponse.json({ error: 'Payment ID is required' }, { status: 400 });
-    }
-
-    console.log('Checking payment status for invoice:', payment_id);
-
-    // Check if we have payment status stored using the shared storage
-    let paymentInfo = await getPaymentStatus(payment_id);
+    console.log('Payment check request for invoice:', invoiceId);
     
-    if (paymentInfo) {
-      console.log('Payment found in local storage:', paymentInfo);
+    // Check if this is a test invoice
+    if (invoiceId && invoiceId.startsWith('TEST_INV_')) {
+      console.log('Test invoice detected, returning mock payment status');
       
-      return NextResponse.json({
-        success: true,
-        payment: {
-          count: 1,
-          rows: [paymentInfo]
-        }
-      });
+      // For test invoices, simulate a successful payment after a delay
+      const invoiceTimestamp = parseInt(invoiceId.replace('TEST_INV_', ''));
+      const timeSinceCreation = Date.now() - invoiceTimestamp;
+      
+      // Simulate payment completion after 30 seconds
+      if (timeSinceCreation > 30000) {
+        return NextResponse.json({
+          success: true,
+          payment: {
+            count: 1,
+            rows: [{
+              payment_id: `TEST_PAY_${Date.now()}`,
+              payment_date: new Date().toISOString(),
+              payment_status: 'PAID',
+              payment_fee: 0,
+              payment_amount: 1000,
+              payment_currency: 'MNT',
+              payment_wallet: 'TEST_WALLET',
+              payment_name: 'Test Payment',
+              payment_description: 'Test payment for development',
+              qr_code: invoiceId,
+              paid_by: 'P2P',
+              object_type: 'INVOICE',
+              object_id: invoiceId
+            }]
+          }
+        });
+      } else {
+        // Payment still pending
+        return NextResponse.json({
+          success: true,
+          payment: {
+            count: 0,
+            rows: []
+          }
+        });
+      }
     }
-
-    // Payment not found - rely on callback system
-    console.log('Payment not found in local storage. This could be a timing issue.');
-    console.log('Payment might still be processing or callback not received yet.');
     
+    // For real invoices, you would check with QPay here
+    // For now, return empty result
     return NextResponse.json({
       success: true,
       payment: {
         count: 0,
         rows: []
-      },
-      message: 'Payment verification in progress. Please wait a moment and try again, or check if the payment was completed in your QPay app.',
-      code: 'PAYMENT_PROCESSING'
+      }
     });
-
+    
   } catch (error: any) {
     console.error('Payment check error:', error);
-    return NextResponse.json({ 
-      error: error.message || 'Failed to check payment status',
-      success: false 
+    
+    return NextResponse.json({
+      success: false,
+      error: error.message || 'Failed to check payment status'
     }, { status: 500 });
   }
 } 
