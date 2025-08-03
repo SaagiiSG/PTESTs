@@ -10,12 +10,9 @@ export async function POST(req: NextRequest) {
     // Enable test mode if credentials are missing or seem incorrect
     let isTestMode = !qpayClientSecret || 
                     !qpayClientId || 
-                    qpayClientSecret === 'SET' || 
                     qpayClientSecret === 'NOT_SET' ||
-                    qpayClientId === 'SYCHOMETRICS' || // This seems to be a placeholder
-                    qpayClientId === 'PSYCHOMETRICS' || // This also seems to be a placeholder
-                    qpayClientSecret.length < 10 || // Too short to be a real secret
-                    qpayClientId.length < 5; // Too short to be a real client ID
+                    qpayClientSecret === 'SET' || // This is a placeholder, not real secret
+                    qpayClientId === 'SYCHOMETRICS'; // This seems to be a placeholder
 
     console.log('Public create invoice endpoint - QPay client secret:', qpayClientSecret ? 'SET' : 'NOT_SET');
     console.log('Public create invoice endpoint - QPay client ID:', qpayClientId);
@@ -83,8 +80,8 @@ export async function POST(req: NextRequest) {
         const qpayService = getQPayService();
         
         const invoiceRequest: QPayInvoiceRequest = {
-          invoice_code: `INV_${Date.now()}`,
-          sender_invoice_no: `INV_${Date.now()}`,
+          invoice_code: `PSYCHOMETRICS_INVOICE_${Date.now()}`,
+          sender_invoice_no: `PSYCHOMETRICS_INVOICE_${Date.now()}`,
           invoice_receiver_code: receiverCode,
           invoice_description: description,
           amount: numericAmount,

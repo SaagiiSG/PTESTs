@@ -97,7 +97,16 @@ class QPayService {
   constructor() {
     // Use sandbox URL for testing, production URL for live
     const isDevelopment = process.env.NODE_ENV === 'development';
-    this.baseUrl = process.env.QPAY_BASE_URL || (isDevelopment ? 'https://merchant-sandbox.qpay.mn/v2' : 'https://merchant.qpay.mn/v2');
+    
+    // Fix the base URL if it's pointing to auth endpoint
+    let baseUrl = process.env.QPAY_BASE_URL || (isDevelopment ? 'https://merchant-sandbox.qpay.mn/v2' : 'https://merchant.qpay.mn/v2');
+    
+    // If the URL contains /auth/token, remove it to get the base URL
+    if (baseUrl.includes('/auth/token')) {
+      baseUrl = baseUrl.replace('/auth/token', '');
+    }
+    
+    this.baseUrl = baseUrl;
     this.username = process.env.QPAY_CLIENT_ID || '';
     this.password = process.env.QPAY_CLIENT_SECRET || '';
     
