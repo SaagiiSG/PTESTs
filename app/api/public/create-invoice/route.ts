@@ -104,11 +104,16 @@ export async function POST(req: NextRequest) {
           note: 'Real QPay payment - scan QR code to pay'
         });
         
-      } catch (qpayError: any) {
-        console.error('Real QPay invoice creation failed:', qpayError);
-        console.log('Falling back to test mode...');
-        // Fall back to test mode if real QPay fails
-      }
+             } catch (qpayError: any) {
+         console.error('Real QPay invoice creation failed:', qpayError);
+         console.error('QPay error details:', {
+           message: qpayError.message,
+           stack: qpayError.stack,
+           name: qpayError.name
+         });
+         console.log('Falling back to test mode...');
+         // Fall back to test mode if real QPay fails
+       }
     }
     
     // Use test mode if real QPay failed or is disabled
