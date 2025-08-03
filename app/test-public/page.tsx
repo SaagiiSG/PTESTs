@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function TestPublicPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -14,12 +16,12 @@ export default function TestPublicPage() {
           <p>✅ Basic routing: Working</p>
         </div>
         <div className="mt-6 text-center">
-          <a 
+          <Link 
             href="/"
             className="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           >
             Go to Home
-          </a>
+          </Link>
         </div>
       </div>
     </div>
