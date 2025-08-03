@@ -28,23 +28,22 @@ const API_PATHS = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow static files and public paths
-  if (PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))) {
-    return NextResponse.next();
-  }
-
-  // For API routes that require authentication, check token
-  if (API_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))) {
-    const token = await getToken({ req: request, secret: process.env.AUTH_SECRET });
-    if (!token) {
+  // Check if user is authenticated
+  const token = await getToken({ req: request, secret: process.env.AUTH_SECRET });
+  
+  // If not authenticated, redirect to login (except for public paths)
+  if (!token) {
+    // Allow access to public paths without authentication
+    if (PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))) {
+      return NextResponse.next();
+    }
+    
+    // For API routes, return 401 instead of redirecting
+    if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    return NextResponse.next();
-  }
-
-  // For other routes, check token and redirect to login if not authenticated
-  const token = await getToken({ req: request, secret: process.env.AUTH_SECRET });
-  if (!token) {
+    
+    // For other routes, redirect to login
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
@@ -58,7 +57,10 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - manifest.json (PWA manifest)
+     * - icon files (PWA icons)
+     * - api/auth (authentication endpoints)
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|icon-|api/auth).*)',
   ],
 }; 
