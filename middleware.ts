@@ -29,7 +29,17 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // For API routes, let them handle their own authentication
+  // Allow public API routes
+  if (
+    request.nextUrl.pathname.startsWith('/api/courses') ||
+    request.nextUrl.pathname.startsWith('/api/protected-tests') ||
+    request.nextUrl.pathname.startsWith('/api/debug-env') ||
+    request.nextUrl.pathname.startsWith('/api/test-connection')
+  ) {
+    return NextResponse.next();
+  }
+
+  // For protected API routes, let them handle their own authentication
   if (request.nextUrl.pathname.startsWith('/api')) {
     return NextResponse.next();
   }
