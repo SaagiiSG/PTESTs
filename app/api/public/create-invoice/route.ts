@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
         numericAmount,
         isNaN: isNaN(numericAmount) 
       });
-      numericAmount = 1000; // Default amount for test mode
+      numericAmount = 1000; // Default amount for test mode - updated
     }
 
     if (!receiverCode) {
