@@ -119,7 +119,7 @@ export default function PaymentOptionsModal({
 
     try {
       // Handle free items
-      if (price === 0) {
+      if (!price || price === 0 || price === null || price === undefined) {
         // For free items, directly mark as purchased
         const purchaseResponse = await fetch('/api/purchase', {
           method: 'POST',
@@ -198,15 +198,15 @@ export default function PaymentOptionsModal({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
-            {price === 0 ? (
+            {(!price || price === 0) ? (
               <Gift className="w-6 h-6 text-green-600" />
             ) : (
               <Lock className="w-6 h-6 text-blue-600" />
             )}
-            {price === 0 ? 'Enroll in Free' : 'Purchase'} {itemType === 'test' ? 'Test' : 'Course'}
+            {(!price || price === 0) ? 'Enroll in Free' : 'Purchase'} {itemType === 'test' ? 'Test' : 'Course'}
           </DialogTitle>
           <DialogDescription>
-            {price === 0 
+            {(!price || price === 0)
               ? 'This is a free course. Click enroll to get instant access!'
               : 'Choose your preferred payment method to unlock access'
             }
