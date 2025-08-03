@@ -68,18 +68,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Receiver code is required' }, { status: 400 });
     }
 
-        // Try to use real QPay - use the exact same working code as test-qpay-simple
+        // Use the exact same working code as test-qpay-simple
     try {
-      console.log('Attempting to create real QPay invoice...');
+      console.log('Testing QPay service...');
       
-      // Test authentication first (like the working endpoint)
+      // Test authentication first
+      console.log('Testing QPay authentication...');
       const qpayService = getQPayService();
       const token = await qpayService['getAccessToken']();
       console.log('QPay authentication successful, token obtained');
       
-      // Use the exact same parameters as the working test endpoint
+      // Test creating a simple invoice
+      console.log('Testing QPay invoice creation...');
       const envInvoiceCode = process.env.QPAY_INVOICE_CODE || 'JAVZAN_B_INVOICE';
-      const invoiceRequest = {
+      const testInvoiceData = {
         invoice_code: envInvoiceCode,
         sender_invoice_no: `SINV${Date.now()}`,
         invoice_receiver_code: receiverCode,
@@ -87,39 +89,39 @@ export async function POST(req: NextRequest) {
         amount: numericAmount,
         callback_url: `${process.env.NEXTAUTH_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app'}/api/qpay-callback`,
         calculate_vat: false,
-        enable_expiry: false
+        enable_expiry: false,
       };
-
-      console.log('Creating real invoice with data:', invoiceRequest);
-      const qpayInvoice = await qpayService.createInvoice(invoiceRequest);
       
-      console.log('Real QPay invoice created successfully:', {
-        invoice_id: qpayInvoice.invoice_id,
-        qr_image: qpayInvoice.qr_image ? 'Generated' : 'Not generated',
-        qr_text: qpayInvoice.qr_text ? 'Generated' : 'Not generated'
+      console.log('Creating test invoice with data:', testInvoiceData);
+      const invoice = await qpayService.createInvoice(testInvoiceData);
+      
+      console.log('QPay test successful:', {
+        invoice_id: invoice.invoice_id,
+        qr_image: invoice.qr_image ? 'Generated' : 'Not generated',
+        qr_text: invoice.qr_text ? 'Generated' : 'Not generated'
       });
       
       return NextResponse.json({
         success: true,
         message: 'Real QPay invoice created successfully',
         isTestMode: false,
-        invoice_id: qpayInvoice.invoice_id,
-        qr_image: qpayInvoice.qr_image,
-        qr_text: qpayInvoice.qr_text,
-        deeplink: qpayInvoice.urls?.deeplink || qpayInvoice.qr_text,
-        web_url: qpayInvoice.urls?.web || qpayInvoice.qr_text,
-        deeplink_url: qpayInvoice.urls?.deeplink || qpayInvoice.qr_text,
+        invoice_id: invoice.invoice_id,
+        qr_image: invoice.qr_image,
+        qr_text: invoice.qr_text,
+        deeplink: invoice.urls?.deeplink || invoice.qr_text,
+        web_url: invoice.urls?.web || invoice.qr_text,
+        deeplink_url: invoice.urls?.deeplink || invoice.qr_text,
         amount: numericAmount,
         testMode: false,
         note: 'Real QPay payment - scan QR code to pay'
       });
       
-    } catch (qpayError: any) {
-      console.error('Real QPay invoice creation failed:', qpayError);
-      console.error('QPay error details:', {
-        message: qpayError.message,
-        stack: qpayError.stack,
-        name: qpayError.name
+    } catch (error: any) {
+      console.error('QPay test failed:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
       });
       console.log('Falling back to test mode...');
       // Fall back to test mode if real QPay fails
