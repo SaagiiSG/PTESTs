@@ -148,7 +148,7 @@ export default function PaymentOptionsModal({
       const requestBody = {
         amount: price || 0,
         description: `${itemType === 'test' ? 'Test' : 'Course'} Purchase: ${itemTitle}`,
-        receiverCode: 'JAVZAN_B', // Use the correct QPay merchant code
+                  receiverCode: 'PSYCHOMETRICS', // Use PSYCHOMETRICS as receiver code
         metadata: {
           itemId,
           itemType,

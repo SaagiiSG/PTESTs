@@ -138,7 +138,7 @@ function QPayPaymentContent() {
         body: JSON.stringify({
           amount: invoiceData.invoice.total_amount || invoiceData.invoice.gross_amount || 1000,
           description: invoiceData.invoice.invoice_description || 'Payment for course/test',
-          receiverCode: 'JAVZAN_B',
+          receiverCode: 'PSYCHOMETRICS',
         }),
       });
 

@@ -49,15 +49,35 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    // For real invoices, you would check with QPay here
-    // For now, return empty result
-    return NextResponse.json({
-      success: true,
-      payment: {
-        count: 0,
-        rows: []
-      }
-    });
+    // For real invoices, check with QPay
+    try {
+      console.log('Checking real QPay payment for invoice:', invoiceId);
+      
+      const { getQPayService } = await import('@/lib/qpay');
+      const qpayService = getQPayService();
+      
+      // Check payment status with QPay
+      const paymentResult = await qpayService.checkPayment(invoiceId);
+      
+      console.log('QPay payment check result:', paymentResult);
+      
+      return NextResponse.json({
+        success: true,
+        payment: paymentResult
+      });
+      
+    } catch (qpayError: any) {
+      console.error('QPay payment check failed:', qpayError);
+      
+      // Return empty result if QPay check fails
+      return NextResponse.json({
+        success: true,
+        payment: {
+          count: 0,
+          rows: []
+        }
+      });
+    }
     
   } catch (error: any) {
     console.error('Public payment check error:', error);
