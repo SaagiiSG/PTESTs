@@ -69,18 +69,15 @@ export async function POST(req: NextRequest) {
         });
       }
       
-      // If no stored payment, check with QPay Course API
-      const { getQPayCourseService } = await import('@/lib/qpay-course');
-      const qpayCourseService = getQPayCourseService();
-      
-      // Check payment status with QPay Course
-      const paymentResult = await qpayCourseService.checkPayment(invoiceId);
-      
-      console.log('QPay Course payment check result:', paymentResult);
+      // If no stored payment, return empty result (rely on callbacks as per QPay docs)
+      console.log('No stored course payment data found, relying on callbacks as per QPay documentation');
       
       return NextResponse.json({
         success: true,
-        payment: paymentResult
+        payment: {
+          count: 0,
+          rows: []
+        }
       });
       
     } catch (qpayError: any) {

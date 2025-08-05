@@ -146,7 +146,7 @@ export default function QPayPayment({
       } catch (error) {
         console.error('Payment check error:', error);
       }
-    }, 5000); // Check every 5 seconds
+    }, 2000); // Check every 2 seconds for faster callback response
 
     setCheckInterval(interval);
   };
@@ -167,7 +167,10 @@ export default function QPayPayment({
     setLastCheckTime(new Date().toLocaleTimeString());
 
     try {
-      const response = await fetch('/api/public/payment/check', {
+      // Use course-specific payment check API for course purchases
+      const checkApiEndpoint = itemType === 'course' ? '/api/public/payment/course-check' : '/api/public/payment/check';
+      
+      const response = await fetch(checkApiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ invoiceId: paymentStatus.qrData.invoice_id })

@@ -68,18 +68,15 @@ export async function POST(req: NextRequest) {
         });
       }
       
-      // If no stored payment, check with QPay API
-      const { getQPayService } = await import('@/lib/qpay');
-      const qpayService = getQPayService();
-      
-      // Check payment status with QPay
-      const paymentResult = await qpayService.checkPayment(invoiceId);
-      
-      console.log('QPay payment check result:', paymentResult);
+      // If no stored payment, return empty result (rely on callbacks as per QPay docs)
+      console.log('No stored payment data found, relying on callbacks as per QPay documentation');
       
       return NextResponse.json({
         success: true,
-        payment: paymentResult
+        payment: {
+          count: 0,
+          rows: []
+        }
       });
       
     } catch (qpayError: any) {
