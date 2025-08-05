@@ -107,13 +107,14 @@ class QPayCourseService {
     }
     
     this.baseUrl = baseUrl;
-    this.username = process.env.QPAY_COURSE_CLIENT_ID || '';
-    this.password = process.env.QPAY_COURSE_CLIENT_SECRET || '';
+    this.username = process.env.QPAY_COURSE_CLIENT_ID || process.env.QPAY_CLIENT_ID || '';
+    this.password = process.env.QPAY_COURSE_CLIENT_SECRET || process.env.QPAY_CLIENT_SECRET || '';
     
     // Validate required environment variables
     if (!this.username || !this.password) {
       console.error('QPay Course credentials not found in environment variables');
       console.error('Please set QPAY_COURSE_CLIENT_ID and QPAY_COURSE_CLIENT_SECRET in your .env.local file');
+      console.error('Falling back to general QPay credentials...');
       throw new Error('QPay Course credentials not configured. Please check your environment variables.');
     }
     

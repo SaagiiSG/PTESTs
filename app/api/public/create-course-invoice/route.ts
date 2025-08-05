@@ -4,8 +4,8 @@ import { getQPayCourseService, QPayInvoiceRequest } from '@/lib/qpay-course';
 export async function POST(req: NextRequest) {
   try {
     // Check if QPay Course credentials are properly configured
-    const qpayCourseClientSecret = process.env.QPAY_COURSE_CLIENT_SECRET;
-    const qpayCourseClientId = process.env.QPAY_COURSE_CLIENT_ID;
+    const qpayCourseClientSecret = process.env.QPAY_COURSE_CLIENT_SECRET || process.env.QPAY_CLIENT_SECRET;
+    const qpayCourseClientId = process.env.QPAY_COURSE_CLIENT_ID || process.env.QPAY_CLIENT_ID;
     
     console.log('Public create course invoice endpoint - QPay Course client secret:', qpayCourseClientSecret ? 'SET' : 'NOT_SET');
     console.log('Public create course invoice endpoint - QPay Course client ID:', qpayCourseClientId);
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       
       // Test creating a course invoice
       console.log('Testing QPay Course invoice creation...');
-      const envCourseInvoiceCode = process.env.QPAY_COURSE_INVOICE_CODE || 'PSYCHOMETRICS_COURSE_INVOICE';
+      const envCourseInvoiceCode = process.env.QPAY_COURSE_INVOICE_CODE || process.env.QPAY_INVOICE_CODE || 'PSYCHOMETRICS_INVOICE';
       const courseInvoiceData: QPayInvoiceRequest = {
         invoice_code: envCourseInvoiceCode,
         sender_invoice_no: `COURSE_INV${Date.now()}`,
