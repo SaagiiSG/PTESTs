@@ -14,6 +14,7 @@ interface QPayPaymentProps {
   description?: string;
   receiverCode?: string;
   invoiceCode?: string;
+  itemType?: 'test' | 'course';
   onSuccess?: (paymentData: any) => void;
   onError?: (error: string) => void;
   className?: string;
@@ -31,6 +32,7 @@ export default function QPayPayment({
   description: initialDescription = '',
   receiverCode: initialReceiverCode = '',
   invoiceCode,
+  itemType = 'test',
   onSuccess,
   onError,
   className = ''
@@ -71,7 +73,10 @@ export default function QPayPayment({
     setPaymentStatus({ status: 'loading' });
 
     try {
-      const response = await fetch('/api/public/create-invoice', {
+      // Use course-specific API for course purchases
+      const apiEndpoint = itemType === 'course' ? '/api/public/create-course-invoice' : '/api/public/create-invoice';
+      
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -114,7 +119,10 @@ export default function QPayPayment({
 
     const interval = setInterval(async () => {
       try {
-        const response = await fetch('/api/public/payment/check', {
+        // Use course-specific payment check API for course purchases
+        const checkApiEndpoint = itemType === 'course' ? '/api/public/payment/course-check' : '/api/public/payment/check';
+        
+        const response = await fetch(checkApiEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ invoiceId })

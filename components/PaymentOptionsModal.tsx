@@ -180,7 +180,10 @@ export default function PaymentOptionsModal({
       
       console.log('Request body:', requestBody);
       
-      const response = await fetch('/api/public/create-invoice', {
+      // Use course-specific API for course purchases
+      const apiEndpoint = itemType === 'course' ? '/api/public/create-course-invoice' : '/api/public/create-invoice';
+      
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
