@@ -3,9 +3,15 @@ import { getQPayService, QPayInvoiceRequest } from '@/lib/qpay';
 
 export async function POST(req: NextRequest) {
   try {
+    const requestBody = await req.json();
+    console.log('Received request body:', requestBody);
+    
+    const { amount, description, receiverCode, invoiceCode, invoiceId, regenerate, itemType } = requestBody;
+    
     // Check if QPay credentials are properly configured FIRST
-    const qpayClientSecret = process.env.QPAY_CLIENT_SECRET;
-    const qpayClientId = process.env.QPAY_CLIENT_ID;
+    const isCoursePayment = itemType === 'course';
+    const qpayClientSecret = isCoursePayment ? (process.env.QPAY_COURSE_CLIENT_SECRET || process.env.QPAY_CLIENT_SECRET) : process.env.QPAY_CLIENT_SECRET;
+    const qpayClientId = isCoursePayment ? (process.env.QPAY_COURSE_CLIENT_ID || process.env.QPAY_CLIENT_ID) : process.env.QPAY_CLIENT_ID;
     
     // Force real QPay mode since credentials are from QPay
     let isTestMode = false; // Force real QPay mode
@@ -13,11 +19,7 @@ export async function POST(req: NextRequest) {
     console.log('Public create invoice endpoint - QPay client secret:', qpayClientSecret ? 'SET' : 'NOT_SET');
     console.log('Public create invoice endpoint - QPay client ID:', qpayClientId);
     console.log('Test mode enabled:', isTestMode);
-
-    const requestBody = await req.json();
-    console.log('Received request body:', requestBody);
-    
-    const { amount, description, receiverCode, invoiceCode, invoiceId, regenerate } = requestBody;
+    console.log('Is course payment:', isCoursePayment);
     
     console.log('Parsed values:', {
       amount,
@@ -80,14 +82,21 @@ export async function POST(req: NextRequest) {
       
       // Test creating a simple invoice
       console.log('Testing QPay invoice creation...');
-      const envInvoiceCode = process.env.QPAY_INVOICE_CODE || 'JAVZAN_B_INVOICE';
+      const envInvoiceCode = isCoursePayment ? 
+        (process.env.QPAY_COURSE_INVOICE_CODE || process.env.QPAY_INVOICE_CODE || 'PSYCHOMETRICS_INVOICE') : 
+        (process.env.QPAY_INVOICE_CODE || 'PSYCHOMETRICS_INVOICE');
+      
+      const callbackUrl = isCoursePayment ? 
+        `${process.env.NEXTAUTH_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app'}/api/qpay-course-callback` :
+        `${process.env.NEXTAUTH_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app'}/api/qpay-callback`;
+      
       const testInvoiceData = {
         invoice_code: envInvoiceCode,
-        sender_invoice_no: `SINV${Date.now()}`,
+        sender_invoice_no: isCoursePayment ? `COURSE_INV${Date.now()}` : `SINV${Date.now()}`,
         invoice_receiver_code: receiverCode,
         invoice_description: description,
         amount: numericAmount,
-        callback_url: `${process.env.NEXTAUTH_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app'}/api/qpay-callback`,
+        callback_url: callbackUrl,
         calculate_vat: false,
         enable_expiry: false,
       };
@@ -103,7 +112,7 @@ export async function POST(req: NextRequest) {
       
       return NextResponse.json({
         success: true,
-        message: 'Real QPay invoice created successfully',
+        message: isCoursePayment ? 'Course QPay invoice created successfully' : 'Real QPay invoice created successfully',
         isTestMode: false,
         invoice_id: invoice.invoice_id,
         qr_image: invoice.qr_image,
@@ -113,7 +122,8 @@ export async function POST(req: NextRequest) {
         deeplink_url: invoice.urls?.deeplink || invoice.qr_text,
         amount: numericAmount,
         testMode: false,
-        note: 'Real QPay payment - scan QR code to pay'
+        note: isCoursePayment ? 'Course QPay payment - scan QR code to pay' : 'Real QPay payment - scan QR code to pay',
+        serviceType: isCoursePayment ? 'course' : 'general'
       });
       
     } catch (error: any) {
