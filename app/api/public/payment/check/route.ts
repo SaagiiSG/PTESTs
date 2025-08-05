@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       console.log('Test invoice detected, checking for real payment data first');
       
       // First check our stored payment data (from callback) even for test invoices
-      const { getPaymentStatus } = await import('@/lib/payment-storage');
+      const { getPaymentStatus } = await import('../../../../lib/payment-storage');
       const storedPayment = await getPaymentStatus(invoiceId);
       
       if (storedPayment && storedPayment.payment_status === 'PAID') {
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
       console.log('Checking real QPay payment for invoice:', invoiceId);
       
       // First check our stored payment data (from callback)
-      const { getPaymentStatus } = await import('@/lib/payment-storage');
+      const { getPaymentStatus } = await import('../../../../lib/payment-storage');
       const storedPayment = await getPaymentStatus(invoiceId);
       
       if (storedPayment && storedPayment.payment_status === 'PAID') {

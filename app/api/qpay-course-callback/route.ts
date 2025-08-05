@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { storePaymentStatus } from '@/lib/payment-storage';
+import { storePaymentStatus } from '../../../lib/payment-storage';
 
 export async function POST(req: NextRequest) {
   try {
     console.log('=== QPay Course Callback Received ===');
     console.log('Request URL:', req.url);
     console.log('Request method:', req.method);
-    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+    console.log('Request headers:', Object.fromEntries(req.headers.entries?.() || []));
     
     const callbackData = await req.json();
     console.log('QPay Course callback received:', JSON.stringify(callbackData, null, 2));
