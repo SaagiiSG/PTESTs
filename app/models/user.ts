@@ -7,6 +7,10 @@ export interface IUser extends Document {
   email?: string;
   age?: number;
   gender?: string;
+  dateOfBirth?: Date;
+  education?: string;
+  family?: string;
+  position?: string;
   verificationCode?: string;
   isPhoneVerified?: boolean;
   verificationCodeExpires?: Date;
@@ -27,6 +31,10 @@ const UserSchema: Schema = new Schema({
   email: { type: String, required: false, unique: true, sparse: true },
   age: { type: Number },
   gender: { type: String },
+  dateOfBirth: { type: Date },
+  education: { type: String },
+  family: { type: String },
+  position: { type: String },
   verificationCode: { type: String },
   isPhoneVerified: { type: Boolean, default: false },
   verificationCodeExpires: { type: Date },

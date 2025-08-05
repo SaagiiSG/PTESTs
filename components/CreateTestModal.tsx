@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Upload, Plus, BookOpen, DollarSign, Image as ImageIcon, Code, Languages, X, Star, Brain, Stethoscope, User } from "lucide-react";
+import { useLanguage } from '@/lib/language';
 
 interface CreateTestModalProps {
   isOpen: boolean;
@@ -15,7 +16,8 @@ interface CreateTestModalProps {
 }
 
 export default function CreateTestModal({ isOpen, onClose, onSuccess }: CreateTestModalProps) {
-  const [title, setTitle] = useState("");
+  const [titleMn, setTitleMn] = useState("");
+  const [titleEn, setTitleEn] = useState("");
   const [descriptionMn, setDescriptionMn] = useState("");
   const [descriptionEn, setDescriptionEn] = useState("");
   const [testType, setTestType] = useState<'Talent' | 'Aptitude' | 'Clinic' | 'Personality'>('Talent');
@@ -26,6 +28,7 @@ export default function CreateTestModal({ isOpen, onClose, onSuccess }: CreateTe
   const [uniqueCodes, setUniqueCodes] = useState("");
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
+  const { language } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +38,7 @@ export default function CreateTestModal({ isOpen, onClose, onSuccess }: CreateTe
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title,
+          title: { mn: titleMn, en: titleEn },
           description: { mn: descriptionMn, en: descriptionEn },
           testType,
           embedCode,
@@ -50,7 +53,8 @@ export default function CreateTestModal({ isOpen, onClose, onSuccess }: CreateTe
       if (res.ok) {
         toast.success("Test created successfully!");
         // Reset form
-        setTitle("");
+        setTitleMn("");
+        setTitleEn("");
         setDescriptionMn("");
         setDescriptionEn("");
         setTestType('Talent');
@@ -146,17 +150,31 @@ export default function CreateTestModal({ isOpen, onClose, onSuccess }: CreateTe
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title" className="text-sm font-medium">Test Title *</Label>
+                  <Label htmlFor="titleEn" className="text-sm font-medium">Test Title (English) *</Label>
                   <Input
-                    id="title"
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                    placeholder="Enter test title"
+                    id="titleEn"
+                    value={titleEn}
+                    onChange={e => setTitleEn(e.target.value)}
+                    placeholder="Enter test title in English"
                     required
                     className="h-10"
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="titleMn" className="text-sm font-medium">Test Title (Монгол) *</Label>
+                  <Input
+                    id="titleMn"
+                    value={titleMn}
+                    onChange={e => setTitleMn(e.target.value)}
+                    placeholder="Тестийн нэрийг монгол хэлээр оруулна уу"
+                    required
+                    className="h-10"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="price" className="text-sm font-medium">Price (₮) *</Label>
                   <div className="relative">
@@ -258,12 +276,12 @@ export default function CreateTestModal({ isOpen, onClose, onSuccess }: CreateTe
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="descriptionMn" className="text-sm font-medium">Description (Mongolian) *</Label>
+                    <Label htmlFor="descriptionEn" className="text-sm font-medium">Description (English) *</Label>
                     <Textarea
-                      id="descriptionMn"
-                      value={descriptionMn}
-                      onChange={e => setDescriptionMn(e.target.value)}
-                      placeholder="Describe the test in Mongolian..."
+                      id="descriptionEn"
+                      value={descriptionEn}
+                      onChange={e => setDescriptionEn(e.target.value)}
+                      placeholder="Describe the test in English..."
                       required
                       rows={3}
                       className="resize-none"
@@ -271,12 +289,12 @@ export default function CreateTestModal({ isOpen, onClose, onSuccess }: CreateTe
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="descriptionEn" className="text-sm font-medium">Description (English) *</Label>
+                    <Label htmlFor="descriptionMn" className="text-sm font-medium">Description (Монгол) *</Label>
                     <Textarea
-                      id="descriptionEn"
-                      value={descriptionEn}
-                      onChange={e => setDescriptionEn(e.target.value)}
-                      placeholder="Describe the test in English..."
+                      id="descriptionMn"
+                      value={descriptionMn}
+                      onChange={e => setDescriptionMn(e.target.value)}
+                      placeholder="Тестийн тайлбарыг монгол хэлээр бичнэ үү..."
                       required
                       rows={3}
                       className="resize-none"
@@ -325,31 +343,17 @@ export default function CreateTestModal({ isOpen, onClose, onSuccess }: CreateTe
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="thumbnail" className="text-sm font-medium">Upload Image</Label>
-                  <div className="relative">
-                    <Input
-                      id="thumbnail"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleThumbnailChange}
-                      className="h-10"
-                    />
-                    <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="thumbnailUrl" className="text-sm font-medium">Or Enter URL</Label>
+              <div className="space-y-2">
+                <Label htmlFor="thumbnail" className="text-sm font-medium">Upload Image</Label>
+                <div className="relative">
                   <Input
-                    id="thumbnailUrl"
-                    value={thumbnailUrl}
-                    onChange={e => setThumbnailUrl(e.target.value)}
-                    placeholder="https://example.com/image.jpg"
-                    type="url"
+                    id="thumbnail"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleThumbnailChange}
                     className="h-10"
                   />
+                  <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 </div>
               </div>
 

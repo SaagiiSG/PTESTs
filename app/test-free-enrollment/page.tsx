@@ -18,6 +18,12 @@ export default function TestFreeEnrollmentPage() {
     } else {
       toast.success('Free test enrolled successfully!');
     }
+    
+    // The PaymentOptionsModal will handle the redirect automatically
+    // But we can also add a fallback redirect here for consistency
+    setTimeout(() => {
+      window.location.href = `/test-embed/688c75c1a2543bde0884458f`;
+    }, 1000);
   };
 
   const handleError = (error: string) => {

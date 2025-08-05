@@ -10,6 +10,8 @@ import AdminPageWrapper from '@/components/AdminPageWrapper';
 import { fetchTests } from '@/lib/api';
 import { toast } from 'sonner';
 import TestCard from '@/components/testCard';
+import { useLanguage } from '@/lib/language';
+import { getLocalizedTitle } from '@/lib/utils';
 
 function TestsPageContent() {
   const [tests, setTests] = useState<any[]>([]);
@@ -18,6 +20,7 @@ function TestsPageContent() {
   const [activeActions, setActiveActions] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTestType, setSelectedTestType] = useState<string>('all');
+  const { language } = useLanguage();
 
   useEffect(() => {
     loadTests();
@@ -83,8 +86,9 @@ function TestsPageContent() {
 
   // Filter tests based on search and test type
   const filteredTests = tests.filter(test => {
+    const localizedTitle = getLocalizedTitle(test.title, language);
     const matchesSearch = !searchTerm || 
-      test.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      localizedTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
       test.description?.en?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       test.description?.mn?.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -327,7 +331,7 @@ function TestsPageContent() {
                 </div>
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-lg line-clamp-1">{test.title}</h3>
+                    <h3 className="font-semibold text-lg line-clamp-1">{getLocalizedTitle(test.title, language)}</h3>
                     <div className="relative actions-container">
                       <Button 
                         variant="ghost" 

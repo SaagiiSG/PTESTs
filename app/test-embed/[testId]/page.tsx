@@ -7,8 +7,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield, Lock, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { use } from 'react';
 
-export default function TestEmbedPage({ params }: { params: { testId: string } }) {
+export default function TestEmbedPage({ params }: { params: Promise<{ testId: string }> }) {
+  const resolvedParams = use(params);
   const [embedCode, setEmbedCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
@@ -20,13 +22,13 @@ export default function TestEmbedPage({ params }: { params: { testId: string } }
   useEffect(() => {
     const checkAccessAndLoadEmbed = async () => {
       try {
-        console.log('🔍 Checking access for test:', params.testId);
+        console.log('🔍 Checking access for test:', resolvedParams.testId);
         
         // First check if user has access to this test
         const accessRes = await fetch('/api/verify-purchase', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ testId: params.testId }),
+          body: JSON.stringify({ testId: resolvedParams.testId }),
         });
 
         console.log('Access check response status:', accessRes.status);
@@ -41,7 +43,7 @@ export default function TestEmbedPage({ params }: { params: { testId: string } }
           if (accessData.hasAccess) {
             console.log('✅ User has access, loading embed code...');
             // User has access, load the embed code
-            const embedRes = await fetch(`/api/protected-tests/${params.testId}/embed`);
+            const embedRes = await fetch(`/api/protected-tests/${resolvedParams.testId}/embed`);
             
             console.log('Embed API response status:', embedRes.status);
             
@@ -59,7 +61,7 @@ export default function TestEmbedPage({ params }: { params: { testId: string } }
             console.log('❌ User does not have access');
             // TEMPORARY: Bypass access check for testing
             console.log('🔄 TEMPORARY: Bypassing access check for testing...');
-            const embedRes = await fetch(`/api/protected-tests/${params.testId}/embed`);
+            const embedRes = await fetch(`/api/protected-tests/${resolvedParams.testId}/embed`);
             if (embedRes.ok) {
               const embedData = await embedRes.json();
               console.log('Embed data received (bypass):', embedData);
@@ -87,7 +89,7 @@ export default function TestEmbedPage({ params }: { params: { testId: string } }
       setLoading(false);
       setCheckingAccess(false);
     }
-  }, [params.testId, session]);
+  }, [resolvedParams.testId, session]);
 
   if (loading || checkingAccess) {
     return (
@@ -131,7 +133,7 @@ export default function TestEmbedPage({ params }: { params: { testId: string } }
             </p>
             <div className="space-y-2">
               <Button 
-                onClick={() => router.push(`/ptests/${params.testId}`)} 
+                onClick={() => router.push(`/ptests/${resolvedParams.testId}`)} 
                 className="w-full"
               >
                 View Test Details
@@ -152,51 +154,36 @@ export default function TestEmbedPage({ params }: { params: { testId: string } }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link href="/Tests" className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                Back to Tests
-              </Link>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Shield className="w-5 h-5 text-green-500" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">Protected Test</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Test Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full">
+        {/* Back Button */}
+        <div className="absolute top-4 left-4 z-100">
+          <Link href="/Tests" className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 rounded-lg px-3 py-2 shadow-lg">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            <span className="text-sm">Back</span>
+          </Link>
+        </div>
+
         {/* Unique Code Display */}
         {uniqueCode && (
-          <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
-                  <span className="text-green-600 dark:text-green-400 text-sm font-bold">✓</span>
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-green-800 dark:text-green-300">Your Access Code</h3>
-                  <p className="text-xs text-green-600 dark:text-green-400">Use this code to access your test results</p>
-                </div>
+          <div className="absolute top-4 z-10  w-screen flex items-center justify-center gap-2 ">
+            <div className="w-fit flex items-center space-x-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+              <div className="w-6 h-6 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
+                <span className="text-green-600 dark:text-green-400 text-xs font-bold">✓</span>
               </div>
-              <div className="text-right">
-                <div className="text-lg font-mono font-bold text-green-700 dark:text-green-300 bg-white dark:bg-gray-800 px-3 py-1 rounded border border-green-300 dark:border-green-700">
+              <div className="flex gap-1 items-center">
+                <h3 className="text-xs font-semibold text-green-800 dark:text-green-300">Access Code: </h3>
+                <div className="text-sm font-mono font-bold text-green-700 dark:text-green-300 bg-white dark:bg-gray-800 px-2 py-1 rounded border border-green-300 dark:border-green-700">
                   {uniqueCode}
                 </div>
                 <button 
                   onClick={() => {
                     navigator.clipboard.writeText(uniqueCode);
-                    toast.success('Access code copied to clipboard!');
+                    toast.success('Access code copied!');
                   }}
-                  className="text-xs text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200 mt-1 underline"
+                  className="text-xs text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200 mt-1 underline ml-3"
                 >
-                  Copy Code
+                  Copy
                 </button>
               </div>
             </div>
@@ -205,30 +192,8 @@ export default function TestEmbedPage({ params }: { params: { testId: string } }
 
         {embedCode ? (
           <div 
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden p-8"
-            style={{
-              userSelect: 'none',
-              WebkitUserSelect: 'none',
-              MozUserSelect: 'none',
-              msUserSelect: 'none'
-            }}
-            onContextMenu={(e) => e.preventDefault()}
-            ref={(el) => {
-              if (el && embedCode) {
-                el.innerHTML = embedCode;
-                // Execute any scripts in the embed code
-                const scripts = el.querySelectorAll('script');
-                scripts.forEach(script => {
-                  const newScript = document.createElement('script');
-                  if (script.src) {
-                    newScript.src = script.src;
-                  } else {
-                    newScript.textContent = script.textContent;
-                  }
-                  document.head.appendChild(newScript);
-                });
-              }
-            }}
+            className="w-full h-screen"
+            dangerouslySetInnerHTML={{ __html: embedCode }}
           />
         ) : (
           <div className="text-center py-12">
@@ -237,6 +202,7 @@ export default function TestEmbedPage({ params }: { params: { testId: string } }
             <p className="text-sm text-gray-500 mt-2">Debug: hasAccess={hasAccess.toString()}, embedCode={embedCode ? 'exists' : 'null'}</p>
           </div>
         )}
+        
       </div>
     </div>
   );

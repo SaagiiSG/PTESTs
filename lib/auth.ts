@@ -50,15 +50,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       try {
         await connectMongoose();
 
-        let dbUser = await User.findOne({ email: user.email }) || await User.findOne({ phoneNumber: user.phoneNumber });
+        const customUser = user as any;
+        let dbUser = await User.findOne({ email: customUser.email }) || await User.findOne({ phoneNumber: customUser.phoneNumber });
 
         if (!dbUser && account?.provider === 'google') {
           dbUser = await User.create({
-            name: user.name || 'Unnamed',
-            email: user.email,
+            name: customUser.name || 'Unnamed',
+            email: customUser.email,
           });
-        } else if (!dbUser && user.phoneNumber) {
-          dbUser = await User.findOne({ phoneNumber: user.phoneNumber });
+        } else if (!dbUser && customUser.phoneNumber) {
+          dbUser = await User.findOne({ phoneNumber: customUser.phoneNumber });
           if (!dbUser) {
             throw new Error('User not found after phone verification');
           }
@@ -66,7 +67,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error('User not found');
         }
 
-        user._id = dbUser._id;
+        customUser._id = dbUser._id;
         console.log('SIGNIN CALLBACK - returning true for user:', { id: dbUser._id, name: dbUser.name, isAdmin: dbUser.isAdmin });
         return true;
       } catch (error) {
@@ -77,7 +78,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user, trigger }) {
       console.log('JWT CALLBACK - trigger:', trigger);
       console.log('JWT CALLBACK - user:', user ? { id: (user as any)._id, email: (user as any).email, phoneNumber: (user as any).phoneNumber, isAdmin: (user as any).isAdmin } : 'no user');
-      console.log('JWT CALLBACK - token before:', { id: token.id, email: token.email, phoneNumber: token.phoneNumber, isAdmin: token.isAdmin });
+      console.log('JWT CALLBACK - token before:', { id: token.id, email: token.email, phoneNumber: (token as any).phoneNumber, isAdmin: (token as any).isAdmin });
       
       if (user) {
         const customUser = user as any;
@@ -95,19 +96,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       
       // If no user is provided, return the existing token
-      console.log('JWT CALLBACK - token after (no user):', { id: token.id, email: token.email, phoneNumber: token.phoneNumber, isAdmin: token.isAdmin });
+      console.log('JWT CALLBACK - token after (no user):', { id: token.id, email: token.email, phoneNumber: (token as any).phoneNumber, isAdmin: (token as any).isAdmin });
       return token;
     },
     async session({ session, token }) {
-      console.log('SESSION CALLBACK - token:', { id: token.id, email: token.email, phoneNumber: token.phoneNumber, isAdmin: token.isAdmin });
+      console.log('SESSION CALLBACK - token:', { id: token.id, email: token.email, phoneNumber: (token as any).phoneNumber, isAdmin: (token as any).isAdmin });
       
       try {
         await connectMongoose();
 
       // Always look up the user by phone number or email to ensure we get the correct user
       let dbUser = null;
-      if (token?.phoneNumber) {
-        dbUser = await User.findOne({ phoneNumber: token.phoneNumber });
+      if ((token as any)?.phoneNumber) {
+        dbUser = await User.findOne({ phoneNumber: (token as any).phoneNumber });
         console.log('SESSION CALLBACK - found user by phoneNumber:', dbUser ? { id: dbUser._id, name: dbUser.name, isAdmin: dbUser.isAdmin } : 'not found');
       } else if (token?.email) {
         dbUser = await User.findOne({ email: token.email });
@@ -116,11 +117,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       if (dbUser) {
         session.user.id = String(dbUser._id);
-        const needsSetup = !dbUser.age || !dbUser.gender || !dbUser.phoneNumber;
+        // Check if profile is complete with new fields
+        const needsSetup = !dbUser.name || !dbUser.dateOfBirth || !dbUser.gender || !dbUser.education || !dbUser.family || !dbUser.position;
         (session.user as any).needsProfileSetup = needsSetup;
         (session.user as any).name = dbUser.name;
-        (session.user as any).age = dbUser.age;
+        (session.user as any).dateOfBirth = dbUser.dateOfBirth;
         (session.user as any).gender = dbUser.gender;
+        (session.user as any).education = dbUser.education;
+        (session.user as any).family = dbUser.family;
+        (session.user as any).position = dbUser.position;
         (session.user as any).email = dbUser.email;
         (session.user as any).phoneNumber = dbUser.phoneNumber;
         (session.user as any).isAdmin = dbUser.isAdmin;

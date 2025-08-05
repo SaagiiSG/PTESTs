@@ -17,10 +17,13 @@ import {
   Shield, 
   CreditCard,
   CheckCircle,
-  X
+  X,
+  Gift
 } from 'lucide-react';
 import { toast } from 'sonner';
 import PaymentOptionsModal from '@/components/PaymentOptionsModal';
+import { useLanguage } from '@/lib/language';
+import { getLocalizedTitle } from '@/lib/utils';
 
 export default function TestDetailPage({ params }: { params: { slug: string } }) {
   console.log('TestDetailPage params:', params);
@@ -38,6 +41,7 @@ export default function TestDetailPage({ params }: { params: { slug: string } })
   const [hasAccess, setHasAccess] = useState(false);
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const { language } = useLanguage();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -124,6 +128,12 @@ export default function TestDetailPage({ params }: { params: { slug: string } })
     } else {
       toast.success('Payment successful! You now have access to this test.');
     }
+    
+    // For free tests, redirect directly to the test start page
+    if (test && test.price === 0) {
+      console.log('Free test purchased, redirecting to test start page:', `/test-embed/${params.slug}`);
+      router.push(`/test-embed/${params.slug}`);
+    }
   };
 
   const handlePaymentError = (error: string) => {
@@ -181,7 +191,7 @@ export default function TestDetailPage({ params }: { params: { slug: string } })
             </div>
             
             <CardContent className="p-6">
-              <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{test.title}</CardTitle>
+              <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{getLocalizedTitle(test.title, language)}</CardTitle>
               <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">{test.description?.en}</p>
               
               {/* Test Stats */}
@@ -215,6 +225,69 @@ export default function TestDetailPage({ params }: { params: { slug: string } })
                     
                     <Button 
                       onClick={() => router.push(`/test-embed/${params.slug}`)}
+                      className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg"
+                    >
+                      Start Test
+                      <Play className="w-5 h-5 ml-2" />
+                    </Button>
+                  </div>
+                ) : test.price === 0 ? (
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-3">
+                      <Gift className="w-6 h-6 text-green-600 dark:text-green-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-green-700 dark:text-green-300 mb-2">Free Test!</h3>
+                    <p className="text-green-600 dark:text-green-400 text-sm mb-4">This test is completely free. Click to start!</p>
+                    <Button 
+                      onClick={async () => {
+                        if (!session?.user?.id) {
+                          toast.error('Please log in to enroll in this test');
+                          return;
+                        }
+                        
+                        try {
+                          console.log('Directly enrolling in free test:', params.slug);
+                          
+                          const response = await fetch('/api/public/purchase-free', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              itemId: params.slug,
+                              itemType: 'test',
+                              amount: 0,
+                              paymentMethod: 'free'
+                            }),
+                          });
+
+                          if (response.ok) {
+                            const data = await response.json();
+                            console.log('Free enrollment successful:', data);
+                            
+                            if (data.uniqueCode) {
+                              toast.success(`Free test enrolled! Your unique code: ${data.uniqueCode}`);
+                            } else {
+                              toast.success('Free test enrolled successfully!');
+                            }
+                            
+                            // Redirect directly to test start page
+                            router.push(`/test-embed/${params.slug}`);
+                          } else {
+                            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                            console.error('Free enrollment failed:', errorData);
+                            
+                            if (errorData.message === 'Test already purchased.') {
+                              // If already purchased, just redirect to test start page
+                              toast.success('You already have access to this test!');
+                              router.push(`/test-embed/${params.slug}`);
+                            } else {
+                              toast.error(errorData.message || 'Failed to enroll in free test');
+                            }
+                          }
+                        } catch (error) {
+                          console.error('Error enrolling in free test:', error);
+                          toast.error('Failed to enroll in free test');
+                        }
+                      }}
                       className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg"
                     >
                       Start Test
@@ -269,8 +342,14 @@ export default function TestDetailPage({ params }: { params: { slug: string } })
                 </div>
                 <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <span className="text-gray-600 dark:text-gray-300">Access Status</span>
-                  <span className={`font-semibold ${hasAccess ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                    {hasAccess ? 'Unlocked' : 'Locked'}
+                  <span className={`font-semibold ${
+                    hasAccess 
+                      ? 'text-green-600 dark:text-green-400' 
+                      : test.price === 0 
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-red-600 dark:text-red-400'
+                  }`}>
+                    {hasAccess ? 'Unlocked' : test.price === 0 ? 'Free' : 'Locked'}
                   </span>
                 </div>
               </div>

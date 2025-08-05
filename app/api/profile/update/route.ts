@@ -24,9 +24,13 @@ export async function POST(req: Request) {
       email: data.email,
       age: data.age,
       gender: data.gender,
+      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
+      education: data.education,
+      family: data.family,
+      position: data.position,
     },
     { new: true }
-  ).lean();
+  ).lean() as any;
 
   if (!user) {
     return NextResponse.json(
@@ -41,5 +45,9 @@ export async function POST(req: Request) {
     phoneNumber: user.phoneNumber,
     age: user.age,
     gender: user.gender,
+    dateOfBirth: user.dateOfBirth,
+    education: user.education,
+    family: user.family,
+    position: user.position,
   });
 }

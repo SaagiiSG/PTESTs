@@ -32,6 +32,10 @@ export async function GET(req: Request) {
     phoneNumber: user.phoneNumber,
     age: user.age,
     gender: user.gender,
+    dateOfBirth: user.dateOfBirth,
+    education: user.education,
+    family: user.family,
+    position: user.position,
     isAdmin: user.isAdmin || false,
     purchasedCourses: user.purchasedCourses || [],
   });

@@ -120,6 +120,8 @@ export default function PaymentOptionsModal({
     try {
       // Handle free items
       if (!price || price === 0 || price === null || price === undefined) {
+        console.log('Processing free enrollment for:', { itemId, itemType, userId: session.user.id });
+        
         // For free items, directly mark as purchased
         const purchaseResponse = await fetch('/api/public/purchase-free', {
           method: 'POST',
@@ -132,13 +134,32 @@ export default function PaymentOptionsModal({
           }),
         });
 
+        console.log('Free purchase response status:', purchaseResponse.status);
+        
         if (purchaseResponse.ok) {
+          const responseData = await purchaseResponse.json();
+          console.log('Free purchase response data:', responseData);
+          
+          // Call onSuccess with the response data and unique code if available
+          onSuccess?.(responseData, responseData.uniqueCode);
           toast.success('Free item purchased successfully!');
-          onSuccess?.();
+          
+          // For free tests, redirect directly to the test start page
+          if (itemType === 'test') {
+            console.log('Redirecting to test start page:', `/test-embed/${itemId}`);
+            router.push(`/test-embed/${itemId}`);
+          } else if (itemType === 'course') {
+            // For courses, redirect to the course page
+            console.log('Redirecting to course page:', `/Course/${itemId}`);
+            router.push(`/Course/${itemId}`);
+          }
+          
           onClose();
           return;
         } else {
-          throw new Error('Failed to purchase free item');
+          const errorData = await purchaseResponse.json().catch(() => ({ message: 'Unknown error' }));
+          console.error('Free purchase failed:', errorData);
+          throw new Error(errorData.message || 'Failed to purchase free item');
         }
       }
 
@@ -148,7 +169,7 @@ export default function PaymentOptionsModal({
       const requestBody = {
         amount: price || 0,
         description: `${itemType === 'test' ? 'Test' : 'Course'} Purchase: ${itemTitle}`,
-                  receiverCode: 'PSYCHOMETRICS', // Use PSYCHOMETRICS as receiver code
+        receiverCode: 'PSYCHOMETRICS', // Use PSYCHOMETRICS as receiver code
         metadata: {
           itemId,
           itemType,
@@ -176,6 +197,7 @@ export default function PaymentOptionsModal({
       onClose();
 
     } catch (error: any) {
+      console.error('Payment error:', error);
       const errorMessage = error.message || 'Failed to initiate payment';
       toast.error(errorMessage);
       onError?.(errorMessage);

@@ -59,6 +59,16 @@ export default function CourseDetailPage({ params }: { params: Promise<{ courseI
   const handlePaymentSuccess = (paymentData: any) => {
     setIsPurchased(true);
     toast.success('Payment successful! You now have access to this course.');
+    
+    // For free courses, the PaymentOptionsModal will handle the redirect automatically
+    // But we can also add a fallback redirect here for consistency
+    if (course && course.price === 0) {
+      console.log('Free course purchased, redirecting to course page:', `/Course/${resolvedParams?.courseId}`);
+      // The PaymentOptionsModal will handle this redirect, but we can add a fallback
+      setTimeout(() => {
+        window.location.href = `/Course/${resolvedParams?.courseId}`;
+      }, 1000);
+    }
   };
 
   const handlePaymentError = (error: string) => {
@@ -223,6 +233,38 @@ export default function CourseDetailPage({ params }: { params: Promise<{ courseI
                         <div className="text-center space-y-2">
                           <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
                             <span>One-time payment</span>
+                            <span>•</span>
+                            <span>Lifetime access</span>
+                          </p>
+                          <div className="flex items-center justify-center gap-4 text-xs text-gray-400 dark:text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              {courseStats.students} students
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Award className="w-3 h-3" />
+                              {courseStats.completionRate}% completion
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Free Course Section */}
+                    {course.price === 0 && !isPurchased && (
+                      <div className="space-y-4">
+                        <Button 
+                          onClick={() => setShowPaymentModal(true)}
+                          className="my-3 mb-5 w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                        >
+                          <span className="flex items-center gap-2">
+                            <Play className="w-5 h-5" />
+                            Start Course - Free!
+                          </span>
+                        </Button>
+                        <div className="text-center space-y-2">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
+                            <span>100% Free</span>
                             <span>•</span>
                             <span>Lifetime access</span>
                           </p>

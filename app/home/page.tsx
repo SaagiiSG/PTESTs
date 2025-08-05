@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import LangToggle from '@/components/LangToggle';
 import { useLanguage } from '@/lib/language';
+import { getLocalizedTitle } from '@/lib/utils';
 import { BookOpen, GraduationCap, Star, Brain, Stethoscope, User } from 'lucide-react';
 
 async function fetchProtectedTestsClient() {
@@ -49,7 +50,7 @@ export default function HomePage() {
   const [loadingPurchasedCourses, setLoadingPurchasedCourses] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [contentLoaded, setContentLoaded] = useState(false);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   // Check if user profile is complete
   const isProfileComplete = (user: any) => {
@@ -60,8 +61,8 @@ export default function HomePage() {
       return true; // Admin users are considered complete
     }
     
-    // Regular users need name, age, and gender
-    return user.name && user.age && user.gender;
+    // Regular users need name, dateOfBirth, gender, education, family, and position
+    return user.name && user.dateOfBirth && user.gender && user.education && user.family && user.position;
   };
 
   useEffect(() => {
@@ -424,7 +425,7 @@ export default function HomePage() {
                         <div key={test.id || index} className="stagger-item">
                           <TestCard
                             _id={test.id}
-                            title={test.title}
+                            title={getLocalizedTitle(test.title, language)}
                             description={test.description}
                             slug={test.id}
                             thumbnailUrl={test.thumbnailUrl}

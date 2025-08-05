@@ -3,6 +3,7 @@ import { connectMongoose } from "@/lib/mongodb";
 import User from "@/app/models/user";
 import Course from "@/app/models/course";
 import Test from "@/app/models/tests";
+import Purchase from "@/app/models/purchase";
 import { auth } from "@/auth";
 import { getPaymentStatus } from "@/lib/payment-storage";
 import Payment from "@/app/models/payment";
@@ -79,8 +80,16 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: "Course already purchased." }, { status: 409 });
       }
       
+      // Update user model (fast access)
       user.purchasedCourses.push(finalCourseId);
       await user.save();
+      
+      // Create purchase record (analytics and history)
+      await Purchase.create({
+        user: session.user.id,
+        course: finalCourseId,
+        purchasedAt: new Date()
+      });
       
       console.log(`Course purchase recorded: ${finalCourseId} for user ${session.user.id}`);
       
@@ -120,9 +129,16 @@ export async function POST(req: Request) {
         }
       }
       
-      // Add test to user's purchased tests
+      // Update user model (fast access)
       user.purchasedTests.push(finalTestId);
       await user.save();
+      
+      // Create purchase record (analytics and history)
+      await Purchase.create({
+        user: session.user.id,
+        test: finalTestId,
+        purchasedAt: new Date()
+      });
       
       console.log(`Test purchase recorded: ${finalTestId} for user ${session.user.id}`);
       

@@ -23,7 +23,8 @@ import {
   Timer,
   ArrowRight,
   Lock,
-  CreditCard
+  CreditCard,
+  Gift
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import PaymentOptionsModal from './PaymentOptionsModal';
@@ -147,16 +148,77 @@ const TestCard: React.FC<TestCardProps> = ({
     } else {
       toast.success('Payment successful! You now have access to this test.');
     }
-    // Refresh the page or update the UI to show access
-    window.location.reload();
+    
+    // For free tests, redirect directly to the test start page
+    if (price === 0) {
+      console.log('Free test purchased, redirecting to test start page:', `/test-embed/${_id}`);
+      window.location.href = `/test-embed/${_id}`;
+    } else {
+      // For paid tests, refresh the page to update the UI
+      window.location.reload();
+    }
   };
 
   const handlePaymentError = (error: string) => {
     toast.error(`Payment failed: ${error}`);
   };
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    if (!hasAccess && (price !== undefined && price !== null)) {
+  const handleCardClick = async (e: React.MouseEvent) => {
+    // For free tests, directly enroll and redirect to test start page
+    if (price === 0 && !hasAccess) {
+      e.preventDefault();
+      if (!session?.user?.id) {
+        toast.error('Please log in to enroll in this test');
+        return;
+      }
+      
+      try {
+        console.log('Directly enrolling in free test:', _id);
+        
+        const response = await fetch('/api/public/purchase-free', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            itemId: _id,
+            itemType: 'test',
+            amount: 0,
+            paymentMethod: 'free'
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Free enrollment successful:', data);
+          
+          if (data.uniqueCode) {
+            toast.success(`Free test enrolled! Your unique code: ${data.uniqueCode}`);
+          } else {
+            toast.success('Free test enrolled successfully!');
+          }
+          
+          // Redirect directly to test start page
+          window.location.href = `/test-embed/${_id}`;
+        } else {
+          const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+          console.error('Free enrollment failed:', errorData);
+          
+          if (errorData.message === 'Test already purchased.') {
+            // If already purchased, just redirect to test start page
+            toast.success('You already have access to this test!');
+            window.location.href = `/test-embed/${_id}`;
+          } else {
+            toast.error(errorData.message || 'Failed to enroll in free test');
+          }
+        }
+      } catch (error) {
+        console.error('Error enrolling in free test:', error);
+        toast.error('Failed to enroll in free test');
+      }
+      return;
+    }
+    
+    // For paid tests or tests user already has access to, use existing logic
+    if (!hasAccess && (price !== undefined && price !== null && price > 0)) {
       e.preventDefault();
       if (!session?.user?.id) {
         toast.error('Please log in to purchase this test');
@@ -371,7 +433,7 @@ const TestCard: React.FC<TestCardProps> = ({
                       {/* Access Status Badge */}
                       {price && (
                         <Badge className={`font-medium px-3 py-1.5 text-xs flex items-center gap-1.5 ${
-                          hasAccess 
+                          hasAccess || price === 0
                             ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800' 
                             : 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'
                         }`}>
@@ -379,6 +441,11 @@ const TestCard: React.FC<TestCardProps> = ({
                             <>
                               <Play className="w-3 h-3" />
                               Available
+                            </>
+                          ) : price === 0 ? (
+                            <>
+                              <Gift className="w-3 h-3" />
+                              Free
                             </>
                           ) : (
                             <>
@@ -402,12 +469,17 @@ const TestCard: React.FC<TestCardProps> = ({
                     {variant === "featured" && (
                       <Button 
                         className={`px-6 py-2 rounded-lg font-medium transition-all duration-300 transform group-hover:scale-105 ${
-                          hasAccess 
+                          hasAccess || price === 0
                             ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white' 
                             : 'bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white'
                         }`}
                       >
                         {hasAccess ? (
+                          <>
+                            Start Test
+                            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                          </>
+                        ) : price === 0 ? (
                           <>
                             Start Test
                             <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />

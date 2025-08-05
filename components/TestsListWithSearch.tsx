@@ -5,6 +5,7 @@ import TestCard from '@/components/testCard';
 import TestCardSkeleton from '@/components/home/TestCardsSkeleton';
 import { Search, Star, Brain, Stethoscope, User, BookOpen, TrendingUp, Clock, Award } from 'lucide-react';
 import { useLanguage } from '@/lib/language';
+import { getLocalizedTitle } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useSession } from 'next-auth/react';
@@ -28,7 +29,7 @@ interface Test {
 }
 
 export default function TestsListWithSearch() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { data: session } = useSession();
   const [tests, setTests] = useState<Test[]>([]);
   const [search, setSearch] = useState('');
@@ -304,7 +305,7 @@ export default function TestsListWithSearch() {
             <div key={test.id} className="stagger-item">
               <TestCard
                 _id={test._id || test.id}
-                title={test.title}
+                title={getLocalizedTitle(test.title, language)}
                 description={test.description}
                 slug={test._id || test.id}
                 thumbnailUrl={test.thumbnailUrl}

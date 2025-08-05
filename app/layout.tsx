@@ -6,6 +6,7 @@ import { LanguageProvider } from "@/lib/language";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import Footer from "@/components/footer";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -49,7 +50,7 @@ export default function RootLayout({
       <head>
         <meta
           httpEquiv="Content-Security-Policy"
-          content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.youtube.com https://player.vimeo.com https://psychometricsmongolia-my.sharepoint.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' https: blob:; frame-src 'self' https://www.youtube.com https://player.vimeo.com https://psychometricsmongolia-my.sharepoint.com; connect-src 'self' https:; worker-src 'self' blob:;"
+          content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.youtube.com https://player.vimeo.com https://psychometricsmongolia-my.sharepoint.com https://take.quiz-maker.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' https: blob:; frame-src 'self' https://www.youtube.com https://player.vimeo.com https://psychometricsmongolia-my.sharepoint.com https://take.quiz-maker.com; connect-src 'self' https:; worker-src 'self' blob:;"
         />
         <script
           dangerouslySetInnerHTML={{
@@ -93,7 +94,12 @@ export default function RootLayout({
               disableTransitionOnChange
             >
               <LanguageProvider>
-                {children}
+                <div className="flex flex-col min-h-screen">
+                  <main className="flex-1">
+                    {children}
+                  </main>
+                  <Footer />
+                </div>
                 <Toaster richColors position="top-center" />
               </LanguageProvider>
             </ThemeProvider>
