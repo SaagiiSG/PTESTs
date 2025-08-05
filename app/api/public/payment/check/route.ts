@@ -49,10 +49,26 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    // For real invoices, check with QPay
+    // For real invoices, check with QPay and our stored payment data
     try {
       console.log('Checking real QPay payment for invoice:', invoiceId);
       
+      // First check our stored payment data (from callback)
+      const { getPaymentStatus } = await import('@/lib/payment-storage');
+      const storedPayment = await getPaymentStatus(invoiceId);
+      
+      if (storedPayment && storedPayment.payment_status === 'PAID') {
+        console.log('Found stored payment data:', storedPayment);
+        return NextResponse.json({
+          success: true,
+          payment: {
+            count: 1,
+            rows: [storedPayment]
+          }
+        });
+      }
+      
+      // If no stored payment, check with QPay API
       const { getQPayService } = await import('@/lib/qpay');
       const qpayService = getQPayService();
       

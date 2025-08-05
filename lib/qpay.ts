@@ -138,15 +138,17 @@ class QPayService {
         password: this.password ? '***' : 'NOT_SET'
       });
 
-      // Try JSON body authentication (this is the correct method for QPay)
+      // Try Basic Auth authentication (this is the correct method for QPay)
+      const basicAuth = Buffer.from(`${this.username}:${this.password}`).toString('base64');
+      
       const response = await fetch(`${this.baseUrl}/auth/token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Basic ${basicAuth}`,
         },
         body: JSON.stringify({
-          username: this.username,
-          password: this.password,
+          grant_type: 'client_credentials',
         }),
       });
 
@@ -156,39 +158,7 @@ class QPayService {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('QPay authentication failed:', errorText);
-        
-        // If JSON body fails, try Basic Auth as fallback
-        console.log('Trying Basic Auth fallback...');
-        const basicAuth = Buffer.from(`${this.username}:${this.password}`).toString('base64');
-        
-        const fallbackResponse = await fetch(`${this.baseUrl}/auth/token`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Basic ${basicAuth}`,
-          },
-          body: JSON.stringify({
-            grant_type: 'client_credentials',
-          }),
-        });
-
-        if (!fallbackResponse.ok) {
-          const fallbackErrorText = await fallbackResponse.text();
-          console.error('QPay Basic Auth also failed:', fallbackErrorText);
-          throw new Error(`QPay authentication failed: ${response.statusText} - ${errorText}`);
-        }
-
-        const fallbackData: QPayTokenResponse = await fallbackResponse.json();
-        console.log('QPay Basic Auth token response:', {
-          access_token: fallbackData.access_token ? '***' : 'NOT_SET',
-          expires_in: fallbackData.expires_in,
-          token_type: fallbackData.token_type
-        });
-        
-        this.accessToken = fallbackData.access_token;
-        this.tokenExpiry = Date.now() + (fallbackData.expires_in * 1000) - 60000;
-        console.log('QPay token obtained successfully via Basic Auth');
-        return this.accessToken;
+        throw new Error(`QPay authentication failed: ${response.statusText} - ${errorText}`);
       }
 
       const data: QPayTokenResponse = await response.json();
@@ -344,13 +314,21 @@ class QPayService {
     console.log('QPay checkPayment called with invoice ID:', invoiceId);
     
     try {
-      // Since direct API calls are not working reliably, 
-      // we'll implement a callback-based approach
-      // For now, return empty rows to indicate no payment found
-      // The actual payment status will be updated via webhook/callback
-      console.log('Using callback-based payment checking for invoice:', invoiceId);
+      // Use the payment list API to check for payments related to this invoice
+      const paymentListData: QPayPaymentListRequest = {
+        object_type: 'INVOICE',
+        object_id: invoiceId,
+        offset: {
+          page_number: 1,
+          page_limit: 100
+        }
+      };
+
+      console.log('Checking payment list for invoice:', invoiceId);
+      const result = await this.getPaymentList(paymentListData);
       
-      return { rows: [] };
+      console.log('Payment list result:', result);
+      return result;
       
     } catch (error) {
       console.error('QPay checkPayment error:', error);
