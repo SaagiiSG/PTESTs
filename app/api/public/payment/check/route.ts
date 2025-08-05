@@ -6,11 +6,26 @@ export async function POST(req: NextRequest) {
     
     console.log('Public payment check request for invoice:', invoiceId);
     
-    // Check if this is a test invoice
+    // Check if this is a test invoice - but first check if we have real payment data
     if (invoiceId && invoiceId.startsWith('TEST_INV_')) {
-      console.log('Test invoice detected, returning mock payment status');
+      console.log('Test invoice detected, checking for real payment data first');
       
-      // For test invoices, simulate a successful payment after a delay
+      // First check our stored payment data (from callback) even for test invoices
+      const { getPaymentStatus } = await import('@/lib/payment-storage');
+      const storedPayment = await getPaymentStatus(invoiceId);
+      
+      if (storedPayment && storedPayment.payment_status === 'PAID') {
+        console.log('Found stored payment data for test invoice:', storedPayment);
+        return NextResponse.json({
+          success: true,
+          payment: {
+            count: 1,
+            rows: [storedPayment]
+          }
+        });
+      }
+      
+      // If no real payment data, simulate test payment after delay
       const invoiceTimestamp = parseInt(invoiceId.replace('TEST_INV_', ''));
       const timeSinceCreation = Date.now() - invoiceTimestamp;
       
