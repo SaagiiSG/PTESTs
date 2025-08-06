@@ -340,21 +340,17 @@ class QPayService {
     console.log('QPay checkPayment called with invoice ID:', invoiceId);
     
     try {
-      // Use the payment list API (this is the working endpoint)
+      // According to QPay documentation, we should use /v2/payment/check endpoint
       const paymentCheckData = {
         object_type: 'INVOICE',
-        object_id: invoiceId,
-        offset: {
-          page_number: 1,
-          page_limit: 100
-        }
+        object_id: invoiceId
       };
 
       console.log('Checking payment for invoice:', invoiceId);
       console.log('Payment check data:', JSON.stringify(paymentCheckData, null, 2));
       
-      // Use the working endpoint
-      const result = await this.makeRequest<{ rows: QPayPaymentResponse[] }>('/payment/list', 'POST', paymentCheckData);
+      // Use the correct endpoint according to QPay documentation
+      const result = await this.makeRequest<{ rows: QPayPaymentResponse[] }>('/v2/payment/check', 'POST', paymentCheckData);
       console.log('Payment check result:', result);
       return result;
       

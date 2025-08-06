@@ -86,17 +86,34 @@ export async function POST(req: NextRequest) {
         });
       }
       
-      // QPay API is unreliable (returns HTML instead of JSON), so we rely on callbacks only
-      console.log('No callback data found. QPay API is unreliable, payment may still be processing.');
-      console.log('Payment status will be available once QPay sends the callback.');
+      // Only if no callback data exists, then check with QPay API as fallback
+      console.log('No callback data found, checking with QPay API as fallback');
+      const qpayService = getQPayService();
+      const qpayResult = await qpayService.checkPayment(invoiceId);
       
+      console.log('QPay API fallback check result:', qpayResult);
+      
+      if (qpayResult && qpayResult.rows && qpayResult.rows.length > 0) {
+        console.log('Found payment via QPay API fallback:', qpayResult.rows[0]);
+        
+        // Store the payment data from API check for future use
+        const { storePaymentStatus } = await import('../../../../../lib/payment-storage');
+        await storePaymentStatus(invoiceId, qpayResult.rows[0]);
+        
+        return NextResponse.json({
+          success: true,
+          payment: qpayResult
+        });
+      }
+      
+      // No payment found
+      console.log('No payment found for invoice:', invoiceId);
       return NextResponse.json({
         success: true,
         payment: {
           count: 0,
           rows: []
-        },
-        message: 'Payment processing. Status will be available once callback is received.'
+        }
       });
       
       // No payment found
