@@ -406,7 +406,7 @@ function QPayPaymentContent() {
           // Handle successful payment
           handlePaymentSuccess(payment, invoiceId);
         } else {
-          setLastError('Payment not found yet. Please try again.');
+          setLastError('Payment processing. Please wait for the callback to complete or try again in a moment.');
           setCheckCount(prev => prev + 1);
         }
       } else {
