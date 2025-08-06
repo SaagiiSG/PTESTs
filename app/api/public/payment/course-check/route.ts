@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getQPayCourseService } from '../../../../../lib/qpay-course';
 
 export async function POST(req: NextRequest) {
   try {
@@ -73,8 +74,8 @@ export async function POST(req: NextRequest) {
       const { getPaymentStatus } = await import('../../../../../lib/payment-storage');
       const storedPayment = await getPaymentStatus(invoiceId);
       
-      if (storedPayment && storedPayment.payment_status === 'PAID' && storedPayment.service_type === 'course') {
-        console.log('Found stored course payment data:', storedPayment);
+      if (storedPayment && storedPayment.payment_status === 'PAID') {
+        console.log('Found stored payment data for course:', storedPayment);
         return NextResponse.json({
           success: true,
           payment: {
@@ -84,9 +85,28 @@ export async function POST(req: NextRequest) {
         });
       }
       
-      // If no stored payment, return empty result (rely on callbacks as per QPay docs)
-      console.log('No stored course payment data found, relying on callbacks as per QPay documentation');
+      // Only if no callback data exists, then check with QPay Course API as fallback
+      console.log('No callback data found, checking with QPay Course API as fallback');
+      const qpayCourseService = getQPayCourseService();
+      const qpayResult = await qpayCourseService.checkPayment(invoiceId);
       
+      console.log('QPay Course API fallback check result:', qpayResult);
+      
+      if (qpayResult && qpayResult.rows && qpayResult.rows.length > 0) {
+        console.log('Found course payment via QPay API fallback:', qpayResult.rows[0]);
+        
+        // Store the payment data from API check for future use
+        const { storePaymentStatus } = await import('../../../../../lib/payment-storage');
+        await storePaymentStatus(invoiceId, qpayResult.rows[0]);
+        
+        return NextResponse.json({
+          success: true,
+          payment: qpayResult
+        });
+      }
+      
+      // No payment found
+      console.log('No course payment found for invoice:', invoiceId);
       return NextResponse.json({
         success: true,
         payment: {

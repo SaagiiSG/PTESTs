@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { connectMongoose } from "@/lib/mongodb";
 import User from "@/app/models/user";
+import Course from "@/app/models/course";
+import Test from "@/app/models/tests";
 import { auth } from "@/auth";
 
 export async function POST(req: Request) {
@@ -23,7 +25,10 @@ export async function POST(req: Request) {
     }
     
     await connectMongoose();
-    const user = await User.findById(session.user.id).populate('purchasedCourses purchasedTests');
+    const user = await User.findById(session.user.id).populate([
+      { path: 'purchasedCourses', model: Course },
+      { path: 'purchasedTests', model: Test }
+    ]);
     
     if (!user) {
       return NextResponse.json({ 
@@ -53,7 +58,6 @@ export async function POST(req: Request) {
       
       // If user has access, get their unique code
       if (hasAccess) {
-        const Test = (await import('@/app/models/tests')).default;
         const test = await Test.findById(testId);
         if (test && test.uniqueCodes) {
           const userCode = test.uniqueCodes.find((code: any) => 

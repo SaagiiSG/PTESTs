@@ -50,7 +50,7 @@ export default function RootLayout({
       <head>
         <meta
           httpEquiv="Content-Security-Policy"
-          content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.youtube.com https://player.vimeo.com https://psychometricsmongolia-my.sharepoint.com https://take.quiz-maker.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' https: blob:; frame-src 'self' https://www.youtube.com https://player.vimeo.com https://psychometricsmongolia-my.sharepoint.com https://take.quiz-maker.com; connect-src 'self' https:; worker-src 'self' blob:;"
+          content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.youtube.com https://player.vimeo.com https://psychometricsmongolia-my.sharepoint.com https://take.quiz-maker.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.poll-maker.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' https: blob:; frame-src 'self' https://www.youtube.com https://player.vimeo.com https://psychometricsmongolia-my.sharepoint.com https://take.quiz-maker.com; connect-src 'self' https:; worker-src 'self' blob:;"
         />
         <script
           dangerouslySetInnerHTML={{

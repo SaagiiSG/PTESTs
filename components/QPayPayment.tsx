@@ -74,7 +74,7 @@ export default function QPayPayment({
 
     try {
       // Use course-specific API for course purchases
-      const apiEndpoint = itemType === 'course' ? '/api/public/create-course-invoice' : '/api/public/create-invoice';
+      const apiEndpoint = itemType === 'course' ? '/api/public/create-course-invoice-v2' : '/api/public/create-invoice';
       
       const response = await fetch(apiEndpoint, {
         method: 'POST',
@@ -120,7 +120,7 @@ export default function QPayPayment({
     const interval = setInterval(async () => {
       try {
         // Use course-specific payment check API for course purchases
-        const checkApiEndpoint = itemType === 'course' ? '/api/public/payment/course-check' : '/api/public/payment/check';
+        const checkApiEndpoint = itemType === 'course' ? '/api/public/payment/course-check-v2' : '/api/public/payment/check';
         
         const response = await fetch(checkApiEndpoint, {
           method: 'POST',

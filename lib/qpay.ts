@@ -128,6 +128,7 @@ class QPayService {
   private async getAccessToken(): Promise<string> {
     // Check if we have a valid token
     if (this.accessToken && Date.now() < this.tokenExpiry) {
+      console.log('Reusing existing QPay token (expires in', Math.round((this.tokenExpiry - Date.now()) / 1000), 'seconds)');
       return this.accessToken;
     }
 
@@ -249,6 +250,13 @@ class QPayService {
           const errorJson = JSON.parse(errorText);
           console.log('Parsed error JSON:', errorJson);
           
+          // Handle SYSTEM_BUSY error specifically
+          if (errorJson.error === 'SYSTEM_BUSY') {
+            console.log('QPay system is busy, this is a temporary issue');
+            // Return empty result instead of throwing error
+            return { rows: [] } as T;
+          }
+          
           // Handle different error response formats
           if (typeof errorJson === 'object') {
             if (errorJson.message) {
@@ -272,8 +280,26 @@ class QPayService {
         throw new Error(`QPay API error (${response.status}): ${errorDetails}`);
       }
 
-      const responseData = await response.json();
-      console.log(`QPay API response data:`, responseData);
+      // Check if response has content before trying to parse JSON
+      const responseText = await response.text();
+      console.log(`QPay API response text:`, responseText);
+      
+      let responseData;
+      if (responseText.trim()) {
+        try {
+          responseData = JSON.parse(responseText);
+          console.log(`QPay API response data:`, responseData);
+          
+        } catch (parseError) {
+          console.error('Failed to parse QPay response as JSON:', parseError);
+          console.error('Response text:', responseText);
+          throw new Error(`QPay API returned invalid JSON: ${responseText.substring(0, 200)}...`);
+        }
+      } else {
+        console.log('QPay API returned empty response');
+        responseData = {};
+      }
+      
       return responseData;
     } catch (error: any) {
       clearTimeout(timeoutId);
@@ -314,8 +340,8 @@ class QPayService {
     console.log('QPay checkPayment called with invoice ID:', invoiceId);
     
     try {
-      // Use the payment list API to check for payments related to this invoice
-      const paymentListData: QPayPaymentListRequest = {
+      // Use the payment list API (this is the working endpoint)
+      const paymentCheckData = {
         object_type: 'INVOICE',
         object_id: invoiceId,
         offset: {
@@ -324,10 +350,12 @@ class QPayService {
         }
       };
 
-      console.log('Checking payment list for invoice:', invoiceId);
-      const result = await this.getPaymentList(paymentListData);
+      console.log('Checking payment for invoice:', invoiceId);
+      console.log('Payment check data:', JSON.stringify(paymentCheckData, null, 2));
       
-      console.log('Payment list result:', result);
+      // Use the working endpoint
+      const result = await this.makeRequest<{ rows: QPayPaymentResponse[] }>('/payment/list', 'POST', paymentCheckData);
+      console.log('Payment check result:', result);
       return result;
       
     } catch (error) {

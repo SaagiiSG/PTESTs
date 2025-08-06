@@ -169,7 +169,7 @@ export default function PaymentOptionsModal({
       const requestBody = {
         amount: price || 0,
         description: `${itemType === 'test' ? 'Test' : 'Course'} Purchase: ${itemTitle}`,
-        receiverCode: 'PSYCHOMETRICS', // Use PSYCHOMETRICS as receiver code
+        receiverCode: itemType === 'course' ? 'JAVZAN_B' : 'PSYCHOMETRICS', // Use appropriate receiver code
         metadata: {
           itemId,
           itemType,
@@ -180,8 +180,14 @@ export default function PaymentOptionsModal({
       
       console.log('Request body:', requestBody);
       
-      // Use the general API endpoint but pass itemType to determine which credentials to use
-      const response = await fetch('/api/public/create-invoice', {
+      // Use course-specific API for courses, regular API for tests
+      const apiEndpoint = itemType === 'course' 
+        ? '/api/public/create-course-invoice-v2'  // Use V2 with course credentials
+        : '/api/public/create-invoice';           // Use regular API for tests
+      
+      console.log('Using API endpoint:', apiEndpoint, 'for itemType:', itemType);
+      
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
@@ -193,8 +199,43 @@ export default function PaymentOptionsModal({
         throw new Error(data.error || 'Failed to create payment invoice');
       }
 
-      // Redirect to payment page with QR code
-      router.push(`/payment/qpay?invoiceId=${data.invoice_id}&itemId=${itemId}&itemType=${itemType}&returnTo=${encodeURIComponent(window.location.pathname)}`);
+      // For course payments, pass QR data as URL parameters
+      if (itemType === 'course') {
+        // Pass essential QR data as URL parameters for course payments
+        const qrDataParam = encodeURIComponent(JSON.stringify({
+          invoice_id: data.invoice_id,
+          qr_image: data.qr_image,
+          qr_text: data.qr_text,
+          deeplink: data.deeplink,
+          web_url: data.web_url,
+          deeplink_url: data.deeplink_url,
+          amount: data.amount,
+          testMode: data.testMode || false
+        }));
+        
+        router.push(`/payment/qpay?invoiceId=${data.invoice_id}&itemId=${itemId}&itemType=${itemType}&returnTo=${encodeURIComponent(window.location.pathname)}&qrData=${qrDataParam}`);
+      } else {
+        // For test payments, use sessionStorage
+        const qrData = {
+          invoice_id: data.invoice_id,
+          qr_image: data.qr_image,
+          qr_text: data.qr_text,
+          deeplink: data.deeplink,
+          web_url: data.web_url,
+          deeplink_url: data.deeplink_url,
+          amount: data.amount,
+          testMode: data.testMode || false
+        };
+        
+        // Store QR data in sessionStorage for the payment page to access
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(`qrData_${data.invoice_id}`, JSON.stringify(qrData));
+          console.log('QR data stored in sessionStorage for invoice:', data.invoice_id);
+        }
+        
+        router.push(`/payment/qpay?invoiceId=${data.invoice_id}&itemId=${itemId}&itemType=${itemType}&returnTo=${encodeURIComponent(window.location.pathname)}`);
+      }
+      
       onClose();
 
     } catch (error: any) {

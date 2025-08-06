@@ -77,7 +77,12 @@ export async function POST(req: Request) {
       }
       
       if (user.purchasedCourses.includes(finalCourseId)) {
-        return NextResponse.json({ message: "Course already purchased." }, { status: 409 });
+        console.log(`Course already purchased by user ${session.user.id}: ${finalCourseId}`);
+        return NextResponse.json({ 
+          message: "Course already purchased.",
+          alreadyPurchased: true,
+          courseId: finalCourseId
+        }, { status: 200 }); // Return 200 instead of 409 for already purchased
       }
       
       // Update user model (fast access)
@@ -107,7 +112,12 @@ export async function POST(req: Request) {
       }
       
       if (user.purchasedTests.includes(finalTestId)) {
-        return NextResponse.json({ message: "Test already purchased." }, { status: 409 });
+        console.log(`Test already purchased by user ${session.user.id}: ${finalTestId}`);
+        return NextResponse.json({ 
+          message: "Test already purchased.",
+          alreadyPurchased: true,
+          testId: finalTestId
+        }, { status: 200 }); // Return 200 instead of 409 for already purchased
       }
       
       // Find an unused unique code for the test

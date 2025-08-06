@@ -67,14 +67,20 @@ export async function POST(req: NextRequest) {
       
       // Test creating a course invoice
       console.log('Testing QPay Course invoice creation...');
-      const envCourseInvoiceCode = process.env.QPAY_COURSE_INVOICE_CODE || process.env.QPAY_INVOICE_CODE || 'PSYCHOMETRICS_INVOICE';
+      
+      // Use regular invoice code since course credentials are not working
+      // This ensures course payments work with the working regular credentials
+      const invoiceCode = process.env.QPAY_INVOICE_CODE || 'PSYCHOMETRICS_INVOICE';
+      
+      console.log('Using invoice code:', invoiceCode, '(regular credentials - course credentials not working)');
+      
       const courseInvoiceData: QPayInvoiceRequest = {
-        invoice_code: envCourseInvoiceCode,
+        invoice_code: invoiceCode,
         sender_invoice_no: `COURSE_INV${Date.now()}`,
         invoice_receiver_code: receiverCode,
         invoice_description: description,
         amount: numericAmount,
-        callback_url: `${process.env.NEXTAUTH_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app'}/api/qpay-course-callback`,
+        callback_url: `${process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : (process.env.NEXTAUTH_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app')}/api/qpay-course-callback`,
         calculate_vat: false,
         enable_expiry: false,
       };

@@ -117,12 +117,12 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen  flex items-center justify-center p-4">
+      <div className="w-full">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="relative">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-4">
               <User className="w-8 h-8 text-white" />
             </div>
             <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
@@ -134,7 +134,7 @@ export default function SignUpPage() {
         </div>
 
         {/* Form Card */}
-        <Card className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-xl">
+        <Card className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-xl w-full rounded-3xl">
           <CardContent className="p-6">
             {error && (
               <Alert variant="destructive" className="mb-6">
@@ -144,40 +144,43 @@ export default function SignUpPage() {
             )}
 
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Name Field */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  Full Name
-                </label>
-                <Input
-                  {...form.register('name')}
-                  className="h-12 rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="Enter your full name"
-                />
-                {form.formState.errors.name && (
-                  <p className="text-red-500 text-sm">{form.formState.errors.name.message}</p>
-                )}
+              {/* Two Column Grid for Inputs */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Name Field */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Full Name
+                  </label>
+                  <Input
+                    {...form.register('name')}
+                    className="h-12 rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="Enter your full name"
+                  />
+                  {form.formState.errors.name && (
+                    <p className="text-red-500 text-sm">{form.formState.errors.name.message}</p>
+                  )}
+                </div>
+
+                {/* Email Field */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    Email Address
+                  </label>
+                  <Input
+                    type="email"
+                    {...form.register('email')}
+                    className="h-12 rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="Enter your email address"
+                  />
+                  {form.formState.errors.email && (
+                    <p className="text-red-500 text-sm">{form.formState.errors.email.message}</p>
+                  )}
+                </div>
               </div>
 
-              {/* Email Field */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  Email Address
-                </label>
-                <Input
-                  type="email"
-                  {...form.register('email')}
-                  className="h-12 rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="Enter your email address"
-                />
-                {form.formState.errors.email && (
-                  <p className="text-red-500 text-sm">{form.formState.errors.email.message}</p>
-                )}
-              </div>
-
-              {/* Phone Number Field */}
+              {/* Phone Number Field - Full Width */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                   <Phone className="w-4 h-4" />
@@ -207,7 +210,7 @@ export default function SignUpPage() {
                 )}
               </div>
 
-              {/* Password Field */}
+              {/* Password Field - Full Width */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                   <Lock className="w-4 h-4" />
@@ -247,9 +250,9 @@ export default function SignUpPage() {
                     Creating Account...
                   </>
                 ) : (
-                  <>
-                    Create Account <ArrowRight className="w-5 h-5 ml-2" />
-                  </>
+                  <div className="flex items-center justify-center">
+                    <span className="text-sm">Create Account</span> <ArrowRight className="w-5 h-5 ml-2" />
+                  </div>
                 )}
               </Button>
             </form>
@@ -269,8 +272,9 @@ export default function SignUpPage() {
               onClick={() => signIn('google', { callbackUrl: '/profile-setup' })}
               variant="outline"
               className="w-full flex items-center justify-center gap-2 h-12 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
-            >
-              <svg
+            > 
+              <span className="flex items-center justify-center gap-2 w-full">
+                <svg
                 className="w-6 h-6"
                 viewBox="0 0 533.5 544.3"
                 xmlns="http://www.w3.org/2000/svg"
@@ -292,8 +296,9 @@ export default function SignUpPage() {
                   d="M272 107.9c39.7 0 75.3 13.6 103.3 40.5l77.5-77.5C404.4 24.6 344.1 0 272 0 166.6 0 71.4 58.6 26.3 148.5l93.7 73.9c21.5-63.7 81.4-111.4 152-111.4z"
                   fill="#ea4335"
                 />
-              </svg>
-              Sign up with Google
+                </svg>
+                <span className="text-sm">Sign up with Google</span>
+              </span>
             </Button>
 
             {/* Login Link */}

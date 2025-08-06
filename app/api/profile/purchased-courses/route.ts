@@ -19,8 +19,10 @@ export async function GET(req: Request) {
   
   // Get user with populated purchased courses and tests
   const user = await User.findById(session.user.id)
-    .populate('purchasedCourses')
-    .populate('purchasedTests')
+    .populate([
+      { path: 'purchasedCourses', model: Course },
+      { path: 'purchasedTests', model: Test }
+    ])
     .lean();
   
   if (!user) {

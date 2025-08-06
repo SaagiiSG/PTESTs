@@ -7,21 +7,22 @@ import Image from "next/image";
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <div className="w-full flex flex-col justify-center items-center h-screen">
+      <div className="w-full flex flex-col justify-start items-center h-full py-4">
     
           <section className="flex flex-col items-center gap-8">
-            <div className="relative flex justify-center items-center w-full">
+            <div className="relative flex justify-center items-center w-full rounded-3xl">
               <Image 
                 src={BG}
                 alt="Background Image"
+                className="rounded-3xl"
               />
               <Image
                 src={logo}
                 alt="PPNIM Logo"
-                className="absolute"
+                className="absolute rounded-3xl"
               />
             </div>
-            <h1 className="text-2xl font-semibold">Welcome to PTEST</h1>
+       
           </section>
     
          {children}

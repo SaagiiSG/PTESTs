@@ -48,8 +48,15 @@ export async function POST(req: Request) {
       passwordResetExpires: undefined,
     });
 
+    // Return user info for automatic login
     return NextResponse.json({ 
-      message: 'Password reset successfully'
+      message: 'Password reset successfully',
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        name: user.name
+      }
     });
 
   } catch (error) {

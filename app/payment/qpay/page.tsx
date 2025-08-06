@@ -39,6 +39,7 @@ function QPayPaymentContent() {
   const itemId = searchParams.get('itemId');
   const itemType = searchParams.get('itemType');
   const returnTo = searchParams.get('returnTo') || '/home';
+  const qrDataParam = searchParams.get('qrData');
   
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>({ status: 'loading' });
   const [checkInterval, setCheckInterval] = useState<NodeJS.Timeout | null>(null);
@@ -53,7 +54,9 @@ function QPayPaymentContent() {
   useEffect(() => {
     return () => {
       if (checkInterval) {
+        console.log('Cleaning up payment monitoring interval');
         clearInterval(checkInterval);
+        setCheckInterval(null);
       }
     };
   }, [checkInterval]);
@@ -108,7 +111,92 @@ function QPayPaymentContent() {
         return;
       }
 
-      // For real invoices, get the existing invoice details first
+            // For course payments, use QR data from URL parameters
+      // For test payments, try to get existing invoice details with regular credentials
+      if (itemType === 'course') {
+        console.log('Course payment detected, checking URL parameters for QR data');
+        
+        // Try to get QR data from URL parameters first
+        if (qrDataParam) {
+          try {
+            const qrData = JSON.parse(decodeURIComponent(qrDataParam));
+            console.log('QR data from URL parameters:', qrData);
+            
+            setPaymentStatus({
+              status: 'qr_generated',
+              qrData: qrData
+            });
+
+            toast.success('Course QR Code loaded successfully!');
+            startPaymentCheck(invoiceId);
+            return;
+          } catch (error) {
+            console.error('Failed to parse QR data from URL parameters:', error);
+            // Continue to fallback
+          }
+        }
+        
+        // Fallback: try to get QR data from sessionStorage
+        if (typeof window !== 'undefined') {
+          const storedQRData = sessionStorage.getItem(`qrData_${invoiceId}`);
+          if (storedQRData) {
+            try {
+              const qrData = JSON.parse(storedQRData);
+              console.log('QR data from sessionStorage:', qrData);
+              
+              setPaymentStatus({
+                status: 'qr_generated',
+                qrData: qrData
+              });
+
+              toast.success('Course QR Code loaded successfully!');
+              startPaymentCheck(invoiceId);
+              
+              // Clean up sessionStorage after using the data
+              sessionStorage.removeItem(`qrData_${invoiceId}`);
+              return;
+            } catch (error) {
+              console.error('Failed to parse QR data from sessionStorage:', error);
+              // Continue to fallback
+            }
+          }
+        }
+        
+        // Final fallback: create a new course invoice
+        console.log('No QR data found, creating new course invoice');
+        
+        const newCourseInvoiceResponse = await fetch('/api/public/create-course-invoice-v2', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: 1000, // Default amount
+            description: 'Course Payment',
+            receiverCode: 'JAVZAN_B'
+          }),
+        });
+
+        const newCourseInvoiceData = await newCourseInvoiceResponse.json();
+
+        if (!newCourseInvoiceResponse.ok) {
+          throw new Error(newCourseInvoiceData.error || 'Failed to create new course invoice');
+        }
+
+        // Use the new course invoice data with QR information
+        if (newCourseInvoiceData.qr_image) {
+          setPaymentStatus({
+            status: 'qr_generated',
+            qrData: newCourseInvoiceData
+          });
+
+          toast.success('Course QR Code loaded successfully!');
+          startPaymentCheck(newCourseInvoiceData.invoice_id);
+          return;
+        } else {
+          throw new Error('Failed to generate QR code for course payment');
+        }
+      }
+
+      // For test payments, get the existing invoice details first
       const invoiceResponse = await fetch(`/api/qpay/invoice/${invoiceId}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
@@ -173,11 +261,25 @@ function QPayPaymentContent() {
     setIsMonitoring(true);
     setTimeLeft(600); // Reset timer to 10 minutes
     console.log('🔄 Payment monitoring started for invoice:', invoiceId);
+    
+    // Add a flag to track if component is still mounted
+    let isMounted = true;
 
     const interval = setInterval(async () => {
+      // Check if component is still mounted before making the request
+      if (!isMounted) {
+        clearInterval(interval);
+        return;
+      }
+      
       console.log('🔍 Checking payment status for invoice:', invoiceId);
       try {
-        const response = await fetch('/api/public/payment/check', {
+        // Use course-specific API for course payments, regular API for test payments
+        const apiEndpoint = itemType === 'course' 
+          ? '/api/public/payment/course-check-v2'  // Use V2 with course credentials
+          : '/api/public/payment/check';           // Use regular API for tests
+        
+        const response = await fetch(apiEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ invoiceId })
@@ -200,10 +302,16 @@ function QPayPaymentContent() {
         }
       } catch (error) {
         console.error('Payment check error:', error);
+        // Don't stop monitoring on network errors, just log them
       }
     }, 10000); // Check every 10 seconds
 
     setCheckInterval(interval);
+    
+    // Return cleanup function
+    return () => {
+      isMounted = false;
+    };
   };
 
   const stopPaymentMonitoring = () => {
@@ -235,16 +343,28 @@ function QPayPaymentContent() {
         setPaymentStatus({ status: 'paid' });
         stopPaymentMonitoring();
         
-        toast.success(`Payment successful! You now have access to ${itemType === 'test' ? 'the test' : 'the course'}`);
-        
-        // Show success message with unique code if it's a test
-        if (itemType === 'test' && purchaseData.uniqueCode) {
-          toast.success(`Your unique access code: ${purchaseData.uniqueCode}`);
+        // Handle already purchased case
+        if (purchaseData.alreadyPurchased) {
+          toast.success(`You already have access to ${itemType === 'test' ? 'the test' : 'the course'}!`);
+        } else {
+          toast.success(`Payment successful! You now have access to ${itemType === 'test' ? 'the test' : 'the course'}`);
+          
+          // Show success message with unique code if it's a test
+          if (itemType === 'test' && purchaseData.uniqueCode) {
+            toast.success(`Your unique access code: ${purchaseData.uniqueCode}`);
+          }
         }
         
-        // Redirect back to the item page after a short delay
+        // Redirect based on item type
         setTimeout(() => {
-          router.push(returnTo);
+          if (itemType === 'test') {
+            // For tests, redirect to the test-embed page
+            console.log('Payment successful, redirecting to test:', `/test-embed/${itemId}`);
+            router.push(`/test-embed/${itemId}`);
+          } else {
+            // For courses, redirect back to the original page
+            router.push(returnTo);
+          }
         }, 3000);
       } else {
         throw new Error('Failed to record purchase');
@@ -262,7 +382,14 @@ function QPayPaymentContent() {
     setLastCheckTime(new Date().toLocaleTimeString());
 
     try {
-      const response = await fetch('/api/public/payment/check', {
+      // Use course-specific API for course payments, regular API for test payments
+      const apiEndpoint = itemType === 'course' 
+        ? '/api/public/payment/course-check-v2'  // Use V2 with course credentials
+        : '/api/public/payment/check';           // Use regular API for tests
+      
+      console.log('Using payment check API:', apiEndpoint, 'for itemType:', itemType);
+      
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ invoiceId })

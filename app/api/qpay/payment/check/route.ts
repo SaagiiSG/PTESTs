@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getQPayService } from '../../../../../lib/qpay';
 
 export async function POST(req: NextRequest) {
   try {
@@ -49,15 +50,31 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    // For real invoices, you would check with QPay here
-    // For now, return empty result
-    return NextResponse.json({
-      success: true,
-      payment: {
-        count: 0,
-        rows: []
-      }
-    });
+    // For real invoices, check with QPay
+    try {
+      console.log('Checking real QPay payment for invoice:', invoiceId);
+      const qpayService = getQPayService();
+      const result = await qpayService.checkPayment(invoiceId);
+      
+      console.log('QPay payment check result:', result);
+      
+      return NextResponse.json({
+        success: true,
+        payment: result
+      });
+      
+    } catch (qpayError: any) {
+      console.error('QPay payment check failed:', qpayError);
+      
+      // Return empty result if QPay check fails
+      return NextResponse.json({
+        success: true,
+        payment: {
+          count: 0,
+          rows: []
+        }
+      });
+    }
     
   } catch (error: any) {
     console.error('Payment check error:', error);

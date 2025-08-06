@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getQPayService } from '../../../../../lib/qpay';
 
 export async function POST(req: NextRequest) {
   try {
@@ -64,16 +65,18 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    // For real invoices, check with QPay and our stored payment data
+    // For real invoices, prioritize callback data over API checks
     try {
-      console.log('Checking real QPay payment for invoice:', invoiceId);
+      console.log('Checking payment for invoice:', invoiceId);
       
-      // First check our stored payment data (from callback)
+      // First check our stored payment data (from callback) - this is the primary source
       const { getPaymentStatus } = await import('../../../../../lib/payment-storage');
       const storedPayment = await getPaymentStatus(invoiceId);
       
-      if (storedPayment && storedPayment.payment_status === 'PAID') {
-        console.log('Found stored payment data:', storedPayment);
+      if (storedPayment) {
+        console.log('Found stored payment data from callback:', storedPayment);
+        
+        // If we have stored payment data, return it regardless of status
         return NextResponse.json({
           success: true,
           payment: {
@@ -83,9 +86,40 @@ export async function POST(req: NextRequest) {
         });
       }
       
-      // If no stored payment, return empty result (rely on callbacks as per QPay docs)
-      console.log('No stored payment data found, relying on callbacks as per QPay documentation');
+      // Only if no callback data exists, then check with QPay API as fallback
+      console.log('No callback data found, checking with QPay API as fallback');
+      const qpayService = getQPayService();
+      const qpayResult = await qpayService.checkPayment(invoiceId);
       
+      console.log('QPay API fallback check result:', qpayResult);
+      
+      if (qpayResult && qpayResult.rows && qpayResult.rows.length > 0) {
+        console.log('Found payment via QPay API fallback:', qpayResult.rows[0]);
+        
+        // Store the payment data from API check for future use
+        const { storePaymentStatus } = await import('../../../../../lib/payment-storage');
+        await storePaymentStatus(invoiceId, qpayResult.rows[0]);
+        
+        return NextResponse.json({
+          success: true,
+          payment: qpayResult
+        });
+      }
+      
+      // Check if this was a SYSTEM_BUSY response (empty rows but no error)
+      if (qpayResult && qpayResult.rows && qpayResult.rows.length === 0) {
+        console.log('QPay system busy or no payment found for invoice:', invoiceId);
+        return NextResponse.json({
+          success: true,
+          payment: {
+            count: 0,
+            rows: []
+          }
+        });
+      }
+      
+      // No payment found
+      console.log('No payment found for invoice:', invoiceId);
       return NextResponse.json({
         success: true,
         payment: {

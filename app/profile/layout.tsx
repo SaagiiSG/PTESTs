@@ -45,8 +45,8 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
   // On mobile, show sidebar or main content based on showSidebarMobile
   const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
 
-  // Navigation links with icons
-  const navLinks = [
+  // Navigation links with icons - create them dynamically to avoid hydration issues
+  const getNavLinks = () => [
     { name: t('testHistory'), route: '/profile/testhistory', icon: <BookOpen className="w-4 h-4 mr-2" /> },
     { name: t('courseHistory'), route: '/profile/coursehistory', icon: <Book className="w-4 h-4 mr-2" /> },
     { name: t('editProfile'), route: '/profile/editprofile', icon: <UserCog className="w-4 h-4 mr-2" /> },
@@ -98,7 +98,7 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
                 <p className="mb-8">{t('loading')}...</p>
               )}
               <nav className="flex flex-col items-start gap-4 w-full">
-                {navLinks.map(link => (
+                {getNavLinks().map(link => (
                   <Button
                     asChild
                     key={link.name}

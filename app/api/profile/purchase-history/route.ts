@@ -19,7 +19,18 @@ export async function GET(req: Request) {
     // Attach test title
     const testIds = purchases.map(p => p.test);
     const tests = await Test.find({ _id: { $in: testIds } }).lean();
-    const testMap = Object.fromEntries(tests.map(t => [t._id.toString(), t.title]));
+    const testMap = Object.fromEntries(tests.map(t => {
+      // Handle multilingual titles - extract English or use the first available language
+      let title = 'Unknown Test';
+      if (t.title) {
+        if (typeof t.title === 'string') {
+          title = t.title;
+        } else if (typeof t.title === 'object') {
+          title = t.title.en || t.title.mn || Object.values(t.title)[0] || 'Unknown Test';
+        }
+      }
+      return [t._id.toString(), title];
+    }));
     return NextResponse.json(purchases.map(p => ({
       _id: p._id,
       testTitle: testMap[p.test?.toString()] || 'Unknown Test',
@@ -30,7 +41,18 @@ export async function GET(req: Request) {
     // Attach course title and thumbnailUrl
     const courseIds = purchases.map(p => p.course);
     const courses = await Course.find({ _id: { $in: courseIds } }).lean();
-    const courseMap = Object.fromEntries(courses.map(c => [c._id.toString(), { title: c.title, thumbnailUrl: c.thumbnailUrl }]));
+    const courseMap = Object.fromEntries(courses.map(c => {
+      // Handle multilingual titles - extract English or use the first available language
+      let title = 'Unknown Course';
+      if (c.title) {
+        if (typeof c.title === 'string') {
+          title = c.title;
+        } else if (typeof c.title === 'object') {
+          title = c.title.en || c.title.mn || Object.values(c.title)[0] || 'Unknown Course';
+        }
+      }
+      return [c._id.toString(), { title, thumbnailUrl: c.thumbnailUrl }];
+    }));
     return NextResponse.json(purchases.map(p => ({
       _id: p._id,
       courseId: p.course?.toString(),

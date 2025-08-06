@@ -5,11 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, XCircle, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { XCircle, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { signIn } from 'next-auth/react';
 
 const formSchema = z.object({
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
@@ -22,12 +23,14 @@ const formSchema = z.object({
 function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<'form' | 'success' | 'error'>('form');
-  const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const token = searchParams.get('token');
+  // Get token from URL params or session storage (for phone verification flow)
+  const urlToken = searchParams.get('token');
+  const sessionToken = typeof window !== 'undefined' ? sessionStorage.getItem('resetToken') : null;
+  const token = urlToken || sessionToken;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -39,10 +42,12 @@ function ResetPasswordContent() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!token) {
-      setStatus('error');
-      setMessage('No reset token provided');
+      toast.error('No reset token provided');
+      router.push('/forgot-password');
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const response = await fetch('/api/auth/reset-password', {
@@ -59,19 +64,57 @@ function ResetPasswordContent() {
       const data = await response.json();
 
       if (response.ok) {
-        setStatus('success');
-        setMessage('Password reset successfully! You can now log in with your new password.');
-        toast.success('Password reset successfully!');
+        // Clear session storage after successful reset
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('resetToken');
+          sessionStorage.removeItem('resetPhoneNumber');
+        }
+        
+        // Automatically sign in the user with their new password
+        console.log('Attempting auto-login with:', {
+          email: data.user.email,
+          phoneNumber: data.user.phoneNumber,
+          hasEmail: !!data.user.email,
+          hasPhone: !!data.user.phoneNumber
+        });
+        
+        const signInResult = await signIn('credentials', {
+          redirect: false,
+          password: values.password,
+          ...(data.user.email ? { email: data.user.email } : { phoneNumber: data.user.phoneNumber }),
+        });
+
+        console.log('Sign-in result:', signInResult);
+
+        if (signInResult?.ok) {
+          toast.success('Password reset successfully! You are now logged in.');
+          // Refresh the router to ensure session is properly established
+          router.refresh();
+          router.push('/home');
+        } else {
+          toast.success('Password reset successfully! Please log in with your new password.');
+          router.push('/login');
+        }
       } else {
-        setStatus('error');
-        setMessage(data.error || 'Password reset failed');
         toast.error(data.error || 'Password reset failed');
+        // Clear session storage and redirect to forgot password on error
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('resetToken');
+          sessionStorage.removeItem('resetPhoneNumber');
+        }
+        router.push('/forgot-password');
       }
     } catch (error) {
       console.error('Password reset error:', error);
-      setStatus('error');
-      setMessage('An error occurred during password reset');
       toast.error('An error occurred during password reset');
+      // Clear session storage and redirect to forgot password on error
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('resetToken');
+        sessionStorage.removeItem('resetPhoneNumber');
+      }
+      router.push('/forgot-password');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -85,12 +128,19 @@ function ResetPasswordContent() {
                 <XCircle className="h-4 w-4" />
                 <AlertDescription>Invalid reset link. Please request a new password reset.</AlertDescription>
               </Alert>
-              <Button
-                onClick={() => router.push('/forgot-password')}
-                className="w-full mt-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
-              >
-                Request New Reset Link
-              </Button>
+                              <Button
+                  onClick={() => {
+                    // Clear session storage and redirect to forgot password
+                    if (typeof window !== 'undefined') {
+                      sessionStorage.removeItem('resetToken');
+                      sessionStorage.removeItem('resetPhoneNumber');
+                    }
+                    router.push('/forgot-password');
+                  }}
+                  className="w-full mt-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
+                >
+                  Request New Reset Link
+                </Button>
             </CardContent>
           </Card>
         </div>
@@ -104,57 +154,19 @@ function ResetPasswordContent() {
         <Card className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-xl">
           <CardHeader className="text-center pb-4">
             <div className="mx-auto mb-4">
-              {status === 'success' ? (
-                <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
-                </div>
-              ) : (
-                <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-                  <Lock className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-                </div>
-              )}
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                <Lock className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+              </div>
             </div>
             <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-              {status === 'success' ? 'Password Reset Success!' : 'Reset Your Password'}
+              Reset Your Password
             </CardTitle>
             <CardDescription className="text-gray-600 dark:text-gray-300">
-              {status === 'success' 
-                ? 'Your password has been successfully updated'
-                : 'Enter your new password below'
-              }
+              Enter your new password below
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {status === 'success' ? (
-              <div className="space-y-4">
-                <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
-                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                  <AlertDescription className="text-green-800 dark:text-green-200">
-                    {message}
-                  </AlertDescription>
-                </Alert>
-                <Button
-                  onClick={() => router.push('/login')}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
-                >
-                  Continue to Login <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            ) : status === 'error' ? (
-              <div className="space-y-4">
-                <Alert variant="destructive">
-                  <XCircle className="h-4 w-4" />
-                  <AlertDescription>{message}</AlertDescription>
-                </Alert>
-                <Button
-                  onClick={() => router.push('/forgot-password')}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
-                >
-                  Request New Reset Link
-                </Button>
-              </div>
-            ) : (
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 {/* New Password Field */}
                 <div className="space-y-2">
@@ -210,9 +222,9 @@ function ResetPasswordContent() {
                 <Button
                   type="submit"
                   className="h-12 rounded-xl w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold transition-all duration-300"
-                  disabled={form.formState.isSubmitting}
+                  disabled={isSubmitting}
                 >
-                  {form.formState.isSubmitting ? (
+                  {isSubmitting ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                       Resetting Password...
@@ -224,7 +236,6 @@ function ResetPasswordContent() {
                   )}
                 </Button>
               </form>
-            )}
 
             <div className="text-center text-sm text-gray-500 dark:text-gray-400">
               <p>Remember your password? <a href="/login" className="text-blue-600 dark:text-blue-400 hover:underline">Log in here</a></p>

@@ -95,7 +95,7 @@ class QPayCourseService {
   private tokenExpiry: number = 0;
 
   constructor() {
-    // Use course-specific QPay credentials
+    // Use course-specific QPay credentials with fallback to regular credentials
     const isDevelopment = process.env.NODE_ENV === 'development';
     
     // Fix the base URL if it's pointing to auth endpoint
@@ -107,24 +107,38 @@ class QPayCourseService {
     }
     
     this.baseUrl = baseUrl;
-    this.username = process.env.QPAY_COURSE_CLIENT_ID || process.env.QPAY_CLIENT_ID || '';
-    this.password = process.env.QPAY_COURSE_CLIENT_SECRET || process.env.QPAY_CLIENT_SECRET || '';
     
-    // Validate required environment variables
-    if (!this.username || !this.password) {
-      console.error('QPay Course credentials not found in environment variables');
-      console.error('Please set QPAY_COURSE_CLIENT_ID and QPAY_COURSE_CLIENT_SECRET in your .env.local file');
-      console.error('Falling back to general QPay credentials...');
-      throw new Error('QPay Course credentials not configured. Please check your environment variables.');
+    // Try course credentials first, fall back to regular credentials
+    const courseUsername = process.env.QPAY_COURSE_CLIENT_ID;
+    const coursePassword = process.env.QPAY_COURSE_CLIENT_SECRET;
+    const regularUsername = process.env.QPAY_CLIENT_ID;
+    const regularPassword = process.env.QPAY_CLIENT_SECRET;
+    
+    // Use regular credentials since course credentials are not working
+    // This ensures course payments work with the working regular credentials
+    this.username = regularUsername || courseUsername || '';
+    this.password = regularPassword || coursePassword || '';
+    
+    // Log which credentials we're using
+    if (regularUsername && regularPassword) {
+      console.log('🔑 Using regular QPay credentials for courses (course credentials not working)');
+    } else if (courseUsername && coursePassword) {
+      console.log('🔑 Using course-specific QPay credentials');
+    } else {
+      console.error('❌ No QPay credentials found for courses');
+      throw new Error('QPay credentials not configured for courses. Please check your environment variables.');
     }
     
     console.log('QPay Course Service initialized with:', {
       baseUrl: this.baseUrl,
       username: this.username,
       password: this.password ? '***' : 'NOT_SET',
-      environment: process.env.NODE_ENV
+      environment: process.env.NODE_ENV,
+      usingCourseCredentials: !!(courseUsername && coursePassword)
     });
   }
+
+
 
   private async getAccessToken(): Promise<string> {
     // Check if we have a valid token
