@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getQPayService } from '../../../../../lib/qpay';
+import { getTestQPayService } from '@/lib/qpay-service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
       
       // Only if no callback data exists, then check with QPay API as fallback
       console.log('No callback data found, checking with QPay API as fallback');
-      const qpayService = getQPayService();
+      const qpayService = getTestQPayService();
       const qpayResult = await qpayService.checkPayment(invoiceId);
       
       console.log('QPay API fallback check result:', qpayResult);

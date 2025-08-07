@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getQPayService } from '@/lib/qpay';
+import { getTestQPayService } from '@/lib/qpay-service';
 
 export async function GET(
   req: NextRequest,
@@ -34,32 +34,17 @@ export async function GET(
       });
     }
 
-    // For real invoices, try to get from QPay
-    try {
-      // Get invoice details from QPay
-      const qpayService = getQPayService();
-      const invoice = await qpayService.getInvoice(invoiceId);
-
-      if (!invoice) {
-        return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
-      }
-
-      return NextResponse.json({
-        success: true,
-        invoice: invoice
-      });
-    } catch (qpayError: any) {
-      console.error('QPay service error:', qpayError);
-      
-      // If QPay fails, return a fallback response
-      return NextResponse.json({
-        success: false,
-        error: 'QPay service unavailable',
-        message: 'Unable to fetch invoice details from QPay',
-        invoiceId: invoiceId,
-        note: 'This might be a test invoice or QPay service is down'
-      }, { status: 503 });
-    }
+    // For real invoices, we don't have a getInvoice method in the new service
+    // This endpoint is likely not needed anymore since we store QR data in sessionStorage
+    console.log('Real invoice detected, but getInvoice method not available in new service');
+    
+    return NextResponse.json({
+      success: false,
+      error: 'Invoice details not available',
+      message: 'This endpoint is deprecated. QR data is now stored in sessionStorage.',
+      invoiceId: invoiceId,
+      note: 'Please use the payment page directly with stored QR data'
+    }, { status: 404 });
 
   } catch (error: any) {
     console.error('Error getting invoice details:', error);

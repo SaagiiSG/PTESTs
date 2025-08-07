@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getQPayService, QPayInvoiceRequest } from '@/lib/qpay';
+import { getTestQPayService, QPayInvoiceRequest } from '@/lib/qpay-service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       
       // Test authentication first
       console.log('Testing QPay authentication...');
-      const qpayService = getQPayService();
+      const qpayService = getTestQPayService();
       const token = await qpayService['getAccessToken']();
       console.log('QPay authentication successful, token obtained');
       
@@ -91,14 +91,18 @@ export async function POST(req: NextRequest) {
         `${process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : (process.env.NEXTAUTH_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app')}/api/qpay-callback`;
       
       const testInvoiceData = {
-        invoice_code: envInvoiceCode,
         sender_invoice_no: isCoursePayment ? `COURSE_INV${Date.now()}` : `SINV${Date.now()}`,
         invoice_receiver_code: receiverCode,
         invoice_description: description,
         amount: numericAmount,
-        callback_url: callbackUrl,
-        calculate_vat: false,
-        enable_expiry: false,
+        lines: [
+          {
+            line_description: description,
+            line_quantity: 1,
+            line_unit_price: numericAmount,
+            amount: numericAmount
+          }
+        ]
       };
       
       console.log('Creating test invoice with data:', testInvoiceData);

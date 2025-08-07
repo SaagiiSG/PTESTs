@@ -76,6 +76,9 @@ function QPayPaymentContent() {
   useEffect(() => {
     if (invoiceId) {
       generateQRCode();
+    } else {
+      // If no invoiceId, show error
+      setPaymentStatus({ status: 'failed', error: 'No invoice ID provided' });
     }
   }, [invoiceId]);
 
@@ -196,37 +199,42 @@ function QPayPaymentContent() {
         }
       }
 
-      // For test payments, get the existing invoice details first
-      const invoiceResponse = await fetch(`/api/qpay/invoice/${invoiceId}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      // For test payments, try to get QR data from sessionStorage first
+      if (typeof window !== 'undefined') {
+        const storedQRData = sessionStorage.getItem(`qrData_${invoiceId}`);
+        if (storedQRData) {
+          try {
+            const qrData = JSON.parse(storedQRData);
+            console.log('QR data from sessionStorage for test payment:', qrData);
+            
+            setPaymentStatus({
+              status: 'qr_generated',
+              qrData: qrData
+            });
 
-      const invoiceData = await invoiceResponse.json();
-
-      if (!invoiceResponse.ok) {
-        throw new Error(invoiceData.error || 'Failed to get invoice details');
+            toast.success('Test QR Code loaded successfully!');
+            startPaymentCheck(invoiceId);
+            
+            // Clean up sessionStorage after using the data
+            sessionStorage.removeItem(`qrData_${invoiceId}`);
+            return;
+          } catch (error) {
+            console.error('Failed to parse QR data from sessionStorage:', error);
+            // Continue to fallback
+          }
+        }
       }
-
-      // Use the invoice data directly if it has QR information
-      if (invoiceData.invoice && invoiceData.invoice.qr_image) {
-        setPaymentStatus({
-          status: 'qr_generated',
-          qrData: invoiceData.invoice
-        });
-
-        toast.success('QR Code loaded successfully!');
-        startPaymentCheck(invoiceId);
-        return;
-      }
-
-      // If no QR data, create a new invoice with the same details
+      
+      // Fallback: create a new test invoice
+      console.log('No QR data found in sessionStorage, creating new test invoice');
+      toast.info('Creating new payment invoice...');
+      
       const response = await fetch('/api/public/create-invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: invoiceData.invoice.total_amount || invoiceData.invoice.gross_amount || 1000,
-          description: invoiceData.invoice.invoice_description || 'Payment for course/test',
+          amount: 1000, // Default amount
+          description: 'Test Payment',
           receiverCode: 'PSYCHOMETRICS',
         }),
       });
@@ -242,8 +250,8 @@ function QPayPaymentContent() {
         qrData: data
       });
 
-      toast.success('QR Code loaded successfully!');
-      startPaymentCheck(invoiceId);
+      toast.success('Test QR Code loaded successfully!');
+      startPaymentCheck(data.invoice_id || invoiceId);
 
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to get QR code data';

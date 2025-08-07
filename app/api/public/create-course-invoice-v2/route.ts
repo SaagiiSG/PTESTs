@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getQPayService } from '@/lib/qpay';
+import { getCourseQPayService } from '@/lib/qpay-service';
 
 export async function POST(req: NextRequest) {
   try {
