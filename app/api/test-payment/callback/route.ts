@@ -3,13 +3,24 @@ import { storePaymentStatus } from '@/lib/payment-storage';
 
 export async function POST(req: NextRequest) {
   try {
-    console.log('=== Test Payment Callback Received ===');
+    console.log('=== Payment Callback Received (Test/Course) ===');
     console.log('Request URL:', req.url);
     console.log('Request method:', req.method);
     console.log('Request headers:', Object.fromEntries(req.headers.entries()));
 
     const callbackData = await req.json();
-    console.log('Test payment callback received:', callbackData);
+    console.log('Payment callback received:', callbackData);
+
+    // Determine if this is a course or test payment based on invoice code or other metadata
+    // Course payments use JAVZAN_B_INVOICE, test payments use PSYCHOMETRICS_INVOICE
+    const isCoursePayment = callbackData.invoice_code === 'JAVZAN_B_INVOICE' || 
+                           callbackData.invoice_code === process.env.QPAY_COURSE_INVOICE_CODE;
+    
+    console.log('Payment type detection:', {
+      invoice_code: callbackData.invoice_code,
+      isCoursePayment,
+      course_invoice_code: process.env.QPAY_COURSE_INVOICE_CODE
+    });
 
     // Extract payment data
     const paymentData = {
@@ -22,7 +33,7 @@ export async function POST(req: NextRequest) {
       payment_currency: callbackData.payment_currency,
       payment_wallet: callbackData.payment_wallet,
       paid_by: callbackData.paid_by,
-      service_type: 'test' // Mark as test payment
+      service_type: isCoursePayment ? 'course' : 'test' // Mark based on detection
     };
 
     console.log('Extracted payment data:', paymentData);
@@ -54,7 +65,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Test payment callback processed successfully'
+      message: `${isCoursePayment ? 'Course' : 'Test'} payment callback processed successfully`
     });
 
   } catch (error: any) {

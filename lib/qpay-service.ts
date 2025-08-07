@@ -18,7 +18,9 @@ const QPAY_COURSE_CONFIG = {
   client_id: process.env.QPAY_COURSE_CLIENT_ID || 'JAVZAN_B',
   client_secret: process.env.QPAY_COURSE_CLIENT_SECRET || 'fGJp4FEz',
   invoice_code: process.env.QPAY_COURSE_INVOICE_CODE || 'JAVZAN_B_INVOICE',
-  callback_url: process.env.QPAY_COURSE_CALLBACK_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app/api/course-payment/callback'
+  callback_url: process.env.NODE_ENV === 'development'
+    ? 'http://localhost:3000/api/test-payment/callback'
+    : (process.env.QPAY_CALLBACK_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app/api/test-payment/callback')
 };
 
 // Types
