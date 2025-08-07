@@ -8,7 +8,9 @@ const QPAY_TEST_CONFIG = {
   client_id: process.env.QPAY_TEST_CLIENT_ID || 'PSYCHOMETRICS',
   client_secret: process.env.QPAY_TEST_CLIENT_SECRET || 'iIxpGxUu',
   invoice_code: process.env.QPAY_TEST_INVOICE_CODE || 'PSYCHOMETRICS_INVOICE',
-  callback_url: process.env.QPAY_CALLBACK_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app/api/test-payment/callback'
+  callback_url: process.env.NODE_ENV === 'development' 
+    ? 'http://localhost:3000/api/test-payment/callback'
+    : (process.env.QPAY_CALLBACK_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app/api/test-payment/callback')
 };
 
 // QPay Credentials - Course System
@@ -203,6 +205,8 @@ class QPayService {
       };
 
       console.log('Creating QPay invoice:', JSON.stringify(requestData, null, 2));
+      console.log('Callback URL being sent to QPay:', this.config.callback_url);
+      console.log('Invoice code being sent to QPay:', this.config.invoice_code);
       
       const response = await axios.post(`${QPAY_BASE_URL}/invoice`, requestData, {
         headers: {
@@ -368,5 +372,4 @@ export function getCourseQPayService(): QPayService {
   return courseQPayService;
 }
 
-// Export types
-export type { QPayInvoiceRequest, QPayInvoiceResponse, QPayPaymentCheckResponse, QPayPaymentResponse }; 
+ 

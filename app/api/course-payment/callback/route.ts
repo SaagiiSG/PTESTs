@@ -7,6 +7,8 @@ export async function POST(req: NextRequest) {
     console.log('Request URL:', req.url);
     console.log('Request method:', req.method);
     console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+    console.log('Environment:', process.env.NODE_ENV);
+    console.log('Callback URL from env:', process.env.QPAY_COURSE_CALLBACK_URL);
 
     const callbackData = await req.json();
     console.log('Course payment callback received:', callbackData);
