@@ -55,81 +55,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Receiver code is required' }, { status: 400 });
     }
 
-    // Use QPay Course service for course purchases with course credentials
+    // Use QPay Course service for course purchases
     try {
-      console.log('Testing QPay Course service with course credentials...');
+      console.log('Testing QPay Course service...');
       
-      // Test authentication first with course credentials
-      console.log('Testing QPay Course authentication with course credentials...');
+      // Test authentication first
+      console.log('Testing QPay Course authentication...');
+      const qpayCourseService = getCourseQPayService();
+      console.log('QPay Course service initialized successfully');
       
-      // Create a temporary QPay service with course credentials
-      const baseUrl = process.env.QPAY_COURSE_BASE_URL || 'https://merchant.qpay.mn/v2';
-      const cleanBaseUrl = baseUrl.includes('/auth/token') ? baseUrl.replace('/auth/token', '') : baseUrl;
-      const username = qpayCourseClientId;
-      const password = qpayCourseClientSecret;
-      
-      if (!username || !password) {
-        throw new Error('Course QPay credentials not configured');
-      }
-      
-      console.log('Using course credentials:', { username, password: password ? '***' : 'NOT_SET' });
-      
-      // Test authentication
-      const basicAuth = Buffer.from(`${username}:${password}`).toString('base64');
-      const authResponse = await fetch(`${cleanBaseUrl}/auth/token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${basicAuth}`,
-        },
-        body: JSON.stringify({
-          grant_type: 'client_credentials',
-        }),
-      });
-
-      if (!authResponse.ok) {
-        const errorText = await authResponse.text();
-        throw new Error(`Course QPay authentication failed: ${authResponse.statusText} - ${errorText}`);
-      }
-
-      const authData = await authResponse.json();
-      console.log('Course QPay authentication successful, token obtained');
-      
-      // Test creating a course invoice with course credentials
-      console.log('Testing QPay Course invoice creation with course credentials...');
-      const envCourseInvoiceCode = process.env.QPAY_COURSE_INVOICE_CODE || 'PSYCHOMETRICS_COURSE_INVOICE';
+      // Test creating a course invoice
+      console.log('Testing QPay Course invoice creation...');
       
       const courseInvoiceData = {
-        invoice_code: envCourseInvoiceCode,
         sender_invoice_no: `COURSE_INV${Date.now()}`,
         invoice_receiver_code: receiverCode,
         invoice_description: description,
         amount: numericAmount,
-        callback_url: `${process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : (process.env.NEXTAUTH_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app')}/api/qpay-course-callback`,
-        calculate_vat: false,
-        enable_expiry: false,
+        lines: [{
+          line_description: description,
+          line_quantity: 1,
+          line_unit_price: numericAmount,
+          amount: numericAmount
+        }]
       };
       
-      console.log('Creating course invoice with course credentials:', courseInvoiceData);
+      console.log('Creating course invoice with course service:', courseInvoiceData);
+      const invoice = await qpayCourseService.createInvoice(courseInvoiceData);
       
-      // Create invoice using course credentials
-      const invoiceResponse = await fetch(`${cleanBaseUrl}/invoice`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authData.access_token}`,
-        },
-        body: JSON.stringify(courseInvoiceData),
-      });
-
-      if (!invoiceResponse.ok) {
-        const errorText = await invoiceResponse.text();
-        throw new Error(`Course QPay invoice creation failed: ${invoiceResponse.statusText} - ${errorText}`);
-      }
-
-      const invoice = await invoiceResponse.json();
-      
-      console.log('QPay Course invoice creation successful with course credentials:', {
+      console.log('QPay Course invoice creation successful:', {
         invoice_id: invoice.invoice_id,
         qr_image: invoice.qr_image ? 'Generated' : 'Not generated',
         qr_text: invoice.qr_text ? 'Generated' : 'Not generated'
@@ -137,7 +91,7 @@ export async function POST(req: NextRequest) {
       
       return NextResponse.json({
         success: true,
-        message: 'Course QPay invoice created successfully with course credentials',
+        message: 'Course QPay invoice created successfully',
         isTestMode: false,
         invoice_id: invoice.invoice_id,
         qr_image: invoice.qr_image,
@@ -153,7 +107,7 @@ export async function POST(req: NextRequest) {
       });
       
     } catch (error: any) {
-      console.error('QPay Course invoice creation failed with course credentials:', error);
+      console.error('QPay Course invoice creation failed:', error);
       console.error('Error details:', {
         message: error.message,
         stack: error.stack,
@@ -162,7 +116,7 @@ export async function POST(req: NextRequest) {
       
       // Return error response
       return NextResponse.json({ 
-        error: 'Failed to create course payment invoice with course credentials',
+        error: 'Failed to create course payment invoice',
         details: error.message,
         success: false
       }, { status: 500 });
@@ -172,7 +126,7 @@ export async function POST(req: NextRequest) {
     console.error('Public create course invoice V2 error:', error);
     
     // Provide more detailed error information
-    let errorMessage = 'Failed to create course QPay invoice with course credentials';
+    let errorMessage = 'Failed to create course QPay invoice';
     if (error.message.includes('Bad Request')) {
       errorMessage = 'Invalid course QPay request parameters. Please check your configuration.';
     } else if (error.message.includes('Unauthorized')) {
@@ -180,7 +134,7 @@ export async function POST(req: NextRequest) {
     } else if (error.message.includes('timeout')) {
       errorMessage = 'Course QPay request timed out. Please try again.';
     } else {
-      errorMessage = error.message || 'Failed to create course QPay invoice with course credentials';
+      errorMessage = error.message || 'Failed to create course QPay invoice';
     }
     
     return NextResponse.json({ 
