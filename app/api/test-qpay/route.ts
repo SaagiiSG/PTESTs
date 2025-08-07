@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getQPayService } from '@/lib/qpay';
+import { getTestQPayService } from '@/lib/qpay-service';
 
 export async function GET() {
   try {
@@ -34,7 +34,7 @@ export async function GET() {
 
     // Try to get QPay service instance
     try {
-      const qpayService = getQPayService();
+      const qpayService = getTestQPayService();
       console.log('QPay service instance created successfully');
       
       // Try to get access token (this will test authentication)

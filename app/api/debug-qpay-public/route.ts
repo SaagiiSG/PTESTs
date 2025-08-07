@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getQPayService } from '@/lib/qpay';
+import { getTestQPayService } from '@/lib/qpay-service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     
     // Test QPay service initialization
     console.log('Testing QPay service initialization...');
-    const qpayService = getQPayService();
+          const qpayService = getTestQPayService();
     console.log('QPay service initialized successfully');
     
     // Test authentication

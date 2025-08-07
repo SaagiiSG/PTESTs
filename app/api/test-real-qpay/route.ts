@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getQPayService } from '@/lib/qpay';
+import { getTestQPayService } from '@/lib/qpay-service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     
     // Test authentication first
     console.log('Testing QPay authentication...');
-    const qpayService = getQPayService();
+    const qpayService = getTestQPayService();
     const token = await qpayService['getAccessToken']();
     console.log('QPay authentication successful, token obtained');
     

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getQPayCourseService, QPayInvoiceRequest } from '@/lib/qpay-course';
+import { getCourseQPayService, QPayInvoiceRequest } from '@/lib/qpay-service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       
       // Test authentication first
       console.log('Testing QPay Course authentication...');
-      const qpayCourseService = getQPayCourseService();
+      const qpayCourseService = getCourseQPayService();
       const token = await qpayCourseService['getAccessToken']();
       console.log('QPay Course authentication successful, token obtained');
       
