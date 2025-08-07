@@ -40,6 +40,17 @@ export async function POST(req: NextRequest) {
     // Validate amount - convert to number if it's a string, provide fallback if missing
     let numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
     
+    console.log('Amount validation check:', {
+      originalAmount: amount,
+      amountType: typeof amount,
+      numericAmount,
+      isNaN: isNaN(numericAmount),
+      isZero: numericAmount === 0,
+      isLessThanZero: numericAmount < 0,
+      isLessThanOrEqualZero: numericAmount <= 0,
+      condition: !numericAmount || isNaN(numericAmount) || numericAmount <= 0
+    });
+    
     // If amount is missing or invalid, use a default amount
     if (!numericAmount || isNaN(numericAmount) || numericAmount <= 0) {
       console.log('Invalid amount detected, using fallback:', { 

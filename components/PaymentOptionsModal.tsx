@@ -199,42 +199,25 @@ export default function PaymentOptionsModal({
         throw new Error(data.error || 'Failed to create payment invoice');
       }
 
-      // For course payments, pass QR data as URL parameters
-      if (itemType === 'course') {
-        // Pass essential QR data as URL parameters for course payments
-        const qrDataParam = encodeURIComponent(JSON.stringify({
-          invoice_id: data.invoice_id,
-          qr_image: data.qr_image,
-          qr_text: data.qr_text,
-          deeplink: data.deeplink,
-          web_url: data.web_url,
-          deeplink_url: data.deeplink_url,
-          amount: data.amount,
-          testMode: data.testMode || false
-        }));
-        
-        router.push(`/payment/qpay?invoiceId=${data.invoice_id}&itemId=${itemId}&itemType=${itemType}&returnTo=${encodeURIComponent(window.location.pathname)}&qrData=${qrDataParam}`);
-      } else {
-        // For test payments, use sessionStorage
-        const qrData = {
-          invoice_id: data.invoice_id,
-          qr_image: data.qr_image,
-          qr_text: data.qr_text,
-          deeplink: data.deeplink,
-          web_url: data.web_url,
-          deeplink_url: data.deeplink_url,
-          amount: data.amount,
-          testMode: data.testMode || false
-        };
-        
-        // Store QR data in sessionStorage for the payment page to access
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem(`qrData_${data.invoice_id}`, JSON.stringify(qrData));
-          console.log('QR data stored in sessionStorage for invoice:', data.invoice_id);
-        }
-        
-        router.push(`/payment/qpay?invoiceId=${data.invoice_id}&itemId=${itemId}&itemType=${itemType}&returnTo=${encodeURIComponent(window.location.pathname)}`);
+      // Store QR data in sessionStorage for both test and course payments
+      const qrData = {
+        invoice_id: data.invoice_id,
+        qr_image: data.qr_image,
+        qr_text: data.qr_text,
+        deeplink: data.deeplink,
+        web_url: data.web_url,
+        deeplink_url: data.deeplink_url,
+        amount: data.amount,
+        testMode: data.testMode || false
+      };
+      
+      // Store QR data in sessionStorage for the payment page to access
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(`qrData_${data.invoice_id}`, JSON.stringify(qrData));
+        console.log('QR data stored in sessionStorage for invoice:', data.invoice_id);
       }
+      
+      router.push(`/payment/qpay?invoiceId=${data.invoice_id}&itemId=${itemId}&itemType=${itemType}&returnTo=${encodeURIComponent(window.location.pathname)}`);
       
       onClose();
 

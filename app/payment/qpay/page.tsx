@@ -168,11 +168,31 @@ function QPayPaymentContent() {
         // Final fallback: create a new course invoice
         console.log('No QR data found, creating new course invoice');
         
+        // Get the actual course price from the URL parameters or use a reasonable default
+        const urlParams = new URLSearchParams(window.location.search);
+        const itemId = urlParams.get('itemId');
+        const itemType = urlParams.get('itemType');
+        
+        // Try to get the course price from the course API
+        let coursePrice = 12; // Default fallback price
+        if (itemId && itemType === 'course') {
+          try {
+            const courseResponse = await fetch(`/api/courses/${itemId}`);
+            if (courseResponse.ok) {
+              const courseData = await courseResponse.json();
+              coursePrice = courseData.price || 12;
+              console.log('Retrieved course price from API:', coursePrice);
+            }
+          } catch (error) {
+            console.error('Failed to get course price:', error);
+          }
+        }
+        
         const newCourseInvoiceResponse = await fetch('/api/public/create-course-invoice-v2', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            amount: 1000, // Default amount
+            amount: coursePrice, // Use actual course price instead of hardcoded 1000
             description: 'Course Payment',
             receiverCode: 'JAVZAN_B'
           }),
@@ -233,7 +253,7 @@ function QPayPaymentContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: 1000, // Default amount
+          amount: 12, // More reasonable default amount for tests
           description: 'Test Payment',
           receiverCode: 'PSYCHOMETRICS',
         }),
