@@ -17,6 +17,8 @@ export async function POST(req: NextRequest) {
     // First check our stored payment data (from callback) - this is the primary source
     const storedPayment = await getPaymentStatus(invoiceId);
     
+    console.log('Course payment check - stored payment data:', storedPayment);
+    
     if (storedPayment && storedPayment.payment_status === 'PAID') {
       console.log('Found stored payment data for course:', storedPayment);
       return NextResponse.json({
