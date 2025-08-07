@@ -3,13 +3,24 @@ import { storePaymentStatus } from '../../../lib/payment-storage';
 
 export async function POST(req: NextRequest) {
   try {
-    console.log('=== QPay Callback Received ===');
+    console.log('=== QPay Callback Received (Test/Course) ===');
     console.log('Request URL:', req.url);
     console.log('Request method:', req.method);
     console.log('Request headers:', Object.fromEntries(req.headers.entries?.() || []));
     
     const callbackData = await req.json();
     console.log('QPay callback received:', JSON.stringify(callbackData, null, 2));
+
+    // Determine if this is a course or test payment based on invoice code or other metadata
+    // Course payments use JAVZAN_B_INVOICE, test payments use PSYCHOMETRICS_INVOICE
+    const isCoursePayment = callbackData.invoice_code === 'JAVZAN_B_INVOICE' || 
+                           callbackData.invoice_code === process.env.QPAY_COURSE_INVOICE_CODE;
+    
+    console.log('Payment type detection:', {
+      invoice_code: callbackData.invoice_code,
+      isCoursePayment,
+      course_invoice_code: process.env.QPAY_COURSE_INVOICE_CODE
+    });
 
     // Extract payment information from callback
     const {
@@ -51,6 +62,7 @@ export async function POST(req: NextRequest) {
       payment_currency: 'MNT',
       payment_wallet: 'QPay',
       paid_by: 'P2P',
+      service_type: isCoursePayment ? 'course' : 'test', // Mark based on detection
       ...otherData
     };
 
@@ -73,7 +85,10 @@ export async function POST(req: NextRequest) {
         console.log('Payment status updated for invoice:', object_id, payment_status);
     }
 
-    return NextResponse.json({ success: true, message: 'Callback processed' });
+    return NextResponse.json({ 
+      success: true, 
+      message: `${isCoursePayment ? 'Course' : 'Test'} payment callback processed successfully` 
+    });
 
   } catch (error: any) {
     console.error('QPay callback error:', error);

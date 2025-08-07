@@ -8,19 +8,19 @@ const QPAY_TEST_CONFIG = {
   client_id: process.env.QPAY_TEST_CLIENT_ID || 'PSYCHOMETRICS',
   client_secret: process.env.QPAY_TEST_CLIENT_SECRET || 'iIxpGxUu',
   invoice_code: process.env.QPAY_TEST_INVOICE_CODE || 'PSYCHOMETRICS_INVOICE',
-  callback_url: process.env.NODE_ENV === 'development' 
-    ? 'http://localhost:3000/api/test-payment/callback'
-    : (process.env.QPAY_CALLBACK_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app/api/test-payment/callback')
+  callback_url: process.env.NODE_ENV === 'development'
+    ? 'http://localhost:3000/api/qpay-callback'
+    : (process.env.QPAY_CALLBACK_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app/api/qpay-callback')
 };
 
 // QPay Credentials - Course System (Temporarily using test credentials for immediate fix)
 const QPAY_COURSE_CONFIG = {
-  client_id: process.env.QPAY_COURSE_CLIENT_ID || 'PSYCHOMETRICS', // Temporarily use test credentials
+  client_id: process.env.QPAY_COURSE_CLIENT_ID || '', // Temporarily use test credentials
   client_secret: process.env.QPAY_COURSE_CLIENT_SECRET || 'iIxpGxUu', // Temporarily use test credentials
   invoice_code: process.env.QPAY_COURSE_INVOICE_CODE || 'PSYCHOMETRICS_INVOICE', // Temporarily use test invoice code
   callback_url: process.env.NODE_ENV === 'development'
-    ? 'http://localhost:3000/api/test-payment/callback'
-    : (process.env.QPAY_CALLBACK_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app/api/test-payment/callback')
+    ? 'http://localhost:3000/api/qpay-callback'
+    : (process.env.QPAY_CALLBACK_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app/api/qpay-callback')
 };
 
 // Types
