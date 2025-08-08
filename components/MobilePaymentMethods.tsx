@@ -29,10 +29,25 @@ export default function MobilePaymentMethods({
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastOpenedApp, setLastOpenedApp] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPaymentMethods();
   }, [invoiceId, qrText]);
+
+  // Listen for when user returns to the page after opening an app
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && lastOpenedApp) {
+        // User returned to the page after opening an app
+        toast.success(`Payment completed in ${lastOpenedApp}! Checking payment status...`);
+        setLastOpenedApp(null);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [lastOpenedApp]);
 
   const fetchPaymentMethods = async () => {
     try {
@@ -70,12 +85,33 @@ export default function MobilePaymentMethods({
         onPaymentMethodSelect(method);
       }
 
+      // Show immediate feedback
+      toast.info(`Opening ${method.name}...`);
+
+      // Track if the app was successfully opened
+      let appOpened = false;
+      setLastOpenedApp(method.name);
+      
+      // Listen for visibility change (when user switches to app)
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'hidden') {
+          appOpened = true;
+          document.removeEventListener('visibilitychange', handleVisibilityChange);
+        }
+      };
+      
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      
       // Attempt to open the deep link
       window.location.href = method.link;
       
-      // Fallback: if the app doesn't open, show a message
+      // Fallback: if the app doesn't open after 2 seconds, show a message
       setTimeout(() => {
-        toast.info(`If ${method.name} didn't open, please install the app from your app store`);
+        if (!appOpened) {
+          toast.info(`${method.name} app not found. Please install the app from your app store or use another payment method.`);
+          setLastOpenedApp(null); // Clear the app name if it didn't open
+        }
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
       }, 2000);
 
     } catch (error) {
