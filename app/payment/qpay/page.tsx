@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
+import { useIsMobile } from '@/lib/device-detection';
+import MobilePaymentMethods from '@/components/MobilePaymentMethods';
 
 interface PaymentStatus {
   status: 'loading' | 'qr_generated' | 'checking' | 'paid' | 'failed';
@@ -34,6 +36,7 @@ function QPayPaymentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
+  const isMobile = useIsMobile();
   
   const invoiceId = searchParams.get('invoiceId');
   const itemId = searchParams.get('itemId');
@@ -531,19 +534,31 @@ function QPayPaymentContent() {
               {/* QR Code Display */}
               {paymentStatus.status === 'qr_generated' && paymentStatus.qrData && (
                 <div className="space-y-6">
-                  {/* Payment Instructions */}
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200 mb-2">
-                      <Smartphone className="h-4 w-4" />
-                      <span className="font-medium">How to Pay</span>
-                    </div>
-                    <ol className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                      <li>1. Open your QPay mobile app</li>
-                      <li>2. Tap the QR scanner or use the payment link below</li>
-                      <li>3. Complete the payment in your app</li>
-                      <li>4. Wait for confirmation (this page will update automatically)</li>
-                    </ol>
-                  </div>
+                  {/* Mobile Payment Methods */}
+                  {isMobile ? (
+                    <MobilePaymentMethods 
+                      invoiceId={invoiceId!}
+                      amount={paymentStatus.qrData.total_amount || paymentStatus.qrData.gross_amount || paymentStatus.qrData.amount || 0}
+                      onPaymentMethodSelect={(method) => {
+                        console.log('Payment method selected:', method.name);
+                        toast.info(`Opening ${method.name}...`);
+                      }}
+                    />
+                  ) : (
+                    <>
+                      {/* Payment Instructions */}
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200 mb-2">
+                          <Smartphone className="h-4 w-4" />
+                          <span className="font-medium">How to Pay</span>
+                        </div>
+                        <ol className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                          <li>1. Open your QPay mobile app</li>
+                          <li>2. Tap the QR scanner or use the payment link below</li>
+                          <li>3. Complete the payment in your app</li>
+                          <li>4. Wait for confirmation (this page will update automatically)</li>
+                        </ol>
+                      </div>
 
                   <div className="text-center">
                     <h3 className="font-semibold mb-4">Scan QR Code to Pay</h3>
@@ -769,6 +784,8 @@ function QPayPaymentContent() {
                         ✅ Simulate Payment Completion
                       </Button>
                     </div>
+                  )}
+                    </>
                   )}
                 </div>
               )}
