@@ -71,8 +71,10 @@ export async function POST(req: Request) {
     }
     
     if (finalCourseId) {
+      console.log('Processing course purchase for:', finalCourseId);
       const course = await Course.findById(finalCourseId);
       if (!course) {
+        console.error('Course not found:', finalCourseId);
         return NextResponse.json({ message: "Course not found." }, { status: 404 });
       }
       
@@ -85,10 +87,13 @@ export async function POST(req: Request) {
         }, { status: 200 }); // Return 200 instead of 409 for already purchased
       }
       
+      console.log('Adding course to user purchased courses...');
       // Update user model (fast access)
       user.purchasedCourses.push(finalCourseId);
       await user.save();
+      console.log('User updated successfully');
       
+      console.log('Creating purchase record...');
       // Create purchase record (analytics and history)
       await Purchase.create({
         user: session.user.id,
@@ -106,8 +111,10 @@ export async function POST(req: Request) {
     }
     
     if (finalTestId) {
+      console.log('Processing test purchase for:', finalTestId);
       const test = await Test.findById(finalTestId);
       if (!test) {
+        console.error('Test not found:', finalTestId);
         return NextResponse.json({ message: "Test not found." }, { status: 404 });
       }
       
@@ -162,6 +169,14 @@ export async function POST(req: Request) {
     
   } catch (error) {
     console.error('Purchase error:', error);
-    return NextResponse.json({ message: "Internal server error." }, { status: 500 });
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    return NextResponse.json({ 
+      message: "Internal server error.", 
+      error: error.message 
+    }, { status: 500 });
   }
 } 
