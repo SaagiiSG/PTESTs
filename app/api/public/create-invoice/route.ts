@@ -87,8 +87,8 @@ export async function POST(req: NextRequest) {
         (process.env.QPAY_INVOICE_CODE || 'PSYCHOMETRICS_INVOICE');
       
       const callbackUrl = isCoursePayment ? 
-        `${process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : (process.env.NEXTAUTH_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app')}/api/qpay-course-callback` :
-        `${process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : (process.env.NEXTAUTH_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app')}/api/qpay-callback`;
+        `${process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : (process.env.NEXTAUTH_URL || 'https://testcenter.mn')}/api/qpay-course-callback` :
+        `${process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : (process.env.NEXTAUTH_URL || 'https://testcenter.mn')}/api/qpay-callback`;
       
       const testInvoiceData = {
         sender_invoice_no: isCoursePayment ? `COURSE_INV${Date.now()}` : `SINV${Date.now()}`,

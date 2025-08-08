@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
         invoice_receiver_code: 'PSYCHOMETRICS',
         invoice_description: 'Test Payment',
         amount: 10,
-        callback_url: 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app/api/test-payment/callback',
+        callback_url: 'https://testcenter.mn/api/test-payment/callback',
         lines: [
           {
             line_description: 'Test Payment',

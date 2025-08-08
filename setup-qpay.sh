@@ -22,7 +22,7 @@ QPAY_BASE_URL=https://merchant.qpay.mn/v2
 QPAY_INVOICE_CODE=JAVZAN_B_INVOICE
 
 # Callback URL (Update this to your actual domain)
-QPAY_CALLBACK_URL=http://localhost:3001/api/qpay-callback
+QPAY_CALLBACK_URL=https://testcenter.mn/api/qpay-callback
 
 # Optional QPay Settings (if needed)
 QPAY_BRANCH_CODE=

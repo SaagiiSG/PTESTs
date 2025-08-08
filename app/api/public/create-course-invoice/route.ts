@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
         invoice_receiver_code: receiverCode,
         invoice_description: description,
         amount: numericAmount,
-        callback_url: `${process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : (process.env.NEXTAUTH_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app')}/api/qpay-course-callback`,
+        callback_url: `${process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : (process.env.NEXTAUTH_URL || 'https://testcenter.mn')}/api/qpay-course-callback`,
         calculate_vat: false,
         enable_expiry: false,
       };

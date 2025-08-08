@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
           invoice_receiver_code: code,
           invoice_description: description || 'Payment for services',
           amount: Number(amount),
-          callback_url: process.env.QPAY_CALLBACK_URL || `${req.nextUrl.origin}/api/qpay-callback`,
+          callback_url: process.env.QPAY_CALLBACK_URL || 'https://testcenter.mn/api/qpay-callback',
           calculate_vat: false,
           enable_expiry: false,
         };

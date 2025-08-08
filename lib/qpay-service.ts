@@ -10,7 +10,7 @@ const QPAY_TEST_CONFIG = {
   invoice_code: process.env.QPAY_TEST_INVOICE_CODE || 'PSYCHOMETRICS_INVOICE',
   callback_url: process.env.NODE_ENV === 'development'
     ? 'http://localhost:3000/api/qpay-callback'
-    : (process.env.QPAY_CALLBACK_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app/api/qpay-callback')
+    : (process.env.QPAY_CALLBACK_URL || 'https://testcenter.mn/api/qpay-callback')
 };
 
 // QPay Credentials - Course System (Temporarily using test credentials for immediate fix)
@@ -20,7 +20,7 @@ const QPAY_COURSE_CONFIG = {
   invoice_code: process.env.QPAY_COURSE_INVOICE_CODE || 'PSYCHOMETRICS_INVOICE', // Temporarily use test invoice code
   callback_url: process.env.NODE_ENV === 'development'
     ? 'http://localhost:3000/api/qpay-callback'
-    : (process.env.QPAY_CALLBACK_URL || 'https://setgelsudlal-git-main-saagiisgs-projects.vercel.app/api/qpay-callback')
+    : (process.env.QPAY_CALLBACK_URL || 'https://testcenter.mn/api/qpay-callback')
 };
 
 // Types
@@ -38,6 +38,8 @@ export interface QPayInvoiceRequest {
   invoice_description: string;
   amount: number;
   callback_url: string;
+  calculate_vat?: boolean;
+  enable_expiry?: boolean;
   lines: Array<{
     line_description: string;
     line_quantity: number;
