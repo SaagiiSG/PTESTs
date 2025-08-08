@@ -25,7 +25,8 @@ export default function MobilePaymentMethods({
   invoiceId, 
   amount, 
   qrText,
-  onPaymentMethodSelect 
+  onPaymentMethodSelect,
+  onPaymentCompleted
 }: MobilePaymentMethodsProps) {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,12 +44,17 @@ export default function MobilePaymentMethods({
         // User returned to the page after opening an app
         toast.success(`Payment completed in ${lastOpenedApp}! Checking payment status...`);
         setLastOpenedApp(null);
+        
+        // Trigger payment check
+        if (onPaymentCompleted) {
+          onPaymentCompleted();
+        }
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [lastOpenedApp]);
+  }, [lastOpenedApp, onPaymentCompleted]);
 
   const fetchPaymentMethods = async () => {
     try {

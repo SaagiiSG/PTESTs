@@ -561,6 +561,10 @@ function QPayPaymentContent() {
                           console.log('Payment method selected:', method.name);
                           toast.info(`Opening ${method.name}...`);
                         }}
+                        onPaymentCompleted={() => {
+                          console.log('User returned from payment app, checking payment status...');
+                          manuallyCheckPayment();
+                        }}
                       />
                       
                       {/* Payment Status Monitor for Mobile */}

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -22,7 +22,6 @@ export const metadata: Metadata = {
   title: "PTest App",
   description: "A hybrid purchase and test platform.",
   manifest: "/manifest.json",
-  themeColor: "#000000",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -38,6 +37,10 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/icon-192x192.png" }],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#000000",
 };
 
 export default function RootLayout({
