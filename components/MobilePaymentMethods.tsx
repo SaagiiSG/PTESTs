@@ -16,12 +16,14 @@ interface PaymentMethod {
 interface MobilePaymentMethodsProps {
   invoiceId: string;
   amount: number;
+  qrText?: string;
   onPaymentMethodSelect?: (method: PaymentMethod) => void;
 }
 
 export default function MobilePaymentMethods({ 
   invoiceId, 
   amount, 
+  qrText,
   onPaymentMethodSelect 
 }: MobilePaymentMethodsProps) {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -30,7 +32,7 @@ export default function MobilePaymentMethods({
 
   useEffect(() => {
     fetchPaymentMethods();
-  }, [invoiceId]);
+  }, [invoiceId, qrText]);
 
   const fetchPaymentMethods = async () => {
     try {
@@ -39,7 +41,17 @@ export default function MobilePaymentMethods({
       const data = await response.json();
 
       if (data.success && data.paymentMethods?.rows) {
-        setPaymentMethods(data.paymentMethods.rows);
+        // If we have QR text, update the links to use the actual QR code
+        let methods = data.paymentMethods.rows;
+        
+        if (qrText) {
+          methods = methods.map((method: PaymentMethod) => ({
+            ...method,
+            link: method.link.replace(/qPay_QRcode=[^&]*/, `qPay_QRcode=${encodeURIComponent(qrText)}`)
+          }));
+        }
+        
+        setPaymentMethods(methods);
       } else {
         setError(data.error || 'Failed to load payment methods');
       }

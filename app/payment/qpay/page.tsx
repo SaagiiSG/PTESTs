@@ -539,6 +539,7 @@ function QPayPaymentContent() {
                     <MobilePaymentMethods 
                       invoiceId={invoiceId!}
                       amount={paymentStatus.qrData.total_amount || paymentStatus.qrData.gross_amount || paymentStatus.qrData.amount || 0}
+                      qrText={paymentStatus.qrData.qr_text}
                       onPaymentMethodSelect={(method) => {
                         console.log('Payment method selected:', method.name);
                         toast.info(`Opening ${method.name}...`);
