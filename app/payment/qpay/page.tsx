@@ -85,6 +85,22 @@ function QPayPaymentContent() {
     }
   }, [invoiceId]);
 
+  // Start payment monitoring for mobile users when QR is generated
+  useEffect(() => {
+    if (isMobile && paymentStatus.status === 'qr_generated' && invoiceId && !isMonitoring) {
+      console.log('Starting payment monitoring for mobile user');
+      startPaymentCheck(invoiceId);
+    }
+  }, [isMobile, paymentStatus.status, invoiceId, isMonitoring]);
+
+  // Start payment monitoring for mobile users when QR data is ready
+  useEffect(() => {
+    if (isMobile && paymentStatus.status === 'qr_generated' && paymentStatus.qrData && !isMonitoring) {
+      console.log('Starting payment monitoring for mobile user');
+      startPaymentCheck(invoiceId!);
+    }
+  }, [isMobile, paymentStatus.status, paymentStatus.qrData, isMonitoring, invoiceId]);
+
   const generateQRCode = async () => {
     if (!invoiceId) return;
 
@@ -536,15 +552,127 @@ function QPayPaymentContent() {
                 <div className="space-y-6">
                   {/* Mobile Payment Methods */}
                   {isMobile ? (
-                    <MobilePaymentMethods 
-                      invoiceId={invoiceId!}
-                      amount={paymentStatus.qrData.total_amount || paymentStatus.qrData.gross_amount || paymentStatus.qrData.amount || 0}
-                      qrText={paymentStatus.qrData.qr_text}
-                      onPaymentMethodSelect={(method) => {
-                        console.log('Payment method selected:', method.name);
-                        toast.info(`Opening ${method.name}...`);
-                      }}
-                    />
+                    <>
+                      <MobilePaymentMethods 
+                        invoiceId={invoiceId!}
+                        amount={paymentStatus.qrData.total_amount || paymentStatus.qrData.gross_amount || paymentStatus.qrData.amount || 0}
+                        qrText={paymentStatus.qrData.qr_text}
+                        onPaymentMethodSelect={(method) => {
+                          console.log('Payment method selected:', method.name);
+                          toast.info(`Opening ${method.name}...`);
+                        }}
+                      />
+                      
+                      {/* Payment Status Monitor for Mobile */}
+                      <div className={`border rounded-lg p-4 ${
+                        lastError 
+                          ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800' 
+                          : isMonitoring 
+                          ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800' 
+                          : 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700'
+                      }`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2 text-sm">
+                            <div className={`w-2 h-2 rounded-full animate-pulse ${
+                              lastError ? 'bg-red-500' : isMonitoring ? 'bg-blue-500' : 'bg-gray-400'
+                            }`}></div>
+                            <span className={lastError ? 'text-red-700 dark:text-red-300' : isMonitoring ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}>
+                              {lastError ? 'Payment check error' : isMonitoring ? 'Payment monitoring active' : 'Monitoring stopped'}
+                            </span>
+                          </div>
+                          {isMonitoring && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded">
+                                Check #{checkCount}
+                              </span>
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <Timer className="w-3 h-3" />
+                                {formatTime(timeLeft)}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <p className="text-xs mb-2">
+                          {lastError ? (
+                            <span className="text-red-600 dark:text-red-400">Error: {lastError}</span>
+                          ) : (
+                            <span className="text-blue-600 dark:text-blue-400">
+                              <Timer className="w-3 h-3 inline mr-1" />
+                              Payment session active • Waiting for completion
+                            </span>
+                          )}
+                        </p>
+                        
+                        <p className="text-xs text-gray-500 mb-3">
+                          Auto-checking every 10 seconds • Last check: {lastCheckTime || 'Not started yet'}
+                        </p>
+                        
+                        <div className="flex gap-2">
+                          {isMonitoring ? (
+                            <>
+                              <Button 
+                                onClick={stopPaymentMonitoring}
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 text-xs"
+                              >
+                                Stop Monitoring
+                              </Button>
+                              <Button 
+                                onClick={manuallyCheckPayment}
+                                disabled={checkingPayment}
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 text-xs"
+                              >
+                                {checkingPayment ? (
+                                  <>
+                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                    Checking...
+                                  </>
+                                ) : (
+                                  <>
+                                    <RefreshCw className="w-3 h-3 mr-1" />
+                                    Check Now
+                                  </>
+                                )}
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button 
+                                onClick={() => startPaymentCheck(invoiceId!)}
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 text-xs"
+                              >
+                                Start Monitoring
+                              </Button>
+                              <Button 
+                                onClick={manuallyCheckPayment}
+                                disabled={checkingPayment}
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 text-xs"
+                              >
+                                {checkingPayment ? (
+                                  <>
+                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                    Checking...
+                                  </>
+                                ) : (
+                                  <>
+                                    <RefreshCw className="w-3 h-3 mr-1" />
+                                    Check Now
+                                  </>
+                                )}
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </>
                   ) : (
                     <>
                       {/* Payment Instructions */}

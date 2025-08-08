@@ -18,6 +18,7 @@ interface MobilePaymentMethodsProps {
   amount: number;
   qrText?: string;
   onPaymentMethodSelect?: (method: PaymentMethod) => void;
+  onPaymentCompleted?: () => void;
 }
 
 export default function MobilePaymentMethods({ 
