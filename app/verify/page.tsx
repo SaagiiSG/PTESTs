@@ -43,6 +43,33 @@ export default function VerifyChoicePage() {
     router.push('/verify-email?pending=true');
   };
 
+  const handleSmsVerify = async () => {
+    const phone = localStorage.getItem('signupPhoneNumber');
+    if (!phone) {
+      toast.error('No phone number found. Please sign up again or use email verification.');
+      return;
+    }
+    try {
+      const res = await fetch('/api/auth/request-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber: phone }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to send SMS code');
+        return;
+      }
+      if (data?.devCode) {
+        try { localStorage.setItem('devSmsCode', data.devCode); } catch (_) {}
+      }
+      toast.success('SMS code sent!');
+      router.push('/verify-sms');
+    } catch (_) {
+      toast.error('Could not send SMS code');
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-width-sm flex flex-col gap-6">
@@ -59,7 +86,7 @@ export default function VerifyChoicePage() {
           <Button
             disabled={!hasPhone}
             variant="outline"
-            onClick={() => router.push('/verify-sms')}
+            onClick={handleSmsVerify}
             className="h-12 px-6"
           >
             <Phone className="w-5 h-5 mr-2" /> Verify via SMS

@@ -102,34 +102,8 @@ export default function SignUpPage() {
           }
         } catch (_) {}
 
-        // At this point, backend sent email verification if email provided.
-        // Also request SMS code if phone provided (non-blocking UX decision page next)
-        try {
-          if (formattedPhone) {
-            const verifyRes = await fetch('/api/auth/request-verification', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ phoneNumber: formattedPhone }),
-            });
-            const verifyData = await verifyRes.json().catch(() => ({}));
-            console.log('Request-verification response:', { status: verifyRes.status, verifyData });
-            if (!verifyRes.ok) {
-              toast.error(verifyData.error || 'Failed to send SMS code. You can still verify by email.');
-            } else {
-              toast.success('SMS code sent.');
-              try {
-                if (verifyData?.devCode && typeof window !== 'undefined') {
-                  localStorage.setItem('devSmsCode', verifyData.devCode);
-                }
-              } catch (_) {}
-            }
-          }
-        } catch (e: any) {
-          console.error('Request-verification failed:', e?.message || e);
-          toast.error('Could not send SMS code. You can still verify by email.');
-        }
-
-        toast.success('Registration successful! Choose a verification method.');
+        // Do not send any verification yet; user will choose the method next
+        toast.success('Registration successful! Choose your verification method.');
         router.push('/verify');
       } else {
         toast.error(data.error || 'Registration failed. Please try again.');
