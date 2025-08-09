@@ -457,11 +457,19 @@ function QPayPaymentContent() {
           }
         }, 3000);
       } else {
-        throw new Error('Failed to record purchase');
+        let serverError: any = null;
+        try {
+          serverError = await purchaseResponse.json();
+        } catch {}
+        const serverMessage = serverError?.error || serverError?.message;
+        const statusText = purchaseResponse.statusText || '';
+        const composed = serverMessage ? `Failed to record purchase: ${serverMessage}` : `Failed to record purchase${statusText ? ` (${statusText})` : ''}`;
+        throw new Error(composed);
       }
     } catch (error) {
       console.error('Error recording purchase:', error);
-      toast.error('Payment successful but failed to record purchase. Please contact support.');
+      const msg = (error as Error)?.message || 'Payment successful but failed to record purchase.';
+      toast.error(msg);
     }
   };
 
@@ -571,97 +579,7 @@ function QPayPaymentContent() {
 
           {/* Main Content */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Test Information */}
-            <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="w-6 h-6 text-blue-600" />
-                  {testInfo ? testInfo.title : 'Test Information'}
-                </CardTitle>
-                <CardDescription>
-                  Test information and details
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {testInfo ? (
-                  <>
-                    {testInfo.thumbnailUrl && (
-                      <div className="flex justify-center">
-                        <img 
-                          src={testInfo.thumbnailUrl} 
-                          alt={testInfo.title}
-                          className="w-24 h-24 rounded-lg object-cover"
-                        />
-                      </div>
-                    )}
-                    
-                    {testInfo.description && (
-                      <div>
-                        <h4 className="font-medium text-gray-900 dark:text-white mb-2">Description</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                          {testInfo.description}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 mb-1">
-                          <Clock className="w-4 h-4" />
-                          Duration
-                        </div>
-                        <div className="font-semibold text-gray-900 dark:text-white">
-                          {testInfo.duration || 20} min
-                        </div>
-                      </div>
-                      
-                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 mb-1">
-                          <BookOpen className="w-4 h-4" />
-                          Questions
-                        </div>
-                        <div className="font-semibold text-gray-900 dark:text-white">
-                          {testInfo.questionCount || 'N/A'}
-                        </div>
-                      </div>
-                      
-                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 mb-1">
-                          <Users className="w-4 h-4" />
-                          Taken
-                        </div>
-                        <div className="font-semibold text-gray-900 dark:text-white">
-                          {testInfo.takenCount || 0}
-                        </div>
-                      </div>
-                      
-                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 mb-1">
-                          <CreditCard className="w-4 h-4" />
-                          Price
-                        </div>
-                        <div className="font-semibold text-green-600 dark:text-green-400">
-                          ₮{testInfo.price.toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
-
-                    {testInfo.testType && (
-                      <div className="flex justify-center">
-                        <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
-                          {testInfo.testType}
-                        </Badge>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="text-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                    <p className="text-gray-600 dark:text-gray-300">Loading test information...</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            
 
             {/* QR Code Payment */}
             <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl">

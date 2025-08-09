@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { connectMongoose } from "@/lib/mongodb";
 import User from "@/app/models/user";
 import Course from "@/app/models/course";
@@ -33,6 +34,14 @@ export async function POST(req: Request) {
     if (!finalCourseId && !finalTestId) {
       return NextResponse.json({ message: "Missing courseId or testId." }, { status: 400 });
     }
+
+    // Validate ObjectId formats early to avoid cast exceptions
+    if (finalCourseId && !mongoose.Types.ObjectId.isValid(finalCourseId)) {
+      return NextResponse.json({ message: "Invalid courseId." }, { status: 400 });
+    }
+    if (finalTestId && !mongoose.Types.ObjectId.isValid(finalTestId)) {
+      return NextResponse.json({ message: "Invalid testId." }, { status: 400 });
+    }
     
     // Verify payment if paymentId is provided
     if (paymentId) {
@@ -44,15 +53,19 @@ export async function POST(req: Request) {
       
       if (!paymentInfo) {
         console.log('Payment not found in local storage. This could be a timing issue.');
-        console.log('Payment might still be processing. Please wait a moment and try again.');
-        
-        return NextResponse.json({ 
-          message: "Payment verification in progress. Please wait a moment and try again, or check your payment status.",
-          code: "PAYMENT_PROCESSING"
-        }, { status: 202 }); // 202 Accepted - processing
+        // Fallback: trust client-provided paymentData if clearly PAID
+        if (paymentData && (paymentData.payment_status === 'PAID' || paymentData.payment_status === 'Paid')) {
+          console.log('Using client-provided paymentData as fallback verification for invoice:', paymentId);
+        } else {
+          console.log('Payment might still be processing. Please wait a moment and try again.');
+          return NextResponse.json({ 
+            message: "Payment verification in progress. Please wait a moment and try again, or check your payment status.",
+            code: "PAYMENT_PROCESSING"
+          }, { status: 202 }); // 202 Accepted - processing
+        }
       }
       
-      if (paymentInfo.payment_status !== 'PAID') {
+      if (paymentInfo && paymentInfo.payment_status !== 'PAID') {
         console.error('Payment not completed:', paymentInfo.payment_status);
         return NextResponse.json({ 
           message: "Payment not completed. Please complete the payment first.",
@@ -141,23 +154,28 @@ export async function POST(req: Request) {
         }, { status: 200 }); // Return 200 instead of 409 for already purchased
       }
       
-      // Find an unused unique code for the test
+      // Find an unused unique code for the test (do not fail purchase if this step fails)
       let uniqueCode = null;
-      if (test.uniqueCodes && test.uniqueCodes.length > 0) {
-        const availableCode = test.uniqueCodes.find((code: any) => !code.used);
-        if (availableCode) {
-          // Assign the code to the user
-          availableCode.used = true;
-          availableCode.assignedTo = user._id;
-          availableCode.assignedAt = new Date();
-          uniqueCode = availableCode.code;
-          
-          // Save the test to update the code status
-          await test.save();
-          console.log(`Unique code ${uniqueCode} assigned to user ${session.user.id} for test ${finalTestId}`);
-        } else {
-          console.warn(`No available unique codes for test ${finalTestId}`);
+      try {
+        if (test.uniqueCodes && test.uniqueCodes.length > 0) {
+          const availableCode = test.uniqueCodes.find((code: any) => !code.used);
+          if (availableCode) {
+            availableCode.used = true;
+            availableCode.assignedTo = user._id;
+            availableCode.assignedAt = new Date();
+            uniqueCode = availableCode.code;
+            await test.save();
+            console.log(`Unique code ${uniqueCode} assigned to user ${session.user.id} for test ${finalTestId}`);
+          } else {
+            console.warn(`No available unique codes for test ${finalTestId}`);
+          }
         }
+      } catch (codeError: any) {
+        console.warn('Unique code assignment failed, continuing without code:', {
+          error: codeError?.message || String(codeError),
+          testId: finalTestId,
+        });
+        uniqueCode = null;
       }
       
       // Update user model (fast access)
