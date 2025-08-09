@@ -69,6 +69,14 @@ export async function POST(req: Request) {
       console.error('User not found:', session.user.id);
       return NextResponse.json({ message: "User not found." }, { status: 404 });
     }
+
+    // Ensure purchase arrays are initialized for legacy user documents
+    if (!Array.isArray(user.purchasedCourses)) {
+      user.purchasedCourses = [] as any;
+    }
+    if (!Array.isArray(user.purchasedTests)) {
+      user.purchasedTests = [] as any;
+    }
     
     if (finalCourseId) {
       console.log('Processing course purchase for:', finalCourseId);
@@ -78,7 +86,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: "Course not found." }, { status: 404 });
       }
       
-      if (Array.isArray(user.purchasedCourses) && user.purchasedCourses.includes(finalCourseId)) {
+      if (
+        Array.isArray(user.purchasedCourses) &&
+        user.purchasedCourses.some((c: any) => c?.toString?.() === finalCourseId)
+      ) {
         console.log(`Course already purchased by user ${session.user.id}: ${finalCourseId}`);
         return NextResponse.json({ 
           message: "Course already purchased.",
@@ -118,7 +129,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: "Test not found." }, { status: 404 });
       }
       
-      if (Array.isArray(user.purchasedTests) && user.purchasedTests.includes(finalTestId)) {
+      if (
+        Array.isArray(user.purchasedTests) &&
+        user.purchasedTests.some((t: any) => t?.toString?.() === finalTestId)
+      ) {
         console.log(`Test already purchased by user ${session.user.id}: ${finalTestId}`);
         return NextResponse.json({ 
           message: "Test already purchased.",
