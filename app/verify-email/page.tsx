@@ -21,7 +21,30 @@ function VerifyEmailContent() {
     if (pending === 'true') {
       setStatus('pending');
       setMessage('Please check your email and click the verification link to complete your registration.');
-      return;
+
+      // Listen for cross-tab notification that verification succeeded
+      let channel: BroadcastChannel | null = null;
+      try {
+        channel = new BroadcastChannel('email-verification');
+        channel.onmessage = (event) => {
+          if (event?.data === 'success') {
+            // Redirect home when another tab completes verification
+            router.replace('/home');
+          }
+        };
+      } catch (_) {}
+
+      const onStorage = (e: StorageEvent) => {
+        if (e.key === 'emailVerified' && e.newValue === 'true') {
+          router.replace('/home');
+        }
+      };
+      window.addEventListener('storage', onStorage);
+
+      return () => {
+        try { channel && channel.close(); } catch (_) {}
+        window.removeEventListener('storage', onStorage);
+      };
     }
 
     if (!token) {
@@ -47,8 +70,17 @@ function VerifyEmailContent() {
 
       if (response.ok) {
         setStatus('success');
-        setMessage('Email verified successfully! You can now log in to your account.');
+        setMessage('Email verified successfully! Redirecting to home...');
         toast.success('Email verified successfully!');
+        // Notify any open "pending" pages to redirect
+        try {
+          localStorage.setItem('emailVerified', 'true');
+          new BroadcastChannel('email-verification').postMessage('success');
+        } catch (_) {}
+        // Redirect to home shortly after success so the toast is visible
+        setTimeout(() => {
+          router.push('/home');
+        }, 1200);
       } else {
         setStatus('error');
         setMessage(data.error || 'Verification failed');

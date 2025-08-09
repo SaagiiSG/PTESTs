@@ -15,7 +15,7 @@ export default function TestHistoryPage() {
 
   return (
     <div className="h-full flex justify-start items-start min-h-[60vh] rounded-3xl">
-      <Card className="w-full h-full rounded-3xl shadow-none bg-white/90">
+      <Card className="w-full h-full rounded-3xl shadow-none">
         <CardHeader>
           <CardTitle className='py-6'>Test History</CardTitle>
         </CardHeader>

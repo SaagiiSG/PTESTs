@@ -18,7 +18,7 @@ export default function CourseHistoryPage() {
 
   return (
     <div className="h-full flex justify-center items-start min-h-[60vh]">
-      <Card className="w-full h-full py-6 rounded-3xl shadow-none bg-white/90">
+      <Card className="w-full h-full py-6 rounded-3xl shadow-none">
         <CardHeader>
           <CardTitle>{t('courseHistory')}</CardTitle>
         </CardHeader>
@@ -32,7 +32,7 @@ export default function CourseHistoryPage() {
               {courseHistory.map((item, idx) => (
                 <li key={item._id || idx}>
                   <Link href={`/Course/${item.courseId}`} className="block">
-                    <div className="flex items-center gap-3 p-2 bg-white rounded-md shadow border w-full max-w-xs hover:bg-yellow-50 transition">
+                    <div className="flex items-center gap-3 p-2 bg-card rounded-md shadow border w-full max-w-xs hover:bg-accent transition">
                       <img
                         src={item.thumbnailUrl || '/ppnim_logo.svg'}
                         alt={item.courseTitle}
@@ -40,7 +40,7 @@ export default function CourseHistoryPage() {
                       />
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-base truncate">{item.courseTitle}</div>
-                        <div className="text-xs text-gray-500 truncate">{new Date(item.purchasedAt).toLocaleString()}</div>
+                        <div className="text-xs text-muted-foreground truncate">{new Date(item.purchasedAt).toLocaleString()}</div>
                       </div>
                     </div>
                   </Link>

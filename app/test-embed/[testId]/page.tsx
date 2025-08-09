@@ -216,9 +216,8 @@ export default function TestEmbedPage({ params }: { params: Promise<{ testId: st
             </div>
             
             <div 
-              className="w-full h-screen pt-16 bg-white"
+              className="w-full h-[150vh] pt-16 bg-white"
               style={{ 
-                minHeight: '100vh',
                 position: 'relative',
                 overflow: 'visible'
               }}
@@ -240,89 +239,13 @@ export default function TestEmbedPage({ params }: { params: Promise<{ testId: st
                     document.head.appendChild(newScript);
                   });
                   
-                  // Immediately try to create the quiz iframe for smooth experience
-                  const quizId = embedCode.match(/data-quiz="([^"]+)"/)?.[1];
-                  if (quizId) {
-                    console.log('🚀 Creating immediate quiz iframe for smooth experience...');
-                    const iframe = document.createElement('iframe');
-                    iframe.src = `https://take.quiz-maker.com/${quizId}`;
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100vh';
-                    iframe.style.border = 'none';
-                    iframe.style.borderRadius = '8px';
-                    iframe.style.position = 'absolute';
-                    iframe.style.top = '0';
-                    iframe.style.left = '0';
-                    iframe.style.zIndex = '10';
-                    iframe.title = 'Quiz';
-                    iframe.allowFullscreen = true;
-                    
-                    // Clear the container and add the iframe immediately
-                    el.innerHTML = '';
-                    el.appendChild(iframe);
-                    console.log('✅ Created immediate iframe for quiz');
-                    
-                    // Hide the debug info when quiz loads
-                    const debugInfo = document.querySelector('.debug-info');
-                    if (debugInfo) {
-                      (debugInfo as HTMLElement).style.display = 'none';
-                    }
-                  }
-                  
-                  // Check for quiz links after script execution (reduced timeout for faster loading)
-                  setTimeout(() => {
-                    const quizLinks = el.querySelectorAll('a[data-quiz]');
-                    console.log('🔗 Found quiz links:', quizLinks.length);
-                    quizLinks.forEach((link, index) => {
-                      console.log(`Quiz link ${index}:`, link.getAttribute('data-quiz'));
-                      console.log('Link text:', link.textContent);
-                      console.log('Link href:', (link as HTMLAnchorElement).href);
-                      
-                      // Try to trigger the quiz manually if it's not already loaded
-                      console.log('🔄 Attempting to trigger quiz manually...');
-                      try {
-                        (link as HTMLAnchorElement).click();
-                      } catch (e) {
-                        console.log('Manual trigger failed:', e);
-                      }
-                    });
-                    
-                    // If no quiz is visible after 2 seconds, try alternative approach (reduced for faster loading)
+                  // Hide the debug info when content loads
+                  const debugInfo = document.querySelector('.debug-info');
+                  if (debugInfo) {
                     setTimeout(() => {
-                      const quizContent = el.querySelector('.quiz-content, .poll-maker-quiz, iframe');
-                      if (!quizContent) {
-                        console.log('⚠️ No quiz content found, trying alternative approach...');
-                        
-                        // Create a direct iframe to the quiz
-                        const quizId = quizLinks[0]?.getAttribute('data-quiz');
-                        if (quizId) {
-                          const iframe = document.createElement('iframe');
-                          iframe.src = `https://take.quiz-maker.com/${quizId}`;
-                          iframe.style.width = '100%';
-                          iframe.style.height = '100vh';
-                          iframe.style.border = 'none';
-                          iframe.style.borderRadius = '8px';
-                          iframe.style.position = 'absolute';
-                          iframe.style.top = '0';
-                          iframe.style.left = '0';
-                          iframe.style.zIndex = '10';
-                          iframe.title = 'Quiz';
-                          iframe.allowFullscreen = true;
-                          
-                          // Clear the container and add the iframe
-                          el.innerHTML = '';
-                          el.appendChild(iframe);
-                          console.log('✅ Created direct iframe for quiz');
-                          
-                          // Hide the debug info when quiz loads
-                          const debugInfo = document.querySelector('.debug-info');
-                          if (debugInfo) {
-                            (debugInfo as HTMLElement).style.display = 'none';
-                          }
-                        }
-                      }
-                    }, 2000); // Reduced from 3000ms to 2000ms for faster loading
-                  }, 1000); // Reduced from 2000ms to 1000ms for faster loading
+                      (debugInfo as HTMLElement).style.display = 'none';
+                    }, 3000);
+                  }
                 }
               }}
             />

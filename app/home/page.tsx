@@ -13,6 +13,7 @@ import LangToggle from '@/components/LangToggle';
 import { useLanguage } from '@/lib/language';
 import { getLocalizedTitle } from '@/lib/utils';
 import { BookOpen, GraduationCap, Star, Brain, Stethoscope, User } from 'lucide-react';
+import { toast } from 'sonner';
 
 async function fetchProtectedTestsClient() {
   const res = await fetch('/api/protected-tests');
@@ -79,6 +80,32 @@ export default function HomePage() {
         if (userData && !isProfileComplete(userData)) {
           router.push('/profile-setup');
           return;
+        }
+
+        // If user exists but email is unverified, show a reminder toast
+        if (userData && userData.email && userData.isEmailVerified === false) {
+          toast.info('Please verify your email address. We sent you a link.', {
+            action: {
+              label: 'Resend',
+              onClick: async () => {
+                try {
+                  const response = await fetch('/api/auth/request-email-verification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userData.email }),
+                  });
+                  if (response.ok) {
+                    toast.success('Verification email resent. Check your inbox.');
+                  } else {
+                    const data = await response.json();
+                    toast.error(data.error || 'Failed to resend email');
+                  }
+                } catch (_) {
+                  toast.error('Failed to resend email');
+                }
+              },
+            },
+          });
         }
       })
       .catch(() => setUser(null))

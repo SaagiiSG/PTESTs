@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Upload, Plus, BookOpen, DollarSign, Image as ImageIcon, Code, Languages, Star, Brain, Stethoscope, User } from "lucide-react";
+import { processEmbedCode, analyzeEmbedCode } from "@/lib/embedCodeUtils";
 
 export default function CreateTestForm() {
   const [title, setTitle] = useState("");
@@ -20,11 +21,28 @@ export default function CreateTestForm() {
   const [uniqueCodes, setUniqueCodes] = useState("");
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
+  const [embedCodeAnalysis, setEmbedCodeAnalysis] = useState<any>(null);
+
+  // Analyze embed code when it changes
+  const handleEmbedCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const code = e.target.value;
+    setEmbedCode(code);
+    
+    if (code.trim()) {
+      const analysis = analyzeEmbedCode(code);
+      setEmbedCodeAnalysis(analysis);
+    } else {
+      setEmbedCodeAnalysis(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Process the embed code before sending
+      const processedEmbedCode = processEmbedCode(embedCode, true);
+      
       const res = await fetch("/api/tests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -32,7 +50,7 @@ export default function CreateTestForm() {
           title,
           description: { mn: descriptionMn, en: descriptionEn },
           testType,
-          embedCode,
+          embedCode: processedEmbedCode,
           price,
           thumbnailUrl,
           uniqueCodes: uniqueCodes
@@ -51,6 +69,7 @@ export default function CreateTestForm() {
         setPrice(0);
         setThumbnailUrl("");
         setUniqueCodes("");
+        setEmbedCodeAnalysis(null);
       } else {
         const err = await res.json();
         toast.error(err.error || "Failed to create test.");
@@ -258,7 +277,7 @@ export default function CreateTestForm() {
           <Textarea
             id="embedCode"
             value={embedCode}
-            onChange={e => setEmbedCode(e.target.value)}
+            onChange={handleEmbedCodeChange}
             placeholder="<iframe>...</iframe> or script..."
             required
             className="font-mono text-sm resize-none"
@@ -266,6 +285,27 @@ export default function CreateTestForm() {
           />
           <p className="text-xs text-gray-500">Paste the complete embed code from your test platform</p>
         </div>
+
+        {embedCodeAnalysis && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h5 className="text-sm font-semibold mb-2 text-blue-800">Embed Code Analysis</h5>
+            <div className="space-y-1 text-sm">
+              <p className="text-gray-700">
+                <strong>Type:</strong> <span className="capitalize">{embedCodeAnalysis.type}</span>
+              </p>
+              <p className="text-gray-700">
+                <strong>Needs Conversion:</strong> {embedCodeAnalysis.needsConversion ? 'Yes' : 'No'}
+              </p>
+              {embedCodeAnalysis.needsConversion && (
+                <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
+                  <p className="text-xs text-green-700">
+                    <strong>✅ Will be converted to iframe format</strong>
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Thumbnail */}

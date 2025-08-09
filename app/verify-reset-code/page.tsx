@@ -167,14 +167,16 @@ export default function VerifyResetCodePage() {
                     Reset Password
                   </Button>
                   
-                  <Button
+                  {/* <Button
                     onClick={handleBackToForgotPassword}
                     variant="outline"
                     className="w-full"
                   >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to Forgot Password
-                  </Button>
+                    <div className="flex items-center justify-center">
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      <span className="text-gray-600 dark:text-gray-300"> Back to Forgot Password </span> 
+                    </div>
+                  </Button> */}
                 </div>
               </div>
             ) : (
@@ -203,14 +205,15 @@ export default function VerifyResetCodePage() {
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
-                    <>
+                    <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Verifying...
-                    </>
+                      <span className="text-white"> Verifying... </span> 
+                    </div>
                   ) : (
-                    <>
-                      Verify Code <CheckCircle className="w-4 h-4 ml-2" />
-                    </>
+                    <div className="flex items-center justify-center">
+                      <span className="text-white"> Verify Code </span> 
+                      <CheckCircle className="w-4 h-4 ml-2" />
+                    </div>
                   )}
                 </Button>
 
@@ -223,20 +226,20 @@ export default function VerifyResetCodePage() {
                   disabled={countdown > 0 || isResending}
                 >
                   {isResending ? (
-                    <>
+                    <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
-                      Sending...
-                    </>
+                      <span className="text-gray-600 dark:text-gray-300"> Sending... </span> 
+                    </div>
                   ) : countdown > 0 ? (
-                    <>
+                    <div className="flex items-center justify-center">
                       <Clock className="w-4 h-4 mr-2" />
-                      Wait {countdown}s
-                    </>
+                      <span className="text-gray-600 dark:text-gray-300"> Wait {countdown}s </span> 
+                    </div>
                   ) : (
-                    <>
+                    <div className="flex items-center justify-center">
                       <Send className="w-4 h-4 mr-2" />
-                      Resend Code
-                    </>
+                      <span className="text-gray-600 dark:text-gray-300"> Resend Code </span> 
+                    </div>
                   )}
                 </Button>
               </form>

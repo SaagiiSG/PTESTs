@@ -120,8 +120,8 @@ function ResetPasswordContent() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
+      <div className="h-auto bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
+        <div className="w-full">
           <Card className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-xl">
             <CardContent className="p-6">
               <Alert variant="destructive">
@@ -149,8 +149,8 @@ function ResetPasswordContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="w-full h-auto bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
+      <div className="w-full md:w-2/5">
         <Card className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-xl">
           <CardHeader className="text-center pb-4">
             <div className="mx-auto mb-4">
@@ -225,14 +225,15 @@ function ResetPasswordContent() {
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
-                    <>
+                    <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Resetting Password...
-                    </>
+                      <span className="text-white"> Resetting Password... </span> 
+                    </div>
                   ) : (
-                    <>
-                      Reset Password <ArrowRight className="w-5 h-5 ml-2" />
-                    </>
+                    <div className="flex items-center justify-center">
+                      <span className="text-white"> Reset Password </span> 
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </div>
                   )}
                 </Button>
               </form>

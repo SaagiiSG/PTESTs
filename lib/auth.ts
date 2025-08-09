@@ -58,6 +58,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             name: customUser.name || 'Unnamed',
             email: customUser.email,
           });
+          console.log('SIGNIN CALLBACK - Created new Google user:', { id: dbUser._id, name: dbUser.name, email: dbUser.email });
         } else if (!dbUser && customUser.phoneNumber) {
           dbUser = await User.findOne({ phoneNumber: customUser.phoneNumber });
           if (!dbUser) {
@@ -67,6 +68,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error('User not found');
         }
 
+        // Ensure the user object has the _id field set
         customUser._id = dbUser._id;
         console.log('SIGNIN CALLBACK - returning true for user:', { id: dbUser._id, name: dbUser.name, isAdmin: dbUser.isAdmin });
         return true;
@@ -82,9 +84,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       
       if (user) {
         const customUser = user as any;
+        
+        // For Google users, we need to ensure we have the correct user ID
+        let userId = customUser._id;
+        
+        // If _id is not set (which can happen with Google auth), try to find the user by email
+        if (!userId && customUser.email) {
+          try {
+            await connectMongoose();
+            const dbUser = await User.findOne({ email: customUser.email });
+            if (dbUser) {
+              userId = dbUser._id;
+            }
+          } catch (error) {
+            console.error('Error finding user by email in JWT callback:', error);
+          }
+        }
+        
         // Completely replace the token with new user data
         const newToken = {
-          id: customUser._id.toString(),
+          id: userId ? userId.toString() : token.id,
           email: customUser.email,
           phoneNumber: customUser.phoneNumber,
           isAdmin: customUser.isAdmin,
@@ -105,34 +124,52 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       try {
         await connectMongoose();
 
-      // Always look up the user by phone number or email to ensure we get the correct user
-      let dbUser = null;
-      if ((token as any)?.phoneNumber) {
-        dbUser = await User.findOne({ phoneNumber: (token as any).phoneNumber });
-        console.log('SESSION CALLBACK - found user by phoneNumber:', dbUser ? { id: dbUser._id, name: dbUser.name, isAdmin: dbUser.isAdmin } : 'not found');
-      } else if (token?.email) {
-        dbUser = await User.findOne({ email: token.email });
-        console.log('SESSION CALLBACK - found user by email:', dbUser ? { id: dbUser._id, name: dbUser.name, isAdmin: dbUser.isAdmin } : 'not found');
-      }
+        // Always look up the user by phone number or email to ensure we get the correct user
+        let dbUser = null;
+        
+        // First try to find by ID if it exists in the token
+        if (token.id) {
+          dbUser = await User.findById(token.id);
+          console.log('SESSION CALLBACK - found user by ID:', dbUser ? { id: dbUser._id, name: dbUser.name, isAdmin: dbUser.isAdmin } : 'not found');
+        }
+        
+        // If not found by ID, try by phone number or email
+        if (!dbUser) {
+          if ((token as any)?.phoneNumber) {
+            dbUser = await User.findOne({ phoneNumber: (token as any).phoneNumber });
+            console.log('SESSION CALLBACK - found user by phoneNumber:', dbUser ? { id: dbUser._id, name: dbUser.name, isAdmin: dbUser.isAdmin } : 'not found');
+          } else if (token?.email) {
+            dbUser = await User.findOne({ email: token.email });
+            console.log('SESSION CALLBACK - found user by email:', dbUser ? { id: dbUser._id, name: dbUser.name, isAdmin: dbUser.isAdmin } : 'not found');
+          }
+        }
 
-      if (dbUser) {
-        session.user.id = String(dbUser._id);
-        // Check if profile is complete with new fields
-        const needsSetup = !dbUser.name || !dbUser.dateOfBirth || !dbUser.gender || !dbUser.education || !dbUser.family || !dbUser.position;
-        (session.user as any).needsProfileSetup = needsSetup;
-        (session.user as any).name = dbUser.name;
-        (session.user as any).dateOfBirth = dbUser.dateOfBirth;
-        (session.user as any).gender = dbUser.gender;
-        (session.user as any).education = dbUser.education;
-        (session.user as any).family = dbUser.family;
-        (session.user as any).position = dbUser.position;
-        (session.user as any).email = dbUser.email;
-        (session.user as any).phoneNumber = dbUser.phoneNumber;
-        (session.user as any).isAdmin = dbUser.isAdmin;
-      }
+        if (dbUser) {
+          session.user.id = String(dbUser._id);
+          // Check if profile is complete with new fields
+          const needsSetup = !dbUser.name || !dbUser.dateOfBirth || !dbUser.gender || !dbUser.education || !dbUser.family || !dbUser.position;
+          (session.user as any).needsProfileSetup = needsSetup;
+          (session.user as any).name = dbUser.name;
+          (session.user as any).dateOfBirth = dbUser.dateOfBirth;
+          (session.user as any).gender = dbUser.gender;
+          (session.user as any).education = dbUser.education;
+          (session.user as any).family = dbUser.family;
+          (session.user as any).position = dbUser.position;
+          (session.user as any).email = dbUser.email;
+          (session.user as any).phoneNumber = dbUser.phoneNumber;
+          (session.user as any).isAdmin = dbUser.isAdmin;
+          console.log('SESSION CALLBACK - User data populated:', { id: session.user.id, name: (session.user as any).name, email: (session.user as any).email });
+        } else {
+          console.error('SESSION CALLBACK - No user found for token:', token);
+          // If no user is found, we should still return the session but with limited data
+          // This prevents the session from being completely broken
+          if (token.email) {
+            (session.user as any).email = token.email;
+          }
+        }
 
-      console.log('SESSION CALLBACK - final session:', { id: session.user.id, name: (session.user as any).name, isAdmin: (session.user as any).isAdmin });
-      return session;
+        console.log('SESSION CALLBACK - final session:', { id: session.user.id, name: (session.user as any).name, isAdmin: (session.user as any).isAdmin });
+        return session;
       } catch (error) {
         console.error('Session callback error:', error);
         return session;

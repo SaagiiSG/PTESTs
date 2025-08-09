@@ -19,7 +19,10 @@ import {
   Copy,
   ExternalLink,
   Shield,
-  Timer
+  Timer,
+  BookOpen,
+  Clock,
+  Users
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
@@ -30,6 +33,17 @@ interface PaymentStatus {
   status: 'loading' | 'qr_generated' | 'checking' | 'paid' | 'failed';
   qrData?: any;
   error?: string;
+}
+
+interface TestInfo {
+  title: string;
+  description?: string;
+  price: number;
+  thumbnailUrl?: string;
+  testType?: string;
+  questionCount?: number;
+  duration?: number;
+  takenCount?: number;
 }
 
 function QPayPaymentContent() {
@@ -52,6 +66,7 @@ function QPayPaymentContent() {
   const [lastError, setLastError] = useState<string>('');
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+  const [testInfo, setTestInfo] = useState<TestInfo | null>(null);
 
   // Cleanup interval on unmount
   useEffect(() => {
@@ -74,6 +89,13 @@ function QPayPaymentContent() {
       toast.info('Payment session expired. Please try again.');
     }
   }, [timeLeft, isMonitoring]);
+
+  // Fetch test information
+  useEffect(() => {
+    if (itemId && itemType === 'test') {
+      fetchTestInfo();
+    }
+  }, [itemId, itemType]);
 
   // Generate QR code on component mount
   useEffect(() => {
@@ -100,6 +122,27 @@ function QPayPaymentContent() {
       startPaymentCheck(invoiceId!);
     }
   }, [isMobile, paymentStatus.status, paymentStatus.qrData, isMonitoring, invoiceId]);
+
+  const fetchTestInfo = async () => {
+    try {
+      const response = await fetch(`/api/tests/${itemId}`);
+      if (response.ok) {
+        const testData = await response.json();
+        setTestInfo({
+          title: testData.title || 'Test',
+          description: testData.description?.en || testData.description?.mn || '',
+          price: testData.price || 0,
+          thumbnailUrl: testData.thumbnailUrl,
+          testType: testData.testType,
+          questionCount: testData.questionCount,
+          duration: testData.duration,
+          takenCount: testData.takenCount
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch test info:', error);
+    }
+  };
 
   const generateQRCode = async () => {
     if (!invoiceId) return;
@@ -505,7 +548,7 @@ function QPayPaymentContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8">
       <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
             <Button 
@@ -516,9 +559,9 @@ function QPayPaymentContent() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Secure Payment</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Test Payment</h1>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Complete your payment securely using QPay
+              Complete your payment to access the test
             </p>
             <div className="flex items-center justify-center gap-2 text-green-600 dark:text-green-400 text-sm">
               <Shield className="w-4 h-4" />
@@ -526,33 +569,155 @@ function QPayPaymentContent() {
             </div>
           </div>
 
-          {/* Payment Card */}
-          <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <QrCode className="w-6 h-6 text-blue-600" />
-                Payment Details
-              </CardTitle>
-              <CardDescription>
-                Scan the QR code below to complete your payment
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent className="space-y-6">
-              {/* Loading State */}
-              {paymentStatus.status === 'loading' && (
-                <div className="text-center py-12">
-                  <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
-                  <p className="text-gray-600 dark:text-gray-300">Generating QR Code...</p>
-                </div>
-              )}
+          {/* Main Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Test Information */}
+            <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="w-6 h-6 text-blue-600" />
+                  {testInfo ? testInfo.title : 'Test Information'}
+                </CardTitle>
+                <CardDescription>
+                  Test information and details
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {testInfo ? (
+                  <>
+                    {testInfo.thumbnailUrl && (
+                      <div className="flex justify-center">
+                        <img 
+                          src={testInfo.thumbnailUrl} 
+                          alt={testInfo.title}
+                          className="w-24 h-24 rounded-lg object-cover"
+                        />
+                      </div>
+                    )}
+                    
+                    {testInfo.description && (
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-white mb-2">Description</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                          {testInfo.description}
+                        </p>
+                      </div>
+                    )}
 
-              {/* QR Code Display */}
-              {paymentStatus.status === 'qr_generated' && paymentStatus.qrData && (
-                <div className="space-y-6">
-                  {/* Mobile Payment Methods */}
-                  {isMobile ? (
-                    <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 mb-1">
+                          <Clock className="w-4 h-4" />
+                          Duration
+                        </div>
+                        <div className="font-semibold text-gray-900 dark:text-white">
+                          {testInfo.duration || 20} min
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 mb-1">
+                          <BookOpen className="w-4 h-4" />
+                          Questions
+                        </div>
+                        <div className="font-semibold text-gray-900 dark:text-white">
+                          {testInfo.questionCount || 'N/A'}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 mb-1">
+                          <Users className="w-4 h-4" />
+                          Taken
+                        </div>
+                        <div className="font-semibold text-gray-900 dark:text-white">
+                          {testInfo.takenCount || 0}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 mb-1">
+                          <CreditCard className="w-4 h-4" />
+                          Price
+                        </div>
+                        <div className="font-semibold text-green-600 dark:text-green-400">
+                          ₮{testInfo.price.toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+
+                    {testInfo.testType && (
+                      <div className="flex justify-center">
+                        <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
+                          {testInfo.testType}
+                        </Badge>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-300">Loading test information...</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* QR Code Payment */}
+            <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <QrCode className="w-6 h-6 text-blue-600" />
+                  Payment QR Code
+                </CardTitle>
+                <CardDescription>
+                  Scan the QR code with your QPay app to complete payment
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent className="space-y-6">
+                {/* Loading State */}
+                {paymentStatus.status === 'loading' && (
+                  <div className="text-center py-12">
+                    <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-300">Generating QR Code...</p>
+                  </div>
+                )}
+
+                {/* QR Code Display */}
+                {paymentStatus.status === 'qr_generated' && paymentStatus.qrData && (
+                  <div className="space-y-6">
+                    {/* QR Code */}
+                    <div className="text-center">
+                      <div className="bg-white p-6 rounded-lg border inline-block shadow-lg">
+                        {paymentStatus.qrData.qr_image ? (
+                          <img 
+                            src={`data:image/png;base64,${paymentStatus.qrData.qr_image}`} 
+                            alt="QPay QR Code" 
+                            className="w-64 h-64"
+                          />
+                        ) : (
+                          <div className="w-64 h-64 flex items-center justify-center bg-gray-100 rounded-lg">
+                            <div className="text-center">
+                              <QrCode className="w-16 h-16 text-gray-400 mx-auto mb-2" />
+                              <p className="text-gray-500 text-sm">QR Code not available</p>
+                              <p className="text-gray-400 text-xs">Use payment links below</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Payment Amount */}
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-green-600 mb-2">
+                        ₮{(paymentStatus.qrData.total_amount || paymentStatus.qrData.gross_amount || paymentStatus.qrData.amount)?.toLocaleString() || 'N/A'}
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-300">Payment Amount</p>
+                    </div>
+
+                    {/* Mobile Payment Methods */}
+                    {isMobile && (
                       <MobilePaymentMethods 
                         invoiceId={invoiceId!}
                         amount={paymentStatus.qrData.total_amount || paymentStatus.qrData.gross_amount || paymentStatus.qrData.amount || 0}
@@ -566,282 +731,100 @@ function QPayPaymentContent() {
                           manuallyCheckPayment();
                         }}
                       />
-                      
-                      {/* Payment Status Monitor for Mobile */}
-                      <div className={`border rounded-lg p-4 ${
-                        lastError 
-                          ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800' 
-                          : isMonitoring 
-                          ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800' 
-                          : 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700'
-                      }`}>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2 text-sm">
-                            <div className={`w-2 h-2 rounded-full animate-pulse ${
-                              lastError ? 'bg-red-500' : isMonitoring ? 'bg-blue-500' : 'bg-gray-400'
-                            }`}></div>
-                            <span className={lastError ? 'text-red-700 dark:text-red-300' : isMonitoring ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}>
-                              {lastError ? 'Payment check error' : isMonitoring ? 'Payment monitoring active' : 'Monitoring stopped'}
-                            </span>
-                          </div>
-                          {isMonitoring && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded">
-                                Check #{checkCount}
-                              </span>
-                              <div className="flex items-center gap-1 text-xs text-gray-500">
-                                <Timer className="w-3 h-3" />
-                                {formatTime(timeLeft)}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <p className="text-xs mb-2">
-                          {lastError ? (
-                            <span className="text-red-600 dark:text-red-400">Error: {lastError}</span>
-                          ) : (
-                            <span className="text-blue-600 dark:text-blue-400">
-                              <Timer className="w-3 h-3 inline mr-1" />
-                              Payment session active • Waiting for completion
-                            </span>
-                          )}
-                        </p>
-                        
-                        <p className="text-xs text-gray-500 mb-3">
-                          Auto-checking every 10 seconds • Last check: {lastCheckTime || 'Not started yet'}
-                        </p>
-                        
-                        <div className="flex gap-2">
-                          {isMonitoring ? (
-                            <>
-                              <Button 
-                                onClick={stopPaymentMonitoring}
-                                variant="outline"
-                                size="sm"
-                                className="flex-1 text-xs"
-                              >
-                                Stop Monitoring
-                              </Button>
-                              <Button 
-                                onClick={manuallyCheckPayment}
-                                disabled={checkingPayment}
-                                variant="outline"
-                                size="sm"
-                                className="flex-1 text-xs"
-                              >
-                                {checkingPayment ? (
-                                  <>
-                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                    Checking...
-                                  </>
-                                ) : (
-                                  <>
-                                    <RefreshCw className="w-3 h-3 mr-1" />
-                                    Check Now
-                                  </>
-                                )}
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Button 
-                                onClick={() => startPaymentCheck(invoiceId!)}
-                                variant="outline"
-                                size="sm"
-                                className="flex-1 text-xs"
-                              >
-                                Start Monitoring
-                              </Button>
-                              <Button 
-                                onClick={manuallyCheckPayment}
-                                disabled={checkingPayment}
-                                variant="outline"
-                                size="sm"
-                                className="flex-1 text-xs"
-                              >
-                                {checkingPayment ? (
-                                  <>
-                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                    Checking...
-                                  </>
-                                ) : (
-                                  <>
-                                    <RefreshCw className="w-3 h-3 mr-1" />
-                                    Check Now
-                                  </>
-                                )}
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      {/* Payment Instructions */}
-                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                        <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200 mb-2">
-                          <Smartphone className="h-4 w-4" />
-                          <span className="font-medium">How to Pay</span>
-                        </div>
-                        <ol className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                          <li>1. Open your QPay mobile app</li>
-                          <li>2. Tap the QR scanner or use the payment link below</li>
-                          <li>3. Complete the payment in your app</li>
-                          <li>4. Wait for confirmation (this page will update automatically)</li>
-                        </ol>
-                      </div>
+                    )}
 
-                  <div className="text-center">
-                    <h3 className="font-semibold mb-4">Scan QR Code to Pay</h3>
-                    <div className="bg-white p-6 rounded-lg border inline-block shadow-lg">
-                      {paymentStatus.qrData.qr_image ? (
-                        <img 
-                          src={`data:image/png;base64,${paymentStatus.qrData.qr_image}`} 
-                          alt="QPay QR Code" 
-                          className="w-64 h-64"
+                    {/* Payment Instructions */}
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                      <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200 mb-2">
+                        <Smartphone className="h-4 w-4" />
+                        <span className="font-medium">How to Pay</span>
+                      </div>
+                      <ol className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                        <li>1. Open your QPay mobile app</li>
+                        <li>2. Tap the QR scanner</li>
+                        <li>3. Scan the QR code above</li>
+                        <li>4. Complete the payment in your app</li>
+                      </ol>
+                    </div>
+
+                    {/* QR Text */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">QR Text</label>
+                      <div className="flex gap-2">
+                        <input 
+                          value={paymentStatus.qrData.qr_text || 'QR text not available'} 
+                          readOnly 
+                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                         />
-                      ) : (
-                        <div className="w-64 h-64 flex items-center justify-center bg-gray-100 rounded-lg">
-                          <div className="text-center">
-                            <QrCode className="w-16 h-16 text-gray-400 mx-auto mb-2" />
-                            <p className="text-gray-500 text-sm">QR Code not available</p>
-                            <p className="text-gray-400 text-xs">Use payment links below</p>
-                          </div>
-                        </div>
-                      )}
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => copyToClipboard(paymentStatus.qrData.qr_text || '')}
+                          disabled={!paymentStatus.qrData.qr_text}
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Payment Amount */}
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-green-600 mb-2">
-                      ₮{(paymentStatus.qrData.total_amount || paymentStatus.qrData.gross_amount || paymentStatus.qrData.amount)?.toLocaleString() || 'N/A'}
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-300">Payment Amount</p>
-                  </div>
-
-                  {/* QR Text */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">QR Text</label>
-                    <div className="flex gap-2">
-                      <input 
-                        value={paymentStatus.qrData.qr_text || 'QR text not available'} 
-                        readOnly 
-                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                      />
+                    {/* Action Buttons */}
+                    <div className="flex gap-3">
                       <Button 
-                        size="sm" 
+                        onClick={() => openDeeplink(paymentStatus.qrData.qPay_shortUrl || paymentStatus.qrData.deeplink)}
+                        className="flex-1"
                         variant="outline"
-                        onClick={() => copyToClipboard(paymentStatus.qrData.qr_text || '')}
-                        disabled={!paymentStatus.qrData.qr_text}
+                        disabled={!paymentStatus.qrData.qPay_shortUrl && !paymentStatus.qrData.deeplink}
                       >
-                        <Copy className="w-4 h-4" />
+                        <Smartphone className="w-4 h-4 mr-2" />
+                        Open in App
+                      </Button>
+                      <Button 
+                        onClick={() => openDeeplink(paymentStatus.qrData.qPay_shortUrl || paymentStatus.qrData.web_url)}
+                        className="flex-1"
+                        variant="outline"
+                        disabled={!paymentStatus.qrData.qPay_shortUrl && !paymentStatus.qrData.web_url}
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Web Payment
                       </Button>
                     </div>
-                  </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-3">
-                    <Button 
-                      onClick={() => openDeeplink(paymentStatus.qrData.qPay_shortUrl || paymentStatus.qrData.deeplink)}
-                      className="flex-1"
-                      variant="outline"
-                      disabled={!paymentStatus.qrData.qPay_shortUrl && !paymentStatus.qrData.deeplink}
-                    >
-                      <Smartphone className="w-4 h-4 mr-2" />
-                      Open in App
-                    </Button>
-                    <Button 
-                      onClick={() => openDeeplink(paymentStatus.qrData.qPay_shortUrl || paymentStatus.qrData.web_url)}
-                      className="flex-1"
-                      variant="outline"
-                      disabled={!paymentStatus.qrData.qPay_shortUrl && !paymentStatus.qrData.web_url}
-                    >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Web Payment
-                    </Button>
-                  </div>
-
-                  {/* Payment Status Monitor */}
-                  <div className={`border rounded-lg p-4 ${
-                    lastError 
-                      ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800' 
-                      : isMonitoring 
-                      ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800' 
-                      : 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700'
-                  }`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2 text-sm">
-                        <div className={`w-2 h-2 rounded-full animate-pulse ${
-                          lastError ? 'bg-red-500' : isMonitoring ? 'bg-blue-500' : 'bg-gray-400'
-                        }`}></div>
-                        <span className={lastError ? 'text-red-700 dark:text-red-300' : isMonitoring ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}>
-                          {lastError ? 'Payment check error' : isMonitoring ? 'Payment monitoring active' : 'Monitoring stopped'}
-                        </span>
-                      </div>
-                      {isMonitoring && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded">
-                            Check #{checkCount}
+                    {/* Payment Status Monitor */}
+                    <div className={`border rounded-lg p-4 ${
+                      lastError 
+                        ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800' 
+                        : isMonitoring 
+                        ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800' 
+                        : 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700'
+                    }`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className={`w-2 h-2 rounded-full animate-pulse ${
+                            lastError ? 'bg-red-500' : isMonitoring ? 'bg-blue-500' : 'bg-gray-400'
+                          }`}></div>
+                          <span className={lastError ? 'text-red-700 dark:text-red-300' : isMonitoring ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}>
+                            {lastError ? 'Payment check error' : isMonitoring ? 'Payment monitoring active' : 'Monitoring stopped'}
                           </span>
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <Timer className="w-3 h-3" />
-                            {formatTime(timeLeft)}
-                          </div>
                         </div>
-                      )}
-                    </div>
-                    
-                    <p className="text-xs mb-2">
-                      {lastError ? (
-                        <span className="text-red-600 dark:text-red-400">Error: {lastError}</span>
-                      ) : (
-                        <span className="text-blue-600 dark:text-blue-400">
-                          <Timer className="w-3 h-3 inline mr-1" />
-                          Payment session active • Waiting for completion
-                        </span>
-                      )}
-                    </p>
-                    
-                    <p className="text-xs text-gray-500 mb-3">
-                      Auto-checking every 10 seconds • Last check: {lastCheckTime || 'Not started yet'}
-                    </p>
-                    
-                    <div className="flex gap-2">
-                      {isMonitoring ? (
-                        <>
-                          <Button 
-                            onClick={stopPaymentMonitoring}
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 text-xs"
-                          >
-                            Stop Monitoring
-                          </Button>
-                          <Button 
-                            onClick={manuallyCheckPayment}
-                            disabled={checkingPayment}
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 text-xs"
-                          >
-                            {checkingPayment ? (
-                              <>
-                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                Checking...
-                              </>
-                            ) : (
-                              <>
-                                <RefreshCw className="w-3 h-3 mr-1" />
-                                Check Now
-                              </>
-                            )}
-                          </Button>
-                        </>
-                      ) : (
-                        <>
+                        {isMonitoring && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded">
+                              Check #{checkCount}
+                            </span>
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Timer className="w-3 h-3" />
+                              {formatTime(timeLeft)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <p className="text-xs mb-2">
+                        Last check: {lastCheckTime || 'Never'}
+                      </p>
+                      
+                      <div className="flex gap-2">
+                        {!isMonitoring ? (
                           <Button 
                             onClick={() => startPaymentCheck(invoiceId!)}
                             variant="outline"
@@ -850,141 +833,64 @@ function QPayPaymentContent() {
                           >
                             Start Monitoring
                           </Button>
-                          <Button 
-                            onClick={manuallyCheckPayment}
-                            disabled={checkingPayment}
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 text-xs"
-                          >
-                            {checkingPayment ? (
-                              <>
-                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                Checking...
-                              </>
-                            ) : (
-                              <>
-                                <RefreshCw className="w-3 h-3 mr-1" />
-                                Check Now
-                              </>
-                            )}
-                          </Button>
-                        </>
-                      )}
-                    </div>
-
-
-                  </div>
-
-                  {/* Development Only: Manual Payment Verification */}
-                  {process.env.NODE_ENV === 'development' && invoiceId && (
-                    <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                      <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200 mb-2">
-                        <span className="text-sm font-medium">🧪 Development Mode</span>
+                        ) : (
+                          <>
+                            <Button 
+                              onClick={stopPaymentMonitoring}
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 text-xs"
+                            >
+                              Stop Monitoring
+                            </Button>
+                            <Button 
+                              onClick={manuallyCheckPayment}
+                              disabled={checkingPayment}
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 text-xs"
+                            >
+                              {checkingPayment ? (
+                                <>
+                                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                  Checking...
+                                </>
+                              ) : (
+                                <>
+                                  <RefreshCw className="w-3 h-3 mr-1" />
+                                  Check Now
+                                </>
+                              )}
+                            </Button>
+                          </>
+                        )}
                       </div>
-                      <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-3">
-                        QPay callbacks cannot reach localhost. Use this button to simulate payment completion.
-                      </p>
-                      <Button 
-                        onClick={async () => {
-                          try {
-                            const response = await fetch('/api/manual-payment-verify', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                invoice_id: invoiceId,
-                                payment_status: 'PAID',
-                                payment_amount: paymentStatus.qrData?.total_amount || 1000
-                              })
-                            });
-                            
-                            if (response.ok) {
-                              toast.success('Payment manually verified! Checking status...');
-                              // Auto-check payment after verification
-                              setTimeout(() => manuallyCheckPayment(), 1000);
-                            } else {
-                              const error = await response.json();
-                              toast.error(error.message || 'Failed to verify payment');
-                            }
-                          } catch (error) {
-                            toast.error('Error verifying payment');
-                          }
-                        }}
-                        variant="outline"
-                        size="sm"
-                        className="w-full bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200 text-xs"
-                      >
-                        ✅ Simulate Payment Completion
-                      </Button>
                     </div>
-                  )}
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Payment Success */}
-              {paymentStatus.status === 'paid' && (
-                <div className="text-center py-8">
-                  <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-green-700 dark:text-green-300 mb-2">Payment Successful!</h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-4">
-                    Your payment has been processed successfully. You now have access to your purchase.
-                  </p>
-                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
-                    <div className="flex items-center gap-2 text-green-800 dark:text-green-200 mb-2">
-                      <Shield className="h-4 w-4" />
-                      <span className="font-medium">Secure Transaction</span>
-                    </div>
-                    <p className="text-sm text-green-700 dark:text-green-300">
-                      Your payment was processed securely through QPay. A receipt has been sent to your email.
-                    </p>
                   </div>
-                  <p className="text-sm text-green-600 dark:text-green-400 mb-4">
-                    Redirecting you back in a few seconds...
-                  </p>
-                </div>
-              )}
+                )}
 
-              {/* Payment Failed */}
-              {paymentStatus.status === 'failed' && (
-                <div className="text-center py-8">
-                  <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-red-700 dark:text-red-300 mb-2">Payment Failed</h3>
-                  {paymentStatus.error && (
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">{paymentStatus.error}</p>
-                  )}
-                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
-                    <div className="flex items-center gap-2 text-red-800 dark:text-red-200 mb-2">
-                      <Shield className="h-4 w-4" />
-                      <span className="font-medium">What to do next</span>
-                    </div>
-                    <ul className="text-sm text-red-700 dark:text-red-300 space-y-1 text-left">
-                      <li>• Check your payment method has sufficient funds</li>
-                      <li>• Ensure you completed the payment in your QPay app</li>
-                      <li>• Try the payment again or contact support if issues persist</li>
-                    </ul>
-                  </div>
-                  <div className="flex gap-3 justify-center">
-                    <Button onClick={() => router.back()}>
-                      Go Back
-                    </Button>
-                    <Button onClick={generateQRCode} variant="outline">
-                      Try Again
-                    </Button>
-                  </div>
-                </div>
-              )}
+                {/* Error State */}
+                {paymentStatus.status === 'failed' && (
+                  <Alert variant="destructive">
+                    <XCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      {paymentStatus.error || 'Failed to generate QR code. Please try again.'}
+                    </AlertDescription>
+                  </Alert>
+                )}
 
-              {/* Error Alert */}
-              {paymentStatus.error && paymentStatus.status !== 'failed' && (
-                <Alert variant="destructive">
-                  <XCircle className="h-4 w-4" />
-                  <AlertDescription>{paymentStatus.error}</AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
+                {/* Success State */}
+                {paymentStatus.status === 'paid' && (
+                  <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800 dark:text-green-200">
+                      Payment successful! Redirecting to test...
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

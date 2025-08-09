@@ -17,7 +17,9 @@ import {
   X,
   ArrowRight,
   Star,
-  Gift
+  Gift,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
@@ -48,40 +50,7 @@ interface PaymentMethod {
   comingSoon?: boolean;
 }
 
-const paymentMethods: PaymentMethod[] = [
-  {
-    id: 'qpay',
-    name: 'QPay',
-    description: 'Pay securely with QPay mobile app',
-    icon: QrCode,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
-    isAvailable: true
-  },
-  {
-    id: 'card',
-    name: 'Credit Card',
-    description: 'Pay with Visa, Mastercard, or other cards',
-    icon: CreditCard,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50',
-    borderColor: 'border-green-200',
-    isAvailable: false,
-    comingSoon: true
-  },
-  {
-    id: 'bank',
-    name: 'Bank Transfer',
-    description: 'Direct bank transfer payment',
-    icon: Smartphone,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50',
-    borderColor: 'border-purple-200',
-    isAvailable: false,
-    comingSoon: true
-  }
-];
+const MAX_DESC_LENGTH = 150;
 
 export default function PaymentOptionsModal({
   isOpen,
@@ -97,8 +66,15 @@ export default function PaymentOptionsModal({
 }: PaymentOptionsModalProps) {
   const { data: session } = useSession();
   const router = useRouter();
-  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<string>('');
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Handle description truncation
+  const isLongDescription = itemDescription && itemDescription.length > MAX_DESC_LENGTH;
+  const displayDescription = showFullDescription || !isLongDescription 
+    ? itemDescription 
+    : itemDescription?.slice(0, MAX_DESC_LENGTH) + '...';
 
   const handlePaymentMethodSelect = (methodId: string) => {
     const method = paymentMethods.find(m => m.id === methodId);
@@ -108,6 +84,30 @@ export default function PaymentOptionsModal({
     }
     setSelectedMethod(methodId);
   };
+
+  const paymentMethods: PaymentMethod[] = [
+    {
+      id: 'qpay',
+      name: 'QPay',
+      description: 'Pay with QPay mobile app',
+      icon: Smartphone,
+      color: 'text-white',
+      bgColor: 'bg-blue-600',
+      borderColor: 'border-blue-600',
+      isAvailable: true,
+    },
+    {
+      id: 'card',
+      name: 'Credit Card',
+      description: 'Pay with credit or debit card',
+      icon: CreditCard,
+      color: 'text-white',
+      bgColor: 'bg-green-600',
+      borderColor: 'border-green-600',
+      isAvailable: false,
+      comingSoon: true,
+    },
+  ];
 
   const handleQPayPayment = async () => {
     if (!session?.user?.id) {
@@ -231,18 +231,47 @@ export default function PaymentOptionsModal({
     }
   };
 
-  const handlePayment = async () => {
-    if (!selectedMethod) {
-      toast.error('Please select a payment method');
-      return;
-    }
+  const handleFreeEnrollment = async () => {
+    setIsProcessing(true);
+    try {
+      const response = await fetch('/api/public/purchase-free', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          itemId,
+          itemType,
+        }),
+      });
 
-    switch (selectedMethod) {
-      case 'qpay':
-        await handleQPayPayment();
-        break;
-      default:
-        toast.info('This payment method is coming soon!');
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success('Successfully enrolled in free course!');
+        if (onSuccess) {
+          onSuccess(data);
+        }
+        onClose();
+      } else {
+        throw new Error(data.message || 'Enrollment failed');
+      }
+    } catch (error) {
+      console.error('Enrollment error:', error);
+      toast.error(error instanceof Error ? error.message : 'Enrollment failed');
+      if (onError) {
+        onError(error instanceof Error ? error.message : 'Enrollment failed');
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handlePayment = async () => {
+    if (price === 0) {
+      await handleFreeEnrollment();
+    } else {
+      await handleQPayPayment();
     }
   };
 
@@ -270,20 +299,42 @@ export default function PaymentOptionsModal({
           {/* Item Preview */}
           <Card className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
             <CardContent className="p-4">
-              <div className="flex items-center gap-4">
+              <div className="flex items-start gap-4">
                 {thumbnailUrl && (
                   <img 
                     src={thumbnailUrl} 
                     alt={itemTitle}
-                    className="w-16 h-16 rounded-lg object-cover"
+                    className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
                   />
                 )}
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">{itemTitle}</h3>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{itemTitle}</h3>
                   {itemDescription && (
-                    <p className="text-sm text-gray-600 dark:text-gray-300">{itemDescription}</p>
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                        {displayDescription}
+                      </p>
+                      {isLongDescription && (
+                        <button
+                          onClick={() => setShowFullDescription(!showFullDescription)}
+                          className="text-blue-600 dark:text-blue-400 hover:underline text-sm font-medium mt-1 flex items-center gap-1"
+                        >
+                          {showFullDescription ? (
+                            <>
+                              <ChevronUp className="w-3 h-3" />
+                              Show less
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-3 h-3" />
+                              Show more
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
                   )}
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
                       {itemType === 'test' ? 'Test' : 'Course'}
                     </Badge>
@@ -393,7 +444,7 @@ export default function PaymentOptionsModal({
             </Button>
             {price === 0 ? (
               <Button 
-                onClick={handleQPayPayment}
+                onClick={handleFreeEnrollment}
                 disabled={isProcessing}
                 className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
               >
@@ -421,10 +472,10 @@ export default function PaymentOptionsModal({
                     Processing...
                   </>
                 ) : (
-                  <>
-                    Pay ₮{price.toLocaleString()}
+                  <span className='flex items-center justify-center'>
+                    <span className="text-sm">Pay  ₮{price.toLocaleString()}</span>
                     <ArrowRight className="w-4 h-4 ml-2" />
-                  </>
+                  </span>
                 )}
               </Button>
             )}

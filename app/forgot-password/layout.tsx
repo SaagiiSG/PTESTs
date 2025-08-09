@@ -8,7 +8,7 @@ import Image from "next/image";
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <section className="w-full h-auto md:h-auto flex flex-col justify-center items-center bg-gray-50 py-4">
+      <section className="w-full h-screen flex flex-col justify-center items-center bg-gray-50">
         <section className=" flex flex-col items-center gap-6 sm:gap-8 w-full md:w-1/2">
           <div className="relative flex justify-center items-center w-full">
             <Image 

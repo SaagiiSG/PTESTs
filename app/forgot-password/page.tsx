@@ -107,7 +107,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
+    <div className="h-auto bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Card className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-xl">
           <CardHeader className="text-center pb-4">
@@ -151,10 +151,12 @@ export default function ForgotPasswordPage() {
                 <div className="space-y-3">
                   <Button
                     onClick={handleVerifyCode}
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
+                    className="flex flex-row items-center justify-center w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
                   >
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Enter Verification Code
+                    <div className="flex items-center justify-center">
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      <span className="text-white"> Enter Verification Code </span> 
+                    </div>
                   </Button>
                   
                   <Button
@@ -169,15 +171,15 @@ export default function ForgotPasswordPage() {
                         Sending...
                       </>
                     ) : countdown > 0 ? (
-                      <>
+                      <div className="flex items-center justify-center">
                         <Clock className="w-4 h-4 mr-2" />
-                        Wait {countdown}s
-                      </>
+                        <span className="text-gray-600 dark:text-gray-300">Wait {countdown}s </span> 
+                      </div>
                     ) : (
-                      <>
+                      <div className="flex items-center justify-center">
                         <Send className="w-4 h-4 mr-2" />
-                        Send Another Code
-                      </>
+                        <span className="text-gray-600 dark:text-gray-300"> Send Another Code </span> 
+                      </div>
                     )}
                   </Button>
                   
@@ -186,8 +188,10 @@ export default function ForgotPasswordPage() {
                     variant="outline"
                     className="w-full"
                   >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to Login
+                    <div className="flex items-center justify-center">
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      <span className="text-gray-600 dark:text-gray-300"> Back to Login </span> 
+                    </div>
                   </Button>
                 </div>
               </div>
@@ -234,9 +238,10 @@ export default function ForgotPasswordPage() {
                       Sending Code...
                     </>
                   ) : (
-                    <>
-                      Send Verification Code <Send className="w-4 h-4 ml-2" />
-                    </>
+                    <div className="flex items-center justify-center">
+                      <span className="text-white"> Send Verification Code </span> 
+                      <Send className="w-4 h-4 ml-2" />
+                    </div>
                   )}
                 </Button>
               </form>
