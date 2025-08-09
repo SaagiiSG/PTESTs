@@ -31,9 +31,9 @@ export async function POST(req: Request) {
     let hasPurchased = false;
     
     if (itemType === 'course') {
-      hasPurchased = user.purchasedCourses.includes(itemId);
+      hasPurchased = Array.isArray(user.purchasedCourses) && user.purchasedCourses.some((c: any) => c?.toString?.() === itemId);
     } else if (itemType === 'test') {
-      hasPurchased = user.purchasedTests.includes(itemId);
+      hasPurchased = Array.isArray(user.purchasedTests) && user.purchasedTests.some((t: any) => t?.toString?.() === itemId);
     }
     
     console.log(`Purchase check result for ${itemType} ${itemId}:`, hasPurchased);

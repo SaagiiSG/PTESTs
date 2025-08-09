@@ -1,0 +1,49 @@
+[
+  {
+    "id": "backend_health_suite",
+    "title": "Backend Health and Diagnostics",
+    "description": "Non-destructive checks for diagnostics/status endpoints (GET only).",
+    "type": "backend",
+    "baseUrl": "http://localhost:3000",
+    "nonDestructive": true,
+    "steps": [
+      { "id": "status_public", "title": "Public status", "method": "GET", "path": "/api/public/status" },
+      { "id": "test_connection", "title": "Test connection", "method": "GET", "path": "/api/test-connection" },
+      { "id": "test_env", "title": "Test env", "method": "GET", "path": "/api/test-env" },
+      { "id": "test_simple", "title": "Test simple", "method": "GET", "path": "/api/test-simple" },
+      { "id": "test_minimal", "title": "Test minimal", "method": "GET", "path": "/api/test-minimal" }
+    ]
+  },
+  {
+    "id": "backend_sanity_suite",
+    "title": "Backend Sanity (Public/Test GET)",
+    "description": "Additional safe GET checks on public/test/debug endpoints (excluding QPay).",
+    "type": "backend",
+    "baseUrl": "http://localhost:3000",
+    "nonDestructive": true,
+    "steps": [
+      { "id": "debug_env", "title": "Debug env", "method": "GET", "path": "/api/debug-env" },
+      { "id": "debug_session", "title": "Debug session", "method": "GET", "path": "/api/debug-session" },
+      { "id": "test_auth_config", "title": "Test auth config", "method": "GET", "path": "/api/test-auth-config" },
+      { "id": "test_credentials", "title": "Test credentials", "method": "GET", "path": "/api/test-credentials" }
+    ]
+  },
+  {
+    "id": "login_post_suite",
+    "title": "Login API (Credentials)",
+    "description": "POST credentials to login endpoint using provided phone and password.",
+    "type": "backend",
+    "baseUrl": "http://localhost:3000",
+    "nonDestructive": true,
+    "steps": [
+      {
+        "id": "post_login_phone",
+        "title": "Login with phone",
+        "method": "POST",
+        "path": "/api/auth/login",
+        "headers": { "Content-Type": "application/json" },
+        "body": { "phoneNumber": "+97688163115", "password": "Saagii21" }
+      }
+    ]
+  }
+]

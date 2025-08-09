@@ -78,7 +78,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: "Course not found." }, { status: 404 });
       }
       
-      if (user.purchasedCourses.includes(finalCourseId)) {
+      if (Array.isArray(user.purchasedCourses) && user.purchasedCourses.includes(finalCourseId)) {
         console.log(`Course already purchased by user ${session.user.id}: ${finalCourseId}`);
         return NextResponse.json({ 
           message: "Course already purchased.",
@@ -118,7 +118,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: "Test not found." }, { status: 404 });
       }
       
-      if (user.purchasedTests.includes(finalTestId)) {
+      if (Array.isArray(user.purchasedTests) && user.purchasedTests.includes(finalTestId)) {
         console.log(`Test already purchased by user ${session.user.id}: ${finalTestId}`);
         return NextResponse.json({ 
           message: "Test already purchased.",

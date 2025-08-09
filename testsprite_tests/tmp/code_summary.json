@@ -1,0 +1,239 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "Next.js (App Router)",
+    "React",
+    "NextAuth.js",
+    "MongoDB",
+    "Mongoose",
+    "Tailwind CSS",
+    "Axios"
+  ],
+  "features": [
+    {
+      "name": "Authentication",
+      "description": "User registration, login, logout, email verification, reset password, and NextAuth session handling.",
+      "files": [
+        "app/api/auth/login/route.ts",
+        "app/api/auth/logout/route.ts",
+        "app/api/auth/register/route.ts",
+        "app/api/auth/[...nextauth]/route.ts",
+        "app/api/auth/request-email-verification/route.ts",
+        "app/api/auth/verify-email/route.ts",
+        "app/api/auth/request-password-reset/route.ts",
+        "app/api/auth/reset-password/route.ts",
+        "lib/auth.ts",
+        "auth.ts"
+      ]
+    },
+    {
+      "name": "Home and Marketing Pages",
+      "description": "Public landing and discovery pages for courses and tests with cards and listings.",
+      "files": [
+        "app/home/page.tsx",
+        "app/page.tsx",
+        "components/home/CourseCard.tsx",
+        "components/home/TestCards.tsx",
+        "components/footer.tsx",
+        "components/navbar.tsx"
+      ]
+    },
+    {
+      "name": "User Profile",
+      "description": "Profile details, edit profile, password change, privacy, and purchase/test histories.",
+      "files": [
+        "app/profile/page.tsx",
+        "app/profile/layout.tsx",
+        "app/profile/editprofile/page.tsx",
+        "app/profile/changepassword/page.tsx",
+        "app/profile/coursehistory/page.tsx",
+        "app/profile/testhistory/page.tsx",
+        "app/api/profile/me/route.ts",
+        "app/api/profile/update/route.ts",
+        "app/api/profile/purchase-history/route.ts"
+      ]
+    },
+    {
+      "name": "Courses and Lessons",
+      "description": "Course listing, course details, and lesson consumption flow, with server APIs.",
+      "files": [
+        "app/Course/page.tsx",
+        "app/Course/[courseId]/page.tsx",
+        "app/Course/[courseId]/lesson/[lessonIdx]/page.tsx",
+        "app/api/courses/route.ts",
+        "app/api/courses/[courseId]/route.ts",
+        "app/api/courses/[courseId]/lesson/[lessonIdx]/route.ts",
+        "app/models/course.ts"
+      ]
+    },
+    {
+      "name": "Admin Dashboard",
+      "description": "Admin area for managing users, tests, courses, analytics, and payments.",
+      "files": [
+        "app/admin/layout.tsx",
+        "app/admin/page.tsx",
+        "app/admin/users/page.tsx",
+        "app/admin/tests/page.tsx",
+        "app/admin/courses/page.tsx",
+        "app/admin/analytics/page.tsx",
+        "app/admin/payments/page.tsx",
+        "components/AdminSidebarNav.tsx",
+        "components/AdminPageWrapper.tsx"
+      ]
+    },
+    {
+      "name": "Admin Content Creation",
+      "description": "Admin flows to create courses and tests with client forms and modals.",
+      "files": [
+        "app/admin/create-course/page.tsx",
+        "app/admin/create-course/CreateCourseForm.tsx",
+        "components/CreateCourseModal.tsx",
+        "app/admin/create-test/page.tsx",
+        "app/admin/create-test/CreateTestForm.tsx",
+        "components/CreateTestModal.tsx"
+      ]
+    },
+    {
+      "name": "Payments and Invoices",
+      "description": "Invoice creation, QPay integration, payment status checks, and purchase verification.",
+      "files": [
+        "app/api/create-invoice/route.ts",
+        "app/api/course-payment/create-invoice/route.ts",
+        "app/api/course-payment/check-payment/route.ts",
+        "app/api/qpay/invoice/[invoiceId]/route.ts",
+        "app/api/qpay/payment/list/route.ts",
+        "app/api/qpay-course/invoice/[invoiceId]/route.ts",
+        "app/api/verify-purchase/route.ts",
+        "app/payment/qpay/page.tsx",
+        "components/PaymentGateway.tsx",
+        "components/QPayPayment.tsx",
+        "lib/qpay.ts",
+        "lib/qpay-service.ts",
+        "lib/qpay-course.ts",
+        "lib/payment-storage.ts",
+        "lib/qr-storage.ts",
+        "app/models/payment.ts",
+        "app/models/purchase.ts"
+      ]
+    },
+    {
+      "name": "Public Purchase Flows",
+      "description": "Public endpoints to create invoices and purchase free content without authentication.",
+      "files": [
+        "app/api/public/create-invoice/route.ts",
+        "app/api/public/create-invoice-v2/route.ts",
+        "app/api/public/payment/check/route.ts",
+        "app/api/public/payment/course-check/route.ts",
+        "app/api/public/payment/course-check-v2/route.ts",
+        "app/api/public/purchase-free/route.ts"
+      ]
+    },
+    {
+      "name": "Tests and Embedding",
+      "description": "Test content listing, embedding support, and protected access to tests.",
+      "files": [
+        "app/Tests/page.tsx",
+        "app/Tests/layout.tsx",
+        "app/api/tests/route.ts",
+        "app/api/tests/[id]/route.ts",
+        "app/api/protected-tests/route.ts",
+        "app/api/protected-tests/[id]/route.ts",
+        "app/api/protected-tests/[id]/embed/route.ts",
+        "app/test-embed/[testId]/page.tsx",
+        "components/TestsListWithSearch.tsx"
+      ]
+    },
+    {
+      "name": "Purchase Management",
+      "description": "Create and check purchases, prevent duplicates, and sync payment with purchases.",
+      "files": [
+        "app/api/purchase/route.ts",
+        "app/api/purchase/check/route.ts",
+        "docs/DUPLICATE_PURCHASE_PROTECTION.md",
+        "lib/purchaseUtils.js"
+      ]
+    },
+    {
+      "name": "Email and Notifications",
+      "description": "Email dispatch for verification and notifications, plus related utility scripts.",
+      "files": [
+        "lib/sendEmail.ts",
+        "app/api/test-email/route.ts",
+        "scripts/detailedEmailTest.js",
+        "scripts/checkSendGridStatus.js"
+      ]
+    },
+    {
+      "name": "API Utilities and Axios",
+      "description": "Shared API client utilities and Axios configuration.",
+      "files": [
+        "lib/api.ts",
+        "lib/axios.ts"
+      ]
+    },
+    {
+      "name": "UI Components and Theming",
+      "description": "Shared UI primitives, theme provider, and toggles.",
+      "files": [
+        "components/ui/button.tsx",
+        "components/ui/input.tsx",
+        "components/ui/dialog.tsx",
+        "components/ThemeProvider.tsx",
+        "components/ThemeToggle.tsx",
+        "components/LangToggle.tsx"
+      ]
+    },
+    {
+      "name": "Middleware and Config",
+      "description": "Edge middleware for auth/routing and project-level configuration.",
+      "files": [
+        "middleware.ts",
+        "next.config.ts",
+        "vercel.json"
+      ]
+    },
+    {
+      "name": "Database and Models",
+      "description": "MongoDB connection helpers and Mongoose models.",
+      "files": [
+        "lib/mongodb.ts",
+        "lib/mongoose.ts",
+        "app/models/course.ts",
+        "app/models/payment.ts",
+        "app/models/purchase.ts"
+      ]
+    },
+    {
+      "name": "Device and Utilities",
+      "description": "Helper utilities including device detection, encryption, language, and general helpers.",
+      "files": [
+        "lib/device-detection.ts",
+        "lib/encryption.ts",
+        "lib/language.tsx",
+        "lib/utils.ts"
+      ]
+    },
+    {
+      "name": "Debug and Diagnostics",
+      "description": "Routes and scripts for debugging environment, sessions, and payment/QPay interactions.",
+      "files": [
+        "app/api/debug-env/route.ts",
+        "app/api/debug-session/route.ts",
+        "app/api/debug-qpay/route.ts",
+        "app/api/debug-qpay-public/route.ts",
+        "app/api/test-connection/route.ts",
+        "scripts/debug-qpay-payment-check.js",
+        "scripts/debugApiIssues.js"
+      ]
+    },
+    {
+      "name": "Public Assets and PWA",
+      "description": "Static assets and manifest icons.",
+      "files": [
+        "public/manifest.json",
+        "public/icon-192x192.png",
+        "public/icon-512x512.png"
+      ]
+    }
+  ]
+}

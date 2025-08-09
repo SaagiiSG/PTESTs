@@ -46,8 +46,8 @@ const UserSchema: Schema = new Schema({
   passwordResetExpires: { type: Date },
   passwordResetCode: { type: String },
   isAdmin: { type: Boolean, default: false },
-  purchasedCourses: [{ type: Schema.Types.ObjectId, ref: 'Course' }],
-  purchasedTests: [{ type: Schema.Types.ObjectId, ref: 'Test' }],
+  purchasedCourses: { type: [{ type: Schema.Types.ObjectId, ref: 'Course' }], default: [] },
+  purchasedTests: { type: [{ type: Schema.Types.ObjectId, ref: 'Test' }], default: [] },
 }, { timestamps: true });
 
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

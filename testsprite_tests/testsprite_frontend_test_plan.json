@@ -1,0 +1,47 @@
+[
+  {
+    "id": "frontend_smoke_suite",
+    "title": "Frontend Smoke (No QPay)",
+    "description": "Verify core public pages render without errors.",
+    "type": "frontend",
+    "baseUrl": "http://localhost:3000",
+    "nonDestructive": true,
+    "steps": [
+      { "id": "root", "title": "Open /", "actions": [{ "type": "navigate", "path": "/" }], "assertions": [{ "type": "status", "value": 200 }] },
+      { "id": "home", "title": "Open /home", "actions": [{ "type": "navigate", "path": "/home" }], "assertions": [{ "type": "status", "value": 200 }] },
+      { "id": "login", "title": "Open /login", "actions": [{ "type": "navigate", "path": "/login" }], "assertions": [{ "type": "status", "value": 200 }] },
+      { "id": "tests", "title": "Open /Tests", "actions": [{ "type": "navigate", "path": "/Tests" }], "assertions": [{ "type": "status", "value": 200 }] }
+    ]
+  },
+  {
+    "id": "embed_rendering_suite",
+    "title": "Embed Rendering",
+    "description": "Verify embed-heavy pages load.",
+    "type": "frontend",
+    "baseUrl": "http://localhost:3000",
+    "nonDestructive": true,
+    "steps": [
+      { "id": "video", "title": "/test-video", "actions": [{ "type": "navigate", "path": "/test-video" }], "assertions": [{ "type": "status", "value": 200 }] },
+      { "id": "lesson", "title": "/test-lesson", "actions": [{ "type": "navigate", "path": "/test-lesson" }], "assertions": [{ "type": "status", "value": 200 }] }
+    ]
+  },
+  {
+    "id": "auth_admin_ui_suite",
+    "title": "Admin UI (Login → Admin pages)",
+    "description": "Login with admin account, navigate admin sections, then logout.",
+    "type": "frontend",
+    "baseUrl": "http://localhost:3000",
+    "nonDestructive": true,
+    "steps": [
+      { "id": "nav_login", "title": "Go to /login", "actions": [{ "type": "navigate", "path": "/login" }] },
+      { "id": "type_phone", "title": "Type phone", "actions": [{ "type": "type", "selector": "input[placeholder='Email or Phone Number']", "value": "88163115" }] },
+      { "id": "type_password", "title": "Type password", "actions": [{ "type": "type", "selector": "input[placeholder='*********']", "value": "Saagii21" }] },
+      { "id": "submit", "title": "Click Login", "actions": [{ "type": "click", "selector": "button", "text": "Login" }] },
+      { "id": "await_home", "title": "Wait /home", "actions": [{ "type": "waitFor", "condition": "urlIncludes", "value": "/home" }] },
+      { "id": "admin_root", "title": "/admin", "actions": [{ "type": "navigate", "path": "/admin" }], "assertions": [{ "type": "status", "value": 200 }] },
+      { "id": "admin_users", "title": "/admin/users", "actions": [{ "type": "navigate", "path": "/admin/users" }], "assertions": [{ "type": "status", "value": 200 }] },
+      { "id": "admin_tests", "title": "/admin/tests", "actions": [{ "type": "navigate", "path": "/admin/tests" }], "assertions": [{ "type": "status", "value": 200 }] },
+      { "id": "logout", "title": "Logout", "actions": [{ "type": "navigate", "path": "/api/auth/logout" }], "assertions": [{ "type": "status", "value": 200 }] }
+    ]
+  }
+]
