@@ -70,17 +70,17 @@ function VerifyEmailContent() {
 
       if (response.ok) {
         setStatus('success');
-        setMessage('Email verified successfully! Redirecting to home...');
+        setMessage('Email verified successfully! Continue to set up your profile.');
         toast.success('Email verified successfully!');
         // Notify any open "pending" pages to redirect
         try {
           localStorage.setItem('emailVerified', 'true');
           new BroadcastChannel('email-verification').postMessage('success');
         } catch (_) {}
-        // Redirect to home shortly after success so the toast is visible
+        // Redirect to login with callback to profile setup so user can authenticate then complete profile
         setTimeout(() => {
-          router.push('/home');
-        }, 1200);
+          router.push('/login?callbackUrl=%2Fprofile-setup');
+        }, 800);
       } else {
         setStatus('error');
         setMessage(data.error || 'Verification failed');
@@ -209,10 +209,10 @@ function VerifyEmailContent() {
             {status === 'success' && (
               <div className="space-y-4">
                 <Button
-                  onClick={() => router.push('/login')}
+                  onClick={() => router.push('/login?callbackUrl=%2Fprofile-setup')}
                   className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
                 >
-                  Continue to Login <ArrowRight className="w-4 h-4 ml-2" />
+                  Continue to Profile Setup <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
             )}
@@ -230,10 +230,10 @@ function VerifyEmailContent() {
                       Resending...
                     </>
                   ) : (
-                    <>
+                    <div className="flex items-center justify-center">
                       <Mail className="w-4 h-4 mr-2" />
-                      Resend Verification Email
-                    </>
+                      <span>Resend Verification Email</span>
+                    </div>
                   )}
                 </Button>
                 

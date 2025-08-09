@@ -35,6 +35,7 @@ export default function VerifySMSPage() {
       body: JSON.stringify({ phoneNumber, code: values.code }),
     });
     if (res.ok) {
+      // Profile setup is public now; go directly there
       router.push("/profile-setup");
     } else {
       setError("Invalid or expired code. Please try again.");

@@ -1,36 +1,23 @@
 "use client";
 
-import { Toaster } from "sonner";
-import BG from "@/public/bg-reg.jpg"
-import logo from "@/public/ppnim_logo.svg"
 import Image from "next/image";
-import { SessionProvider } from "next-auth/react";
+import { Toaster } from "sonner";
+import BG from "@/public/bg-reg.jpg";
+import logo from "@/public/ppnim_logo.svg";
 
-export default function RootLayout({ children }) {
+export default function ProfileSetupLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <div className="w-full flex flex-col justify-center items-center h-screen">
-    
-          <section className="flex flex-col items-center gap-8">
-            <div className="relative flex justify-center items-center w-full">
-              <Image 
-                src={BG}
-                alt="Background Image"
-              />
-              <Image
-                src={logo}
-                alt="PPNIM Logo"
-                className="absolute"
-              />
-            </div>
-            <h1 className="text-2xl font-semibold">Welcome to PTEST</h1>
-          </section>
-    
-         <SessionProvider> {children} </SessionProvider>
-        <Toaster richColors position="top-center" />
+    <div className="w-full flex flex-col justify-center items-center min-h-screen">
+      <section className="flex flex-col items-center gap-8">
+        <div className="relative flex justify-center items-center w-full">
+          <Image src={BG} alt="Background Image" />
+          <Image src={logo} alt="PPNIM Logo" className="absolute" />
         </div>
-    </html>
+        <h1 className="text-2xl font-semibold">Welcome to PTEST</h1>
+      </section>
 
-   
+      {children}
+      <Toaster richColors position="top-center" />
+    </div>
   );
 }

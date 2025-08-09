@@ -12,29 +12,14 @@ import { signIn } from 'next-auth/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, Phone, Lock, ArrowRight, Shield, Sparkles, Mail } from 'lucide-react';
 
-// Support signing up by either email OR phone, with clear validation rules per choice
-const baseSchema = {
+// Collect both email and phone; user chooses later how to verify
+const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
-};
-
-const emailMethodSchema = z.object({
-  signupMethod: z.literal('email'),
   email: z.string().email({ message: 'Please enter a valid email address.' }),
-  phoneNumber: z.string().optional(),
-  countryCodeDigits: z.string().optional(),
-  ...baseSchema,
-});
-
-const phoneMethodSchema = z.object({
-  signupMethod: z.literal('phone'),
-  phoneNumber: z.string().min(8, { message: 'Phone number must be at least 8 characters.' }),
   countryCodeDigits: z.string().min(1, { message: 'Country code is required.' }),
-  email: z.string().email().optional(),
-  ...baseSchema,
+  phoneNumber: z.string().min(8, { message: 'Phone number must be at least 8 characters.' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
-
-const formSchema = z.discriminatedUnion('signupMethod', [emailMethodSchema, phoneMethodSchema]);
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -43,26 +28,35 @@ export default function SignUpPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      signupMethod: 'email' as 'email' | 'phone',
       name: '',
-      phoneNumber: '',
       email: '',
-      password: '',
       countryCodeDigits: '976',
+      phoneNumber: '',
+      password: '',
     },
   });
+
+  const onInvalid = (errors: any) => {
+    console.error('Validation errors:', errors);
+    const firstErrorKey = Object.keys(errors)[0];
+    const firstErrorMsg = firstErrorKey && (errors[firstErrorKey]?.message || errors[firstErrorKey]?.root?.message);
+    toast.error(firstErrorMsg || 'Please complete the required fields.');
+    if (firstErrorKey) {
+      const field = document.querySelector(`[name="${firstErrorKey}"]`) as HTMLElement | null;
+      if (field && typeof field.focus === 'function') field.focus();
+    }
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     console.log('Form submitted with values:', values);
     setError('');
-    const formattedPhone =
-      (values as any).signupMethod === 'phone' && (values as any).countryCodeDigits && (values as any).phoneNumber
-        ? `+${(values as any).countryCodeDigits}${(values as any).phoneNumber}`
-        : '';
+    const formattedPhone = values.countryCodeDigits && values.phoneNumber
+      ? `+${values.countryCodeDigits}${values.phoneNumber}`
+      : '';
     console.log('Submitting signup:', { 
-      name: values.name, 
-      phoneNumber: formattedPhone, 
-      email: values.email 
+      name: values.name,
+      email: values.email,
+      phoneNumber: formattedPhone,
     });
 
     try {
@@ -71,8 +65,8 @@ export default function SignUpPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: values.name,
-          phoneNumber: (values as any).signupMethod === 'phone' ? formattedPhone : undefined,
-          email: (values as any).signupMethod === 'email' ? values.email : undefined,
+          email: values.email,
+          phoneNumber: formattedPhone,
           password: values.password,
         }),
       });
@@ -95,40 +89,48 @@ export default function SignUpPage() {
       }
 
       if (res.ok) {
-        // Store for potential resend flows
-        if ((values as any).signupMethod === 'email' && values.email) {
+        // Store for potential resend flows and seamless auto-login later
+        if (values.email) {
           localStorage.setItem('signupEmail', values.email);
-        } else if ((values as any).signupMethod === 'phone' && formattedPhone) {
+        }
+        if (formattedPhone) {
           localStorage.setItem('signupPhoneNumber', formattedPhone);
         }
+        try {
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('signupPassword', values.password);
+          }
+        } catch (_) {}
 
-        if (data.emailVerificationSent) {
-          toast.success('Registration successful! Please check your email to verify your account.');
-          setError('');
-          
-          // Show success message and redirect to email verification page
-          router.push('/verify-email?pending=true');
-        } else {
-          toast.success('Registration successful!');
-          if ((values as any).signupMethod === 'phone' && formattedPhone) {
+        // At this point, backend sent email verification if email provided.
+        // Also request SMS code if phone provided (non-blocking UX decision page next)
+        try {
+          if (formattedPhone) {
             const verifyRes = await fetch('/api/auth/request-verification', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ phoneNumber: formattedPhone }),
             });
-
-            const verifyData = await verifyRes.json();
+            const verifyData = await verifyRes.json().catch(() => ({}));
             console.log('Request-verification response:', { status: verifyRes.status, verifyData });
-
-            if (verifyRes.ok) {
-              toast.success('Verification code sent!');
-              router.push('/verify-sms');
+            if (!verifyRes.ok) {
+              toast.error(verifyData.error || 'Failed to send SMS code. You can still verify by email.');
             } else {
-              toast.error(verifyData.error || 'Failed to send verification code.');
-              setError(verifyData.error || 'Failed to send verification code.');
+              toast.success('SMS code sent.');
+              try {
+                if (verifyData?.devCode && typeof window !== 'undefined') {
+                  localStorage.setItem('devSmsCode', verifyData.devCode);
+                }
+              } catch (_) {}
             }
           }
+        } catch (e: any) {
+          console.error('Request-verification failed:', e?.message || e);
+          toast.error('Could not send SMS code. You can still verify by email.');
         }
+
+        toast.success('Registration successful! Choose a verification method.');
+        router.push('/verify');
       } else {
         toast.error(data.error || 'Registration failed. Please try again.');
         setError(data.error || 'Registration failed. Please try again.');
@@ -167,31 +169,7 @@ export default function SignUpPage() {
               </Alert>
             )}
 
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Sign up method toggle */}
-              <div className="flex items-center gap-4">
-                <label className="text-sm font-medium">Sign up using:</label>
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="radio"
-                      value="email"
-                      checked={form.watch('signupMethod') === 'email'}
-                      onChange={() => form.setValue('signupMethod', 'email')}
-                    />
-                    Email
-                  </label>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="radio"
-                      value="phone"
-                      checked={form.watch('signupMethod') === 'phone'}
-                      onChange={() => form.setValue('signupMethod', 'phone')}
-                    />
-                    Phone
-                  </label>
-                </div>
-              </div>
+      <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit(onSubmit, onInvalid)(e as any); }} className="space-y-6">
 
               {/* Two Column Grid for Inputs */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -205,63 +183,68 @@ export default function SignUpPage() {
                     {...form.register('name')}
                     className="h-12 rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     placeholder="Enter your full name"
+                    required
                   />
                   {form.formState.errors.name && (
                     <p className="text-red-500 text-sm">{(form.formState.errors as any).name?.message}</p>
                   )}
                 </div>
 
-                {/* Email Field (only when email method) */}
-                {form.watch('signupMethod') === 'email' && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
-                      Email Address
-                    </label>
-                    <Input
-                      type="email"
-                      {...form.register('email')}
-                      className="h-12 rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="Enter your email address"
-                    />
-                    {form.formState.errors.email && (
-                      <p className="text-red-500 text-sm">{(form.formState.errors as any).email?.message}</p>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Phone Number Field - Full Width (only when phone method) */}
-              {form.watch('signupMethod') === 'phone' && (
+                {/* Email Field */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                    <Phone className="w-4 h-4" />
-                    Phone Number
+                    <Mail className="w-4 h-4" />
+                    Email Address
                   </label>
-                  <div className="flex gap-2 h-12">
-                    <div className="flex">
-                      <span className="inline-flex items-center px-4 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xl">
-                        +
-                      </span>
-                      <Input
-                        {...form.register('countryCodeDigits')}
-                        className="h-full rounded-none rounded-r-lg w-20 text-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        placeholder="976"
-                        type="number"
-                      />
-                    </div>
-                    <Input
-                      {...form.register('phoneNumber')}
-                      className="h-full text-lg rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      type="number"
-                      placeholder="8816XXXX"
-                    />
-                  </div>
-                  {form.formState.errors.phoneNumber && (
-                    <p className="text-red-500 text-sm">{(form.formState.errors as any).phoneNumber?.message}</p>
+                  <Input
+                    type="email"
+                    {...form.register('email')}
+                    className="h-12 rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="Enter your email address"
+                    required
+                  />
+                  {form.formState.errors.email && (
+                    <p className="text-red-500 text-sm">{(form.formState.errors as any).email?.message}</p>
                   )}
                 </div>
-              )}
+              </div>
+
+              {/* Phone Number Field - Full Width */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  Phone Number
+                </label>
+                <div className="flex gap-2 h-12">
+                  <div className="flex">
+                    <span className="inline-flex items-center px-4 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xl">
+                      +
+                    </span>
+                    <Input
+                      {...form.register('countryCodeDigits')}
+                      className="h-full rounded-none rounded-r-lg w-20 text-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      placeholder="976"
+                      type="tel"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      required
+                    />
+                  </div>
+                  <Input
+                    {...form.register('phoneNumber')}
+                    className="h-full text-lg rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="8816XXXX"
+                    minLength={8}
+                    required
+                  />
+                </div>
+                {form.formState.errors.phoneNumber && (
+                  <p className="text-red-500 text-sm">{(form.formState.errors as any).phoneNumber?.message}</p>
+                )}
+              </div>
 
               {/* Password Field - Full Width */}
               <div className="space-y-2">
@@ -274,6 +257,8 @@ export default function SignUpPage() {
                   {...form.register('password')}
                   className="h-12 rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="Create a secure password"
+                  minLength={6}
+                  required
                 />
                 {form.formState.errors.password && (
                   <p className="text-red-500 text-sm">{form.formState.errors.password.message}</p>
@@ -287,15 +272,16 @@ export default function SignUpPage() {
                   <span className="font-medium text-sm">Secure Registration</span>
                 </div>
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  Your information is protected with encryption. {form.watch('signupMethod') === 'email' ?
-                    `We'll send a verification email to confirm your account.` :
-                    `We'll send a verification code via SMS to confirm your account.`}
+                  Your information is protected with encryption. We'll send a verification email and an SMS code; you can verify using either one.
                 </p>
               </div>
 
               {/* Submit Button */}
               <Button
+                id="signup-submit"
                 type="submit"
+                onClick={() => form.handleSubmit(onSubmit, onInvalid)()}
+                aria-busy={form.formState.isSubmitting}
                 className="h-12 rounded-xl w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold transition-all duration-300"
                 disabled={form.formState.isSubmitting}
               >

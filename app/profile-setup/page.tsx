@@ -40,27 +40,43 @@ export default function ProfileSetupPage() {
     },
   });
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    }
-  }, [status, router]);
+  // Do not require authentication here; allow unauthenticated users to complete basic profile
+  // If you still want to prefill from session when available, we rely on default values above.
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
+      // Include identifiers so unauthenticated first-time users can be matched server-side
+      const email = (session as any)?.user?.email || (typeof window !== 'undefined' ? localStorage.getItem('signupEmail') : null);
+      const phoneNumber = (session as any)?.user?.phoneNumber || (typeof window !== 'undefined' ? localStorage.getItem('signupPhoneNumber') : null);
+
       const res = await fetch('/api/profile/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          ...values,
+          // pass identifiers only if present
+          ...(email ? { email } : {}),
+          ...(phoneNumber ? { phoneNumber } : {}),
+        }),
         credentials: 'include',
       });
 
       if (res.ok) {
         toast.success(t('profileSaved'));
-        router.push('/home');
+        // Always redirect to login to ensure a clean authenticated session before landing on home
+        router.push('/login?callbackUrl=%2Fhome');
+      } else if (res.status === 401) {
+        toast.info('Please log in to save your profile. Redirecting to login...');
+        router.push('/login?callbackUrl=%2Fprofile-setup');
+        return;
       } else {
-        toast.error('Failed to save profile');
+        try {
+          const data = await res.json();
+          toast.error(data?.message || 'Failed to save profile');
+        } catch (_) {
+          toast.error('Failed to save profile');
+        }
       }
     } catch (error) {
       toast.error('Something went wrong');

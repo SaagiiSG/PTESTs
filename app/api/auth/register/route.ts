@@ -48,26 +48,31 @@ export async function POST(req: Request) {
 
   const hashed = await bcrypt.hash(password, 10);
 
-  // Generate email verification token if email is provided
-  let emailVerificationToken;
-  let emailVerificationExpires;
-  
-  if (email) {
-    emailVerificationToken = crypto.randomBytes(32).toString('hex');
-    emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-  }
+  // Prepare new user payload conditionally to avoid storing nulls for unique sparse fields
+  let emailVerificationToken: string | undefined;
+  let emailVerificationExpires: Date | undefined;
 
-  const user = await User.create({
+  const payload: any = {
     name,
-    phoneNumber,
-    email,
     password: hashed,
     age,
     gender,
-    emailVerificationToken,
-    emailVerificationExpires,
     isEmailVerified: false,
-  });
+  };
+
+  if (phoneNumber) {
+    payload.phoneNumber = phoneNumber;
+  }
+
+  if (email) {
+    payload.email = email;
+    emailVerificationToken = crypto.randomBytes(32).toString('hex');
+    emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    payload.emailVerificationToken = emailVerificationToken;
+    payload.emailVerificationExpires = emailVerificationExpires;
+  }
+
+  const user = await User.create(payload);
 
   // Send verification email if email is provided
   if (email && emailVerificationToken) {
