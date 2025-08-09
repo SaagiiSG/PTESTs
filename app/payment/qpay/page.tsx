@@ -107,13 +107,13 @@ function QPayPaymentContent() {
     }
   }, [invoiceId]);
 
-  // Start payment monitoring for mobile users when QR is generated
+  // Start payment monitoring automatically when QR is generated (all devices)
   useEffect(() => {
-    if (isMobile && paymentStatus.status === 'qr_generated' && invoiceId && !isMonitoring) {
-      console.log('Starting payment monitoring for mobile user');
+    if (paymentStatus.status === 'qr_generated' && invoiceId && !isMonitoring) {
+      console.log('Starting automatic payment monitoring');
       startPaymentCheck(invoiceId);
     }
-  }, [isMobile, paymentStatus.status, invoiceId, isMonitoring]);
+  }, [paymentStatus.status, invoiceId, isMonitoring]);
 
   // Start payment monitoring for mobile users when QR data is ready
   useEffect(() => {
@@ -355,10 +355,40 @@ function QPayPaymentContent() {
     // Add a flag to track if component is still mounted
     let isMounted = true;
 
-    const interval = setInterval(async () => {
+    const pollOnce = async () => {
+      if (!isMounted) return;
+      try {
+        const apiEndpoint = itemType === 'course' 
+          ? '/api/public/payment/course-check-v2'
+          : '/api/public/payment/check';
+        const response = await fetch(apiEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ invoiceId })
+        });
+        const data = await response.json();
+        if (response.ok && data.success) {
+          if (data.payment && data.payment.count > 0) {
+            const payment = data.payment.rows[0];
+            console.log('Payment found:', payment);
+            clearInterval(intervalRef);
+            setCheckInterval(null);
+            handlePaymentSuccess(payment, invoiceId);
+          }
+        }
+      } catch (error) {
+        console.error('Payment check error:', error);
+      }
+    };
+
+    // Immediate first check
+    pollOnce();
+
+    // Scheduled checks
+    const intervalRef = setInterval(async () => {
       // Check if component is still mounted before making the request
       if (!isMounted) {
-        clearInterval(interval);
+        clearInterval(intervalRef);
         return;
       }
       
@@ -383,7 +413,7 @@ function QPayPaymentContent() {
             const payment = data.payment.rows[0];
             console.log('Payment found:', payment);
             
-            clearInterval(interval);
+            clearInterval(intervalRef);
             setCheckInterval(null);
             
             // Handle successful payment
@@ -394,9 +424,9 @@ function QPayPaymentContent() {
         console.error('Payment check error:', error);
         // Don't stop monitoring on network errors, just log them
       }
-    }, 10000); // Check every 10 seconds
+    }, 8000); // Check every ~8 seconds
 
-    setCheckInterval(interval);
+    setCheckInterval(intervalRef);
     
     // Return cleanup function
     return () => {
