@@ -23,16 +23,6 @@ Start with these docs in `docs/`:
 - [Testing](docs/Testing.md)
 - [Reflections](docs/Reflections.md)
 
-### Quick Start
 
-```bash
-npm install
-cp .env.example .env.local  # create and fill in values
-npm run dev
-```
+Visit `http://testcenter.mn/login`.
 
-Visit `http://localhost:3000`.
-
-### Deployment
-
-Deploy on Vercel and configure environment variables per `docs/Environment.md`.
