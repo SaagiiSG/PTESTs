@@ -75,7 +75,7 @@ const Footer = ({ variant = 'default' }: FooterProps) => {
 
   const contactInfo = [
     { icon: Mail, label: "info@psychometrics.mn", href: "info@psychometrics.mn" },
-    { icon: Phone, label: "+976 7000718", href: "tel:+976 7000718" },
+    { icon: Phone, label: "+976 75057188", href: "tel:+976 75057188" },
     { icon: MapPin, label: "Ulaanbaatar, Mongolia", href: "https://www.google.com/maps/place/Ikh+Mongol+Residence/@47.9054236,106.9420219,78m/data=!3m1!1e3!4m6!3m5!1s0x5d96922bce89510b:0x6d084460e28c8189!8m2!3d47.9053831!4d106.9421953!16s%2Fg%2F11cmxzcfyh?entry=ttu&g_ep=EgoyMDI1MDczMC4wIKXMDSoASAFQAw%3D%3D" },
   ];
 
