@@ -44,6 +44,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: '/login',
   },
+  // Fix for App Router server-side authentication
+  trustHost: true,
+  useSecureCookies: process.env.NODE_ENV === 'production',
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.session-token' : 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+  },
   callbacks: {
     async signIn({ user, account }) {
       console.log('SIGNIN CALLBACK - user:', user);

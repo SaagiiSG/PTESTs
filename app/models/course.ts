@@ -5,6 +5,8 @@ export interface ILesson {
   description: string;
   embedCode: string;
   video?: string;
+  testEmbedCode?: string;
+  estimatedDuration?: number; // in minutes
 }
 
 export interface ICourse extends Document {
@@ -22,6 +24,8 @@ const LessonSchema: Schema = new Schema({
   description: { type: String, required: true },
   embedCode: { type: String, required: true },
   video: { type: String },
+  testEmbedCode: { type: String },
+  estimatedDuration: { type: Number, min: 1 },
 });
 
 const CourseSchema: Schema = new Schema({

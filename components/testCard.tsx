@@ -259,21 +259,22 @@ const TestCard: React.FC<TestCardProps> = ({
   };
 
   const getImageClasses = () => {
-    const baseClasses = "relative overflow-hidden flex-shrink-0";
-    
+    // Mobile: fixed height; Desktop: rely on flex stretch (no explicit height), keep a sensible min-height
+    const baseClasses = "relative overflow-hidden flex-shrink-0 w-full";
+
     switch (variant) {
       case "featured":
-        return `${baseClasses} w-80 h-48`;
+        return `${baseClasses} h-40 sm:w-80 sm:h-auto sm:min-h-[12rem] sm:self-stretch`;
       case "big":
-        return `${baseClasses} w-64 h-40`;
+        return `${baseClasses} h-36 sm:w-64 sm:h-auto sm:min-h-[10rem] sm:self-stretch`;
       case "small":
-        return `${baseClasses} w-32 h-24`;
+        return `${baseClasses} h-28 sm:w-32 sm:h-auto sm:min-h-[6rem] sm:self-stretch`;
       case "compact":
-        return `${baseClasses} w-24 h-20`;
+        return `${baseClasses} h-24 sm:w-24 sm:h-auto sm:min-h-[5rem] sm:self-stretch`;
       case "grid":
-        return `${baseClasses} w-56 h-36`;
+        return `${baseClasses} h-36 sm:w-56 sm:h-auto sm:min-h-[9rem] sm:self-stretch`;
       default:
-        return `${baseClasses} w-64 h-40`;
+        return `${baseClasses} h-36 sm:w-64 sm:h-auto sm:min-h-[10rem] sm:self-stretch`;
     }
   };
 
@@ -295,21 +296,21 @@ const TestCard: React.FC<TestCardProps> = ({
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          <div className="flex h-full">
+          <div className="flex flex-col sm:flex-row items-stretch h-full overflow-visible">
             {/* Image Section - Left Side */}
-            <div className={getImageClasses()}>
+            <div className={`${getImageClasses()} sm:flex sm:items-stretch sm:self-stretch`}>
               {isLocalImage ? (
                 <img
                   src={imageUrl}
                   alt={title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
               ) : (
                 <Image
                   src={imageUrl}
                   alt={title}
                   fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="object-cover transition-transform duration-700"
                 />
               )}
               
@@ -353,7 +354,7 @@ const TestCard: React.FC<TestCardProps> = ({
             </div>
 
             {/* Content Section - Right Side */}
-            <div className={getContentClasses()}>
+            <div className={`${getContentClasses()} sm:flex sm:flex-col sm:self-stretch`}>
               <div className="flex flex-col h-full">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4 mb-3">

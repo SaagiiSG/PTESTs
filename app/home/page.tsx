@@ -227,58 +227,33 @@ export default function HomePage() {
                     ))}
                   </div>
                 ) : purchasedCourses.length > 0 ? (
-                  <div className="space-y-3 max-h-96 ">
+                  <div className="relative">
+                    <div className="space-y-3 max-h-82 md:max-h-96 overflow-y-auto pr-1 pb-6">
                     {purchasedCourses.map((purchasedCourse, index) => {
                       const course = purchasedCourse.course;
                       if (!course) return null;
                       
                       return (
                         <div key={course._id || index} className="stagger-item">
-                          <div className="bg-white dark:bg-gray-800 rounded-lg shadow border dark:border-gray-700 p-3 hover:shadow-md transition-all duration-300 card-hover">
-                            {/* Mobile Layout - Compact Horizontal */}
-                            <div className="lg:hidden flex flex-row items-center gap-3">
-                              <img
-                                src={course.thumbnailUrl || '/ppnim_logo.svg'}
-                                alt={course.title}
-                                className="w-12 h-12 object-cover rounded border dark:border-gray-600 flex-shrink-0"
-                              />
-                              <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                <div className="font-semibold text-sm truncate mb-0.5 text-gray-800 dark:text-white">{course.title}</div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">{course.lessons?.length || 0} lessons</div>
-                              </div>
-                              <Link href={`/Course/${course._id}/lesson/0`}>
-                                <Button size="sm" variant="gradientYellow" className="px-2 py-1 text-xs whitespace-nowrap rounded-full">
-                                  {t('continue')}
-                                </Button>
-                              </Link>
-                            </div>
-
-                            {/* Desktop Layout - Compact Card */}
-                            <div className="hidden lg:flex flex-col gap-3">
-                              <div className="flex items-start gap-3">
-                                <img
-                                  src={course.thumbnailUrl || '/ppnim_logo.svg'}
-                                  alt={course.title}
-                                  className="w-16 h-16 object-cover rounded-lg border dark:border-gray-600 flex-shrink-0"
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="text-sm font-semibold text-gray-800 dark:text-white mb-1 line-clamp-1">{course.title}</h3>
-                                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">{course.description}</p>
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-xs text-gray-500 dark:text-gray-400">{course.lessons?.length || 0} {t('lessons')}</span>
-                                    <Link href={`/Course/${course._id}/lesson/0`}>
-                                      <Button size="sm" variant="gradientYellow" className="px-3 py-1 text-xs rounded-full">
-                                        {t('continueLearning')}
-                                      </Button>
-                                    </Link>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
+                            <CourseCard
+                              _id={course._id}
+                              title={course.title}
+                              description={course.description}
+                              lessonCount={course.lessons?.length || 0}
+                              price={course.price}
+                              thumbnailUrl={course.thumbnailUrl}
+                              lessons={course.lessons}
+                              variant="sidebar"
+                              compact
+                              href={`/Course/${course._id}/lesson/0`}
+                              className="rounded-lg border dark:border-gray-700"
+                            />
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
+                    {/* Bottom gradient overlay for smooth fade */}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white dark:from-gray-900 to-transparent" />
                   </div>
                 ) : (
                   <div className="text-gray-500 dark:text-gray-400 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700 text-center">

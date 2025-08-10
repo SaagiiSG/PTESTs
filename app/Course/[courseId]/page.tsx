@@ -120,22 +120,25 @@ export default function CourseDetailPage({ params }: { params: Promise<{ courseI
   }
 
   return (
-    <div className="min-h-screen bg-transparent">
+    <div className="min-h-screen bg-transparent w-full py-4 pb-8 relative">
       {/* Hero Section with Background Pattern */}
+      <Button variant="outline" className="w-auto md:w-auto sticky top-4 left-2 z-10 dark:bg-gray-800/90">
+        <span className="flex items-center gap-2">
+        <ArrowLeft className="w-4 h-4" />
+        <span>Back to Courses</span>
+        </span>
+      </Button>
       <div className="relative">
         <div className="absolute inset-0 "></div>
         <div className="absolute inset-0 opacity-50" style={{
           backgroundImage: `radial-gradient(circle at 25% 25%, rgba(156, 146, 172, 0.1) 0%, transparent 50%)`
         }}></div>
         
-        <div className="relative p-6">
-          <div className="max-w-7xl mx-auto">
-        
-            
-
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <div className="relative md:p-6">
+          <div className="w-full md:max-w-7xl mx-auto">
+            <div className="w-full flex flex-col md:grid md:grid-cols-1 lg:grid-cols-5 gap-8">
               {/* Left Column - Course Info & Buy Section (60%) */}
-              <div className="lg:col-span-3 space-y-6">
+              <div className="w-full lg:col-span-3">
                 {/* Course Card */}
                 <Card className="overflow-hidden border-0 shadow-2xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:shadow-3xl transition-all duration-500 transform hover:-translate-y-1">
                   {/* Image Section */}
@@ -219,7 +222,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ courseI
                     </div>
 
                     {/* Buy Section */}
-                    {course.price && !isPurchased && (
+                    {typeof course.price === 'number' && course.price > 0 && !isPurchased && (
                       <div className="space-y-4">
                         <Button 
                           onClick={() => setShowPaymentModal(true)}
@@ -251,7 +254,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ courseI
                     )}
 
                     {/* Free Course Section */}
-                    {course.price === 0 && !isPurchased && (
+                    {typeof course.price === 'number' && course.price === 0 && !isPurchased && (
                       <div className="space-y-4">
                         <Button 
                           onClick={() => setShowPaymentModal(true)}
@@ -331,21 +334,16 @@ export default function CourseDetailPage({ params }: { params: Promise<{ courseI
                       <GraduationCap className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                       Course Content
                     </CardTitle>
-                    <CardDescription className="flex items-center gap-4 text-gray-600 dark:text-gray-300">
-                      <span className="flex items-center gap-1">
+                    <CardDescription className="flex flex-col md:flex-row items-end mt-2 md:mt-0 md:items-center gap-4 text-gray-600 dark:text-gray-300">
+                      <span className="w-auto flex items-center gap-1">
                         <BookOpen className="w-3 h-3" />
-                        {lessons.length} lessons
+                        <span> {lessons.length} lessons</span>
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         Self-paced
                       </span>
-                      {isPurchased && (
-                        <div className="flex items-center gap-2">
-                          <Progress value={25} className="w-16 h-2" />
-                          <span className="text-xs text-gray-500 dark:text-gray-400">25% Complete</span>
-                        </div>
-                      )}
+                      
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
@@ -360,7 +358,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ courseI
                             onMouseEnter={() => setHoveredLesson(index)}
                             onMouseLeave={() => setHoveredLesson(null)}
                           >
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="flex items-start md:items-center gap-3 flex-1 min-w-0">
                               {/* Animated Lesson Number */}
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
                                 isPurchased 
@@ -371,7 +369,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ courseI
                               </div>
                               
                               {/* Lesson Info */}
-                              <div className="flex-1 min-w-0">
+                              <div className="flex-1 min-w-0 flex flex-col">
                                 <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1 transition-colors duration-300 text-sm">
                                   {lesson.title}
                                 </h3>
@@ -381,11 +379,11 @@ export default function CourseDetailPage({ params }: { params: Promise<{ courseI
                                   </p>
                                 )}
                                 <div className="flex items-center gap-3 mt-2">
-                                  <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                                  <span className="hidden md:flex text-xs text-gray-400 dark:text-gray-500 items-center gap-1">
                                     <Play className="w-3 h-3" />
                                     <span>Video</span>
                                   </span>
-                                  <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                                  <span className="hidden md:flex text-xs text-gray-400 dark:text-gray-500 items-center gap-1">
                                     <Clock className="w-3 h-3" />
                                     <span>15 min</span>
                                   </span>

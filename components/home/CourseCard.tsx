@@ -19,9 +19,12 @@ interface CourseCardProps {
   thumbnailUrl?: string;
   lessons?: Lesson[];
   compact?: boolean;
+  variant?: 'default' | 'sidebar';
+  href?: string;
+  className?: string;
 }
 
-const CourseCard: React.FC<CourseCardProps> = ({ _id, title, description, lessonCount, price, thumbnailUrl, lessons, compact }) => {
+const CourseCard: React.FC<CourseCardProps> = ({ _id, title, description, lessonCount, price, thumbnailUrl, lessons, compact, variant = 'default', href, className = '' }) => {
   const imageUrl = thumbnailUrl || "/ppnim_logo.svg";
   const isLocalImage = imageUrl.startsWith('/') && !imageUrl.startsWith('//');
   
@@ -32,23 +35,25 @@ const CourseCard: React.FC<CourseCardProps> = ({ _id, title, description, lesson
     }
   }, [thumbnailUrl, title, imageUrl, isLocalImage]);
   
+  const imageHeightCls = compact ? 'h-32' : (variant === 'sidebar' ? 'h-36' : 'h-48');
+
   return (
-    <Link href={`/Course/${_id}`} className="block w-full group">
+    <Link href={href || `/Course/${_id}`} className={`block w-full group ${className}`}>
       <Card className="overflow-hidden group cursor-pointer card-hover border-0 shadow-sm bg-white dark:bg-gray-800 dark:border-gray-700">
         {/* Image Section */}
-        <div className={`relative w-full ${compact ? 'h-32' : 'h-48'} bg-gray-100 dark:bg-gray-700 overflow-hidden`}>
+        <div className={`relative w-full ${imageHeightCls} bg-gray-100 dark:bg-gray-700 overflow-hidden`}>
           {isLocalImage ? (
             <img 
               src={imageUrl} 
               alt={title} 
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
             />
           ) : (
             <Image 
               src={imageUrl} 
               alt={title} 
               fill 
-              className="object-cover transition-transform duration-500 group-hover:scale-110" 
+              className="object-cover transition-transform duration-500 group-hover:scale-105" 
             />
           )}
           {/* Overlay gradient */}
@@ -61,9 +66,9 @@ const CourseCard: React.FC<CourseCardProps> = ({ _id, title, description, lesson
             </div>
           </div>
           
-          {/* Price badge */}
-          {typeof price === 'number' && (
-            <div className="absolute top-3 right-3 transform translate-y-1 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+          {/* Price badge (hidden in sidebar variant) */}
+          {variant !== 'sidebar' && typeof price === 'number' && (
+            <div className="absolute top-3 right-3 transform sm:translate-y-1 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100 transition-all duration-300">
               <Badge className="bg-white/95 dark:bg-gray-800/95 text-gray-900 dark:text-white font-semibold px-3 py-1 shadow-lg">
                 <DollarSign className="w-3 h-3 mr-1" />
                 {price}
@@ -73,7 +78,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ _id, title, description, lesson
         </div>
 
         {/* Content Section */}
-        <CardContent className="p-4">
+        <CardContent className={`p-4 ${variant === 'sidebar' ? 'pt-3 pb-4' : ''}`}>
           {/* Title */}
           <CardTitle className="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
             {title}
@@ -125,10 +130,19 @@ const CourseCard: React.FC<CourseCardProps> = ({ _id, title, description, lesson
               <Clock className="w-3 h-3" />
               <span>Self-paced</span>
             </div>
-            <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-              <span className="text-xs font-medium">Start Learning</span>
-              <ChevronRight className="w-3 h-3" />
-            </div>
+            {variant === 'sidebar' ? (
+              <div className="flex items-center">
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 text-sm rounded-full border bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 transition-colors dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800 dark:hover:bg-blue-900/40 font-medium">
+                  <Play className="w-4 h-4" />
+                  Continue
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+                <span className="text-xs font-medium">Start Learning</span>
+                <ChevronRight className="w-3 h-3" />
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
