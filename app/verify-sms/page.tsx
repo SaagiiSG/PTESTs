@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { MessageSquare, Phone, ArrowLeft, Send, Clock, CheckCircle } from "lucide-react";
 import Silk from "@/components/Silk/Silk";
 import { useLanguage } from "@/lib/language";
-import { LangToggle } from "@/components/LangToggle";
+import LangToggle from "@/components/LangToggle";
 
 export default function VerifySMSPage() {
   const router = useRouter();
