@@ -236,7 +236,7 @@ export default function AboutPage() {
       <Separator className="my-8" />
       
       <div className="text-center text-gray-600">
-        <p>© 2024 PPNIM. {language === 'mn' ? 'Бүх эрх хуулиар хамгаалагдсан.' : 'All rights reserved.'}</p>
+        <p>© 2024 TestCenter. {language === 'mn' ? 'Бүх эрх хуулиар хамгаалагдсан.' : 'All rights reserved.'}</p>
       </div>
     </div>
   );

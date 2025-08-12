@@ -1,6 +1,6 @@
 {
-  "name": "PTest App",
-  "short_name": "PTest",
+  "name": "TestCenter",
+  "short_name": "TestCenter",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

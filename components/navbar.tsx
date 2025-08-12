@@ -34,7 +34,7 @@ const navbar = () => {
       <Link href={"/home"} className="hidden sm:block group">
         <Image
           src={logo}
-          alt="PPNIM Logo"
+          alt="TestCenter Logo"
           width={80}
           height={40}
           className="cursor-pointer transition-transform duration-300 group-hover:scale-105"

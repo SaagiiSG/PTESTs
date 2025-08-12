@@ -56,8 +56,8 @@ export default function EmailAuth({ isSignup = false }: { isSignup?: boolean }) 
             placeholder="Enter your email"
             className="h-12 rounded-xl"
           />
-          <Button onClick={handleSendCode} className="w-full h-12 rounded-xl">
-            Send Verification Code
+          <Button onClick={handleSendCode} className="inline-flex items-center justify-center w-full h-12 rounded-xl">
+            <span className="font-semibold">Send Verification Code</span>
           </Button>
         </>
       ) : (
@@ -69,8 +69,8 @@ export default function EmailAuth({ isSignup = false }: { isSignup?: boolean }) 
             placeholder="Enter verification code"
             className="h-12 rounded-xl"
           />
-          <Button onClick={handleVerifyCode} className="w-full h-12 rounded-xl">
-            Verify
+          <Button onClick={handleVerifyCode} className="inline-flex items-center justify-center w-full h-12 rounded-xl">
+            <span className="font-semibold">Verify</span>
           </Button>
         </>
       )}

@@ -247,11 +247,11 @@ export default function PaymentGateway({
 
               <Button 
                 onClick={generatePaymentQR} 
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
+                className="inline-flex items-center justify-center w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
                 size="lg"
               >
-                <QrCode className="h-5 w-5 mr-2" />
-                Pay ₮{price.toLocaleString()} with QPay
+                <QrCode className="h-5 w-5 inline-block mr-2" />
+                <span className="font-semibold">Pay ₮{price.toLocaleString()} with QPay</span>
               </Button>
             </div>
           )}
@@ -286,8 +286,8 @@ export default function PaymentGateway({
               {paymentStatus.error && (
                 <p className="text-gray-600 dark:text-gray-300 mb-4">{paymentStatus.error}</p>
               )}
-              <Button onClick={resetPayment} className="w-full">
-                Try Again
+              <Button onClick={resetPayment} className="inline-flex items-center justify-center w-full">
+                <span className="font-semibold">Try Again</span>
               </Button>
             </div>
           )}

@@ -26,13 +26,17 @@ async function fetchProtectedTestsClient() {
 }
 
 async function fetchCoursesClient() {
-  const res = await fetch('/api/courses');
+  // Use the API's status filter to only fetch active courses
+  const res = await fetch('/api/courses?status=active');
   if (!res.ok) {
     const text = await res.text();
     console.error("API error (courses):", res.status, text);
     return [];
   }
-  return res.json();
+  const data = await res.json();
+  
+  console.log(`📚 Active courses loaded: ${data.length} courses`);
+  return data;
 }
 
 export default function HomePage() {
@@ -153,6 +157,7 @@ export default function HomePage() {
 
   // Courses filtering
   const filteredCourses = useMemo(() => {
+    // API already filters out inactive courses, just apply search filter
     if (!courseSearch) return courses;
     const s = courseSearch.toLowerCase();
     return courses.filter(

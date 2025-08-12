@@ -15,6 +15,7 @@ export interface ICourse extends Document {
   price: number;
   thumbnailUrl?: string;
   lessons: ILesson[];
+  status: 'active' | 'inactive';
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -34,6 +35,7 @@ const CourseSchema: Schema = new Schema({
   price: { type: Number, required: true },
   thumbnailUrl: { type: String },
   lessons: { type: [LessonSchema], default: [] },
+  status: { type: String, enum: ['active', 'inactive'], default: 'active' },
 }, { timestamps: true });
 
 export default mongoose.models.Course || mongoose.model<ICourse>('Course', CourseSchema); 

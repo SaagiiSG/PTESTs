@@ -242,13 +242,21 @@ export default function PaymentOptionsModal({
         body: JSON.stringify({
           itemId,
           itemType,
+          amount: 0,
+          paymentMethod: 'free'
         }),
       });
 
       const data = await response.json();
+      console.log('Free enrollment response:', { status: response.status, data });
 
       if (response.ok) {
-        toast.success('Successfully enrolled in free course!');
+        if (data.alreadyPurchased) {
+          toast.success('You already have access to this item!');
+        } else {
+          toast.success('Successfully enrolled in free item!');
+        }
+        
         if (onSuccess) {
           onSuccess(data);
         }

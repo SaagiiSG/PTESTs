@@ -1,45 +1,49 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Home, BookOpen, GraduationCap, User, AppWindow } from 'lucide-react';
-import logo from '@/public/PPNIM-logo-colered.svg';
+import { Home, BookOpen, GraduationCap, User, AppWindow, LogOut } from 'lucide-react';
+// import Logo from '@/public/PPNIM-logo-colored.svg';
 import LogoutButton from '@/components/LogoutButton';
 import { auth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import AdminSidebarNav from '@/components/AdminSidebarNav';
 import { redirect } from 'next/navigation';
 import { IUser } from '@/app/models/user';
+import { connectMongoose } from '@/lib/mongodb';
+import UserModel from '@/app/models/user';
+import AdminLayoutClient from './AdminLayoutClient';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  const admin: IUser | undefined = session?.user as IUser | undefined;
-  if (!admin?.isAdmin) {
-    redirect('/home');
+  
+  if (!session?.user?.id) {
+    console.log('Admin layout: No session or user ID');
+    redirect('/login');
   }
-  return (
-    <div className="min-h-screen flex">
-      <aside className="fixed top-0 w-64 shadow-xl flex flex-col justify-between p-6 border-r min-h-screen h-screen rounded-r-3xl">
-        <div>
-          <Link href="/home" className="flex items-center gap-2 mb-6">
-            <Image src={logo} alt="PPNIM Logo" width={100} height={50} className="cursor-pointer" />
-          </Link>
-          {/* Admin Info Card */}
-          {admin && (
-            <div className="mb-6 p-4 bg-gray-100 rounded-2xl shadow flex flex-col items-center text-center">
-              <User className="w-10 h-10 text-gray-500 mb-2" />
-              <div className="font-bold text-gray-800 text-lg">{admin.name || 'Admin'}</div>
-              {admin.email && <div className="text-xs text-gray-600">{admin.email}</div>}
-              {(admin as any)?.phoneNumber && <div className="text-xs text-gray-600">{(admin as any).phoneNumber}</div>}
-              <div className="text-xs text-gray-500 font-semibold mt-1">Admin</div>
-            </div>
-          )}
-          <AdminSidebarNav />
-        </div>
-        <div className="flex flex-col items-center">
-          <LogoutButton />
-        </div>
-      </aside>
-      <main className="flex-1 p-10 rounded-3xl shadow-xl ml-64">{children}</main>
-    </div>
-  );
+
+  // CRITICAL SECURITY: Double-check admin status against database
+  try {
+    await connectMongoose();
+    const dbUser = await UserModel.findById(session.user.id);
+    
+    if (!dbUser) {
+      console.log('Admin layout: User not found in database');
+      redirect('/login');
+    }
+    
+    if (!dbUser.isAdmin) {
+      console.log('Admin layout: User is not admin:', { userId: session.user.id, isAdmin: dbUser.isAdmin });
+      redirect('/home');
+    }
+    
+    console.log('Admin layout: Admin access granted for:', { userId: dbUser._id, name: dbUser.name, isAdmin: dbUser.isAdmin });
+    
+    // Use the database user data, not session data - serialize MongoDB object
+    const admin: IUser = JSON.parse(JSON.stringify(dbUser));
+    
+    return <AdminLayoutClient admin={admin}>{children}</AdminLayoutClient>;
+  } catch (error) {
+    console.error('Admin layout: Database error:', error);
+    redirect('/login');
+  }
 } 

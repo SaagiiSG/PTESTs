@@ -128,8 +128,8 @@ export default function TestEmbedPage({ params }: { params: Promise<{ testId: st
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               You need to be logged in to access this test.
             </p>
-            <Button onClick={() => router.push('/login')} className="w-full">
-              Login
+            <Button onClick={() => router.push('/login')} className="inline-flex items-center justify-center w-full">
+              <span className="font-semibold">Login</span>
             </Button>
           </CardContent>
         </Card>
@@ -150,16 +150,16 @@ export default function TestEmbedPage({ params }: { params: Promise<{ testId: st
             <div className="space-y-2">
               <Button 
                 onClick={() => router.push(`/ptests/${resolvedParams.testId}`)} 
-                className="w-full"
+                className="inline-flex items-center justify-center w-full"
               >
-                View Test Details
+                <span className="font-semibold">View Test Details</span>
               </Button>
               <Button 
                 variant="outline" 
                 onClick={() => router.push('/ptests')} 
-                className="w-full"
+                className="inline-flex items-center justify-center w-full"
               >
-                Browse All Tests
+                <span className="font-semibold">Browse All Tests</span>
               </Button>
             </div>
           </CardContent>

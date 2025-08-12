@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Play, Clock, GraduationCap, DollarSign, Lock, ChevronRight, ArrowLeft, CheckCircle, Star, Users, Award, BookOpen, Target, Zap, Shield, Globe, Heart, CreditCard } from 'lucide-react';
 import PaymentOptionsModal from '@/components/PaymentOptionsModal';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 export default function CourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
   const [resolvedParams, setResolvedParams] = useState<{ courseId: string } | null>(null);
@@ -17,6 +18,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ courseI
   const [isPurchased, setIsPurchased] = useState(false);
   const [hoveredLesson, setHoveredLesson] = useState<number | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     params.then(setResolvedParams);
@@ -33,6 +35,14 @@ export default function CourseDetailPage({ params }: { params: Promise<{ courseI
         
         if (!courseRes.ok) throw new Error('Failed to fetch course');
         const courseData = await courseRes.json();
+        
+        // Check if course is active - redirect if inactive
+        if (courseData.status === 'inactive') {
+          toast.error('This course is currently unavailable.');
+          router.push('/Course');
+          return;
+        }
+        
         setCourse(courseData);
         
         // Fetch lessons if they exist in the course data
@@ -122,11 +132,9 @@ export default function CourseDetailPage({ params }: { params: Promise<{ courseI
   return (
     <div className="min-h-screen bg-transparent w-full py-4 pb-8 relative">
       {/* Hero Section with Background Pattern */}
-      <Button variant="outline" className="w-auto md:w-auto sticky top-4 left-2 z-10 dark:bg-gray-800/90">
-        <span className="flex items-center gap-2">
-        <ArrowLeft className="w-4 h-4" />
-        <span>Back to Courses</span>
-        </span>
+      <Button variant="outline" className="inline-flex items-center gap-2 w-auto md:w-auto sticky top-4 left-2 z-10 dark:bg-gray-800/90">
+        <ArrowLeft className="w-4 h-4 inline-block" />
+        <span className="font-semibold">Back to Courses</span>
       </Button>
       <div className="relative">
         <div className="absolute inset-0 "></div>

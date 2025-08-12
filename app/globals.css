@@ -504,3 +504,220 @@
     transform: translateY(-1px);
   }
 }
+
+/* Glassmorphism Embed Styling */
+.glassmorphism-embed-wrapper {
+  --embed-primary: #29ADFF;
+  --embed-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --embed-shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.15);
+  --embed-transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glassmorphism-embed-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  transition: var(--embed-transition);
+}
+
+.glassmorphism-embed-wrapper:hover {
+  transform: translateY(-2px);
+}
+
+.glassmorphism-embed-wrapper:hover .embed-content-container {
+  box-shadow: var(--embed-shadow-hover);
+  border-color: rgba(41, 173, 255, 0.2);
+}
+
+.embed-content-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: var(--embed-shadow);
+  transition: var(--embed-transition);
+}
+
+.embed-content-container iframe {
+  border: none !important;
+  border-radius: 20px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: transparent !important;
+}
+
+.embed-content-container iframe:focus {
+  outline: 2px solid rgba(41, 173, 255, 0.5);
+  outline-offset: 2px;
+}
+
+.embed-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(41, 173, 255, 0.1);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: opacity 0.3s ease;
+  border-radius: 20px;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(41, 173, 255, 0.2);
+  border-top: 3px solid var(--embed-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Enhanced embed container for admin preview */
+.embed-container {
+  background: transparent;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.embed-container:hover {
+  transform: translateY(-1px);
+}
+
+/* Silk Background Integration */
+.silk-background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.glassmorphism-overlay {
+  position: relative;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: inherit;
+}
+
+/* Responsive glassmorphism adjustments */
+@media (max-width: 768px) {
+  .glassmorphism-embed-wrapper {
+    border-radius: 16px;
+  }
+  
+  .embed-content-container {
+    border-radius: 16px;
+  }
+  
+  .embed-content-container iframe {
+    border-radius: 16px !important;
+  }
+  
+  .embed-loading-overlay {
+    border-radius: 16px;
+  }
+}
+
+/* EXTREMELY AGGRESSIVE background removal with !important */
+.glassmorphism-embed-wrapper iframe,
+.glassmorphism-embed-wrapper iframe *,
+.glassmorphism-embed-wrapper iframe body,
+.glassmorphism-embed-wrapper iframe div,
+.glassmorphism-embed-wrapper iframe form,
+.glassmorphism-embed-wrapper iframe .quiz-container,
+.glassmorphism-embed-wrapper iframe .question-container,
+.glassmorphism-embed-wrapper iframe .quiz-content,
+.glassmorphism-embed-wrapper iframe .question,
+.glassmorphism-embed-wrapper iframe .answer,
+.glassmorphism-embed-wrapper iframe .option,
+.glassmorphism-embed-wrapper iframe .quiz,
+.glassmorphism-embed-wrapper iframe .quiz-maker,
+.glassmorphism-embed-wrapper iframe .content,
+.glassmorphism-embed-wrapper iframe .main,
+.glassmorphism-embed-wrapper iframe .container,
+.glassmorphism-embed-wrapper iframe .wrapper,
+.glassmorphism-embed-wrapper iframe .panel,
+.glassmorphism-embed-wrapper iframe .card,
+.glassmorphism-embed-wrapper iframe .box,
+.glassmorphism-embed-wrapper iframe .section,
+.glassmorphism-embed-wrapper iframe .area,
+.glassmorphism-embed-wrapper iframe .region,
+.glassmorphism-embed-wrapper iframe .block,
+.glassmorphism-embed-wrapper iframe .element,
+.glassmorphism-embed-wrapper iframe .component,
+.glassmorphism-embed-wrapper iframe .widget,
+.glassmorphism-embed-wrapper iframe .module,
+.glassmorphism-embed-wrapper iframe .unit,
+.glassmorphism-embed-wrapper iframe .part,
+.glassmorphism-embed-wrapper iframe .segment,
+.glassmorphism-embed-wrapper iframe .piece,
+.glassmorphism-embed-wrapper iframe .chunk,
+.glassmorphism-embed-wrapper iframe .fragment,
+.glassmorphism-embed-wrapper iframe .portion,
+.glassmorphism-embed-wrapper iframe .section,
+.glassmorphism-embed-wrapper iframe .division,
+.glassmorphism-embed-wrapper iframe .segment,
+.glassmorphism-embed-wrapper iframe .part,
+.glassmorphism-embed-wrapper iframe .piece,
+.glassmorphism-embed-wrapper iframe .chunk,
+.glassmorphism-embed-wrapper iframe .fragment,
+.glassmorphism-embed-wrapper iframe .portion {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  background-attachment: scroll !important;
+  background-clip: border-box !important;
+  background-origin: padding-box !important;
+  background-position: 0% 0% !important;
+  background-repeat: repeat !important;
+  background-size: auto !important;
+}
+
+/* Force complete transparency on all embedded content */
+.embed-content-container iframe,
+.embed-content-container iframe *,
+.embed-content-container * {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Override quiz-maker.com specific styles */
+.embed-content-container iframe body,
+.embed-content-container iframe div,
+.embed-content-container iframe form,
+.embed-content-container iframe .quiz-container,
+.embed-content-container iframe .question-container {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Ensure glassmorphism container is properly transparent */
+.glassmorphism-embed-wrapper .embed-content-container {
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Enhanced glassmorphism effects */
+.glassmorphism-embed-wrapper {
+  --embed-primary: #29ADFF;
+  --embed-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --embed-shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.15);
+  --embed-transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}

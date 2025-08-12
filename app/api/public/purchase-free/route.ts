@@ -63,12 +63,20 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: "Course not found." }, { status: 404 });
       }
       
-      if (user.purchasedCourses.includes(itemId)) {
+      // Check if already purchased
+      if (user.purchasedCourses && user.purchasedCourses.includes(itemId)) {
         console.log('Course already purchased:', itemId);
-        return NextResponse.json({ message: "Course already purchased." }, { status: 409 });
+        return NextResponse.json({ 
+          message: "Course already purchased.",
+          alreadyPurchased: true,
+          courseId: itemId
+        }, { status: 200 }); // Return 200 for already purchased
       }
       
       // Update user model (fast access)
+      if (!user.purchasedCourses) {
+        user.purchasedCourses = [];
+      }
       user.purchasedCourses.push(itemId);
       await user.save();
       
@@ -98,9 +106,14 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: "Test not found." }, { status: 404 });
       }
       
-      if (user.purchasedTests.includes(itemId)) {
+      // Check if already purchased
+      if (user.purchasedTests && user.purchasedTests.includes(itemId)) {
         console.log('Test already purchased:', itemId);
-        return NextResponse.json({ message: "Test already purchased." }, { status: 409 });
+        return NextResponse.json({ 
+          message: "Test already purchased.",
+          alreadyPurchased: true,
+          testId: itemId
+        }, { status: 200 }); // Return 200 for already purchased
       }
       
       // Find an unused unique code for the test
@@ -126,6 +139,9 @@ export async function POST(req: NextRequest) {
       }
       
       // Update user model (fast access)
+      if (!user.purchasedTests) {
+        user.purchasedTests = [];
+      }
       user.purchasedTests.push(itemId);
       await user.save();
       
@@ -151,6 +167,9 @@ export async function POST(req: NextRequest) {
     
   } catch (error) {
     console.error('Free purchase error:', error);
-    return NextResponse.json({ message: "Internal server error." }, { status: 500 });
+    return NextResponse.json({ 
+      message: "Internal server error.",
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 } 

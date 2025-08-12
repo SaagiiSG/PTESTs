@@ -119,6 +119,14 @@ export async function POST(req: NextRequest) {
           callback_url: process.env.QPAY_CALLBACK_URL || 'https://testcenter.mn/api/qpay-callback',
           calculate_vat: false,
           enable_expiry: false,
+          lines: [
+            {
+              line_description: description || 'Payment for services',
+              line_quantity: 1,
+              line_unit_price: Number(amount),
+              amount: Number(amount)
+            }
+          ]
         };
 
         console.log('Creating QPay invoice with data:', {

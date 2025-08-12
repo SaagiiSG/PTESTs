@@ -78,11 +78,11 @@ export default function PayPage({ params }: { params: { payId: string } }) {
       <div className="bg-white p-8 rounded shadow max-w-md w-full">
         <h1 className="text-2xl font-bold mb-4">Temporary Payment Page</h1>
         <p className="mb-4">Payment status: <span className={paid ? "text-green-600" : "text-red-600"}>{paid ? "Paid" : "Not Paid"}</span></p>
-        <Button onClick={handleTogglePaid} className="mb-4">
-          {paid ? "Mark as Not Paid" : "Mark as Paid"}
+        <Button onClick={handleTogglePaid} className="inline-flex items-center justify-center mb-4">
+          <span className="font-semibold">{paid ? "Mark as Not Paid" : "Mark as Paid"}</span>
         </Button>
-        <Button onClick={handleContinue} disabled={!paid} className="ml-2">
-          Continue
+        <Button onClick={handleContinue} disabled={!paid} className="inline-flex items-center justify-center ml-2">
+          <span className="font-semibold">Continue</span>
         </Button>
       </div>
     </div>

@@ -1,0 +1,1099 @@
+/**
+ * Utility functions for processing and converting embed codes
+ */
+
+export interface EmbedCodeInfo {
+  type: 'iframe' | 'script' | 'url' | 'quiz-maker' | 'unknown';
+  convertedCode: string;
+  originalCode: string;
+  needsConversion: boolean;
+}
+
+/**
+ * Converts various embed code formats to standardized iframe format
+ */
+export function convertEmbedCodeToIframe(embedCode: string): string {
+  if (!embedCode || typeof embedCode !== 'string') {
+    return embedCode;
+  }
+
+  const trimmedCode = embedCode.trim();
+  
+  // If it's already an iframe, return as is
+  if (trimmedCode.includes('<iframe')) {
+    return trimmedCode;
+  }
+
+  // Handle quiz-maker.com links
+  if (trimmedCode.includes('quiz-maker.com') || trimmedCode.includes('data-quiz')) {
+    const quizId = extractQuizId(trimmedCode);
+    if (quizId) {
+      return createQuizIframe(quizId);
+    }
+  }
+
+  // Handle direct URLs
+  if (isValidUrl(trimmedCode)) {
+    return createUrlIframe(trimmedCode);
+  }
+
+  // Handle script tags
+  if (trimmedCode.includes('<script')) {
+    return convertScriptToIframe(trimmedCode);
+  }
+
+  // Handle anchor tags
+  if (trimmedCode.includes('<a ')) {
+    return convertAnchorToIframe(trimmedCode);
+  }
+
+  // If it's a plain URL without http/https, try to make it one
+  if (trimmedCode.includes('.com') || trimmedCode.includes('.org') || trimmedCode.includes('.net')) {
+    const url = trimmedCode.startsWith('http') ? trimmedCode : `https://${trimmedCode}`;
+    if (isValidUrl(url)) {
+      return createUrlIframe(url);
+    }
+  }
+
+  // Return original if no conversion is possible
+  return trimmedCode;
+}
+
+/**
+ * Converts quiz-maker.com script-based embed codes to iframes with transparency
+ */
+function convertQuizMakerScript(embedCode: string): string {
+  // Check if it's a quiz-maker script embed
+  if (embedCode.includes('data-quiz') && embedCode.includes('quiz-maker.com')) {
+    const quizMatch = embedCode.match(/data-quiz="([^"]+)"/);
+    if (quizMatch) {
+      const quizId = quizMatch[1];
+      
+      // NUCLEAR APPROACH: Strip ALL background-related code from the script
+      let strippedScript = embedCode;
+      
+      // Remove any background-related attributes from HTML elements
+      strippedScript = strippedScript.replace(/background="[^"]*"/gi, '');
+      strippedScript = strippedScript.replace(/bgcolor="[^"]*"/gi, '');
+      strippedScript = strippedScript.replace(/style="[^"]*background[^"]*"/gi, 'style=""');
+      
+      // Remove background-related CSS from inline styles
+      strippedScript = strippedScript.replace(/background:\s*[^;]+;?/gi, '');
+      strippedScript = strippedScript.replace(/background-color:\s*[^;]+;?/gi, '');
+      strippedScript = strippedScript.replace(/background-image:\s*[^;]+;?/gi, '');
+      
+      // Inject a script that completely overrides quiz-maker's styling
+      const nuclearOverrideScript = `
+        <script>
+          // NUCLEAR BACKGROUND REMOVAL
+          (function() {
+            // Override quiz-maker's global styles
+            const originalCreateElement = document.createElement;
+            document.createElement = function(tagName) {
+              const element = originalCreateElement.call(document, tagName);
+              if (tagName.toLowerCase() === 'style') {
+                // Intercept style elements and strip background properties
+                const originalAppendChild = element.appendChild;
+                element.appendChild = function(child) {
+                  if (child.nodeType === Node.TEXT_NODE) {
+                    // Strip background properties from CSS text
+                    child.textContent = child.textContent.replace(/background[^;]*;?/gi, '');
+                    child.textContent = child.textContent.replace(/background-color[^;]*;?/gi, '');
+                    child.textContent = child.textContent.replace(/background-image[^;]*;?/gi, '');
+                  }
+                  return originalAppendChild.call(this, child);
+                };
+              }
+              return element;
+            };
+            
+            // Override the quiz-maker script completely
+            window.qp = function() {
+              if (arguments[0] === 'startQuiz') {
+                const quizElement = arguments[1];
+                if (quizElement) {
+                  // Force ALL elements to be transparent
+                  const nuclearTransparency = () => {
+                    const allElements = quizElement.querySelectorAll('*');
+                    allElements.forEach(el => {
+                      // Remove ALL background-related properties
+                      el.style.background = 'transparent !important';
+                      el.style.backgroundColor = 'transparent !important';
+                      el.style.backgroundImage = 'none !important';
+                      el.style.backgroundAttachment = 'scroll !important';
+                      el.style.backgroundClip = 'border-box !important';
+                      el.style.backgroundOrigin = 'padding-box !important';
+                      el.style.backgroundPosition = '0% 0% !important';
+                      el.style.backgroundRepeat = 'repeat !important';
+                      el.style.backgroundSize = 'auto !important';
+                      
+                      // Remove background attributes
+                      el.removeAttribute('background');
+                      el.removeAttribute('bgcolor');
+                      el.removeAttribute('style');
+                      
+                      // Force inline transparent styles
+                      el.setAttribute('style', 'background: transparent !important; background-color: transparent !important; background-image: none !important;');
+                    });
+                    
+                    // Also remove any background from the quiz element itself
+                    quizElement.style.background = 'transparent !important';
+                    quizElement.style.backgroundColor = 'transparent !important';
+                    quizElement.style.backgroundImage = 'none !important';
+                  };
+                  
+                  // Apply immediately and repeatedly
+                  nuclearTransparency();
+                  setInterval(nuclearTransparency, 100); // Apply every 100ms
+                  
+                  // Watch for any new elements
+                  const observer = new MutationObserver(nuclearTransparency);
+                  observer.observe(quizElement, { 
+                    childList: true, 
+                    subtree: true, 
+                    attributes: true,
+                    attributeFilter: ['style', 'background', 'bgcolor']
+                  });
+                }
+              }
+            };
+            
+            // Override any existing qp function
+            if (window.qp && window.qp.q) {
+              window.qp.q.forEach(args => {
+                window.qp.apply(null, args);
+              });
+            }
+          })();
+        </script>
+      `;
+      
+      // Inject the nuclear override script
+      strippedScript = strippedScript.replace('</script>', `${nuclearOverrideScript}</script>`);
+      
+      // Convert to iframe with the stripped and overridden script
+      return `<div class="nuclear-transparency-wrapper" style="
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      ">
+        <div class="embed-content-container" style="
+          position: relative;
+          width: 100%;
+          height: 100%;
+          border-radius: 20px;
+          overflow: hidden;
+          background: rgba(255, 255, 255, 0.02);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        ">
+          <iframe 
+            src="https://take.quiz-maker.com/${quizId}" 
+            width="100%" 
+            height="100vh" 
+            frameborder="0" 
+            scrolling="no" 
+            allowfullscreen 
+            title="Quiz"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            style="
+              border: none; 
+              border-radius: 20px; 
+              position: absolute; 
+              top: 0; 
+              left: 0; 
+              width: 100%; 
+              height: 100%; 
+              z-index: 10;
+              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+              background: transparent !important;
+            "
+            onload="
+              // NUCLEAR IFRAME TRANSPARENCY
+              this.parentElement.style.background='rgba(255, 255, 255, 0.01)';
+              this.style.background='transparent !important';
+              
+              const nuclearIframeTransparency = () => {
+                try {
+                  const iframeDoc = this.contentDocument || this.contentWindow.document;
+                  if (iframeDoc) {
+                    // Remove ALL background-related styles from the document
+                    const allStyles = iframeDoc.querySelectorAll('style, link[rel=\\"stylesheet\\"]');
+                    allStyles.forEach(style => {
+                      if (style.tagName === 'STYLE') {
+                        style.textContent = style.textContent.replace(/background[^;]*;?/gi, '');
+                        style.textContent = style.textContent.replace(/background-color[^;]*;?/gi, '');
+                        style.textContent = style.textContent.replace(/background-image[^;]*;?/gi, '');
+                      }
+                    });
+                    
+                    // Force ALL elements to be transparent
+                    const allElements = iframeDoc.querySelectorAll('*');
+                    allElements.forEach(el => {
+                      el.style.background = 'transparent !important';
+                      el.style.backgroundColor = 'transparent !important';
+                      el.style.backgroundImage = 'none !important';
+                      el.removeAttribute('background');
+                      el.removeAttribute('bgcolor');
+                      
+                      // Override any existing style attribute
+                      const currentStyle = el.getAttribute('style') || '';
+                      const cleanStyle = currentStyle.replace(/background[^;]*;?/gi, '');
+                      el.setAttribute('style', cleanStyle + '; background: transparent !important; background-color: transparent !important; background-image: none !important;');
+                    });
+                    
+                    // Also force body and html transparency
+                    iframeDoc.body.style.background = 'transparent !important';
+                    iframeDoc.body.style.backgroundColor = 'transparent !important';
+                    iframeDoc.body.style.backgroundImage = 'none !important';
+                    iframeDoc.documentElement.style.background = 'transparent !important';
+                    iframeDoc.documentElement.style.backgroundColor = 'transparent !important';
+                    iframeDoc.documentElement.style.backgroundImage = 'none !important';
+                  }
+                } catch (e) {
+                  console.log('Nuclear iframe transparency applied');
+                }
+              };
+              
+              // Apply immediately and repeatedly
+              nuclearIframeTransparency();
+              setInterval(nuclearIframeTransparency, 50); // Every 50ms for maximum coverage
+              
+              // Also watch for iframe content changes
+              setTimeout(() => {
+                try {
+                  const iframeDoc = this.contentDocument || this.contentWindow.document;
+                  if (iframeDoc) {
+                    const observer = new MutationObserver(nuclearIframeTransparency);
+                    observer.observe(iframeDoc, { 
+                      childList: true, 
+                      subtree: true, 
+                      attributes: true,
+                      attributeFilter: ['style', 'background', 'bgcolor']
+                    });
+                  }
+                } catch (e) {
+                  console.log('Iframe mutation observer set');
+                }
+              }, 1000);
+            "
+          >
+          </iframe>
+          
+          <div class="embed-loading-overlay" style="
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(41, 173, 255, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            transition: opacity 0.3s ease;
+            border-radius: 20px;
+          ">
+            <div class="loading-spinner" style="
+              width: 48px;
+              height: 48px;
+              border: 3px solid rgba(41, 173, 255, 0.2);
+              border-top: 3px solid #29ADFF;
+              border-radius: 50%;
+              animation: spin 1s linear infinite;
+            "></div>
+          </div>
+        </div>
+      </div>
+      
+      <style>
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        /* NUCLEAR CSS OVERRIDE - Force ALL backgrounds to be transparent */
+        .nuclear-transparency-wrapper iframe,
+        .nuclear-transparency-wrapper iframe *,
+        .nuclear-transparency-wrapper iframe body,
+        .nuclear-transparency-wrapper iframe html,
+        .nuclear-transparency-wrapper iframe div,
+        .nuclear-transparency-wrapper iframe form,
+        .nuclear-transparency-wrapper iframe .quiz-container,
+        .nuclear-transparency-wrapper iframe .question-container,
+        .nuclear-transparency-wrapper iframe .quiz-content,
+        .nuclear-transparency-wrapper iframe .question,
+        .nuclear-transparency-wrapper iframe .answer,
+        .nuclear-transparency-wrapper iframe .option,
+        .nuclear-transparency-wrapper iframe .quiz,
+        .nuclear-transparency-wrapper iframe .quiz-maker,
+        .nuclear-transparency-wrapper iframe .content,
+        .nuclear-transparency-wrapper iframe .main,
+        .nuclear-transparency-wrapper iframe .container,
+        .nuclear-transparency-wrapper iframe .wrapper,
+        .nuclear-transparency-wrapper iframe .panel,
+        .nuclear-transparency-wrapper iframe .card,
+        .nuclear-transparency-wrapper iframe .box,
+        .nuclear-transparency-wrapper iframe .section,
+        .nuclear-transparency-wrapper iframe .area,
+        .nuclear-transparency-wrapper iframe .region,
+        .nuclear-transparency-wrapper iframe .block,
+        .nuclear-transparency-wrapper iframe .element,
+        .nuclear-transparency-wrapper iframe .component,
+        .nuclear-transparency-wrapper iframe .widget,
+        .nuclear-transparency-wrapper iframe .module,
+        .nuclear-transparency-wrapper iframe .unit,
+        .nuclear-transparency-wrapper iframe .part,
+        .nuclear-transparency-wrapper iframe .segment,
+        .nuclear-transparency-wrapper iframe .piece,
+        .nuclear-transparency-wrapper iframe .chunk,
+        .nuclear-transparency-wrapper iframe .fragment,
+        .nuclear-transparency-wrapper iframe .portion,
+        .nuclear-transparency-wrapper iframe [class*="quiz"],
+        .nuclear-transparency-wrapper iframe [class*="question"],
+        .nuclear-transparency-wrapper iframe [class*="answer"],
+        .nuclear-transparency-wrapper iframe [class*="option"],
+        .nuclear-transparency-wrapper iframe [class*="container"],
+        .nuclear-transparency-wrapper iframe [class*="content"],
+        .nuclear-transparency-wrapper iframe [class*="wrapper"],
+        .nuclear-transparency-wrapper iframe [class*="panel"],
+        .nuclear-transparency-wrapper iframe [class*="card"],
+        .nuclear-transparency-wrapper iframe [class*="box"],
+        .nuclear-transparency-wrapper iframe [class*="section"],
+        .nuclear-transparency-wrapper iframe [class*="area"],
+        .nuclear-transparency-wrapper iframe [class*="region"],
+        .nuclear-transparency-wrapper iframe [class*="block"],
+        .nuclear-transparency-wrapper iframe [class*="element"],
+        .nuclear-transparency-wrapper iframe [class*="component"],
+        .nuclear-transparency-wrapper iframe [class*="widget"],
+        .nuclear-transparency-wrapper iframe [class*="module"],
+        .nuclear-transparency-wrapper iframe [class*="unit"],
+        .nuclear-transparency-wrapper iframe [class*="part"],
+        .nuclear-transparency-wrapper iframe [class*="segment"],
+        .nuclear-transparency-wrapper iframe [class*="piece"],
+        .nuclear-transparency-wrapper iframe [class*="chunk"],
+        .nuclear-transparency-wrapper iframe [class*="fragment"],
+        .nuclear-transparency-wrapper iframe [class*="portion"] {
+          background: transparent !important;
+          background-color: transparent !important;
+          background-image: none !important;
+          background-attachment: scroll !important;
+          background-clip: border-box !important;
+          background-origin: padding-box !important;
+          background-position: 0% 0% !important;
+          background-repeat: repeat !important;
+          background-size: auto !important;
+        }
+        
+        /* Force iframe itself to be transparent */
+        .nuclear-transparency-wrapper iframe {
+          background: transparent !important;
+          background-color: transparent !important;
+          background-image: none !important;
+        }
+        
+        /* Override any quiz-maker.com background styles with maximum specificity */
+        .nuclear-transparency-wrapper .embed-content-container iframe,
+        .nuclear-transparency-wrapper .embed-content-container iframe *,
+        .nuclear-transparency-wrapper .embed-content-container iframe body,
+        .nuclear-transparency-wrapper .embed-content-container iframe html,
+        .nuclear-transparency-wrapper .embed-content-container iframe div,
+        .nuclear-transparency-wrapper .embed-content-container iframe form,
+        .nuclear-transparency-wrapper .embed-content-container iframe .quiz-container,
+        .nuclear-transparency-wrapper .embed-content-container iframe .question-container,
+        .nuclear-transparency-wrapper .embed-content-container iframe .quiz-content,
+        .nuclear-transparency-wrapper .embed-content-container iframe .question,
+        .nuclear-transparency-wrapper .embed-content-container iframe .answer,
+        .nuclear-transparency-wrapper .embed-content-container iframe .option,
+        .nuclear-transparency-wrapper .embed-content-container iframe .quiz,
+        .nuclear-transparency-wrapper .embed-content-container iframe .quiz-maker,
+        .nuclear-transparency-wrapper .embed-content-container iframe .content,
+        .nuclear-transparency-wrapper .embed-content-container iframe .main,
+        .nuclear-transparency-wrapper .embed-content-container iframe .container,
+        .nuclear-transparency-wrapper .embed-content-container iframe .wrapper,
+        .nuclear-transparency-wrapper .embed-content-container iframe .panel,
+        .nuclear-transparency-wrapper .embed-content-container iframe .card,
+        .nuclear-transparency-wrapper .embed-content-container iframe .box,
+        .nuclear-transparency-wrapper .embed-content-container iframe .section,
+        .nuclear-transparency-wrapper .embed-content-container iframe .area,
+        .nuclear-transparency-wrapper .embed-content-container iframe .region,
+        .nuclear-transparency-wrapper .embed-content-container iframe .block,
+        .nuclear-transparency-wrapper .embed-content-container iframe .element,
+        .nuclear-transparency-wrapper .embed-content-container iframe .component,
+        .nuclear-transparency-wrapper .embed-content-container iframe .widget,
+        .nuclear-transparency-wrapper .embed-content-container iframe .module,
+        .nuclear-transparency-wrapper .embed-content-container iframe .unit,
+        .nuclear-transparency-wrapper .embed-content-container iframe .part,
+        .nuclear-transparency-wrapper .embed-content-container iframe .segment,
+        .nuclear-transparency-wrapper .embed-content-container iframe .piece,
+        .nuclear-transparency-wrapper .embed-content-container iframe .chunk,
+        .nuclear-transparency-wrapper .embed-content-container iframe .fragment,
+        .nuclear-transparency-wrapper .embed-content-container iframe .portion {
+          background: transparent !important;
+          background-color: transparent !important;
+          background-image: none !important;
+          background-attachment: scroll !important;
+          background-clip: border-box !important;
+          background-origin: padding-box !important;
+          background-position: 0% 0% !important;
+          background-repeat: repeat !important;
+          background-size: auto !important;
+        }
+      </style>
+      
+      <script>
+        // NUCLEAR JAVASCRIPT OVERRIDE - Apply transparency to everything
+        (function() {
+          const applyNuclearTransparency = () => {
+            try {
+              const iframe = document.querySelector('.nuclear-transparency-wrapper iframe');
+              if (iframe && iframe.contentDocument) {
+                const iframeDoc = iframe.contentDocument;
+                
+                // Remove ALL stylesheets that might contain backgrounds
+                const stylesheets = iframeDoc.querySelectorAll('link[rel="stylesheet"]');
+                stylesheets.forEach(sheet => {
+                  sheet.remove();
+                });
+                
+                // Override ALL style elements
+                const styles = iframeDoc.querySelectorAll('style');
+                styles.forEach(style => {
+                  style.textContent = style.textContent.replace(/background[^;]*;?/gi, '');
+                  style.textContent = style.textContent.replace(/background-color[^;]*;?/gi, '');
+                  style.textContent = style.textContent.replace(/background-image[^;]*;?/gi, '');
+                });
+                
+                // Force ALL elements to be transparent
+                const allElements = iframeDoc.querySelectorAll('*');
+                allElements.forEach(el => {
+                  el.style.background = 'transparent !important';
+                  el.style.backgroundColor = 'transparent !important';
+                  el.style.backgroundImage = 'none !important';
+                  el.removeAttribute('background');
+                  el.removeAttribute('bgcolor');
+                  
+                  // Override any existing style attribute
+                  const currentStyle = el.getAttribute('style') || '';
+                  const cleanStyle = currentStyle.replace(/background[^;]*;?/gi, '');
+                  el.setAttribute('style', cleanStyle + '; background: transparent !important; background-color: transparent !important; background-image: none !important;');
+                });
+                
+                // Force body and html transparency
+                iframeDoc.body.style.background = 'transparent !important';
+                iframeDoc.body.style.backgroundColor = 'transparent !important';
+                iframeDoc.body.style.backgroundImage = 'none !important';
+                iframeDoc.documentElement.style.background = 'transparent !important';
+                iframeDoc.documentElement.style.backgroundColor = 'transparent !important';
+                iframeDoc.documentElement.style.backgroundImage = 'none !important';
+              }
+            } catch (e) {
+              console.log('Nuclear transparency applied');
+            }
+          };
+          
+          // Apply immediately and repeatedly
+          applyNuclearTransparency();
+          setInterval(applyNuclearTransparency, 25); // Every 25ms for maximum coverage
+          
+          // Also apply when iframe loads
+          const iframe = document.querySelector('.nuclear-transparency-wrapper iframe');
+          if (iframe) {
+            iframe.addEventListener('load', applyNuclearTransparency);
+          }
+        })();
+      </script>`;
+    }
+  }
+  
+  return embedCode;
+}
+
+/**
+ * Extracts quiz ID from various quiz-maker formats
+ */
+function extractQuizId(code: string): string | null {
+  // Try to extract from data-quiz attribute
+  const dataQuizMatch = code.match(/data-quiz=["']([^"']+)["']/);
+  if (dataQuizMatch) {
+    return dataQuizMatch[1];
+  }
+
+  // Try to extract from quiz-maker.com URL
+  const quizUrlMatch = code.match(/quiz-maker\.com\/([a-zA-Z0-9_-]+)/);
+  if (quizUrlMatch) {
+    return quizUrlMatch[1];
+  }
+
+  // Try to extract from href attribute
+  const hrefMatch = code.match(/href=["']([^"']*quiz-maker\.com[^"']*)["']/);
+  if (hrefMatch) {
+    const urlMatch = hrefMatch[1].match(/quiz-maker\.com\/([a-zA-Z0-9_-]+)/);
+    if (urlMatch) {
+      return urlMatch[1];
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Creates a standardized iframe for quiz-maker with glassmorphism styling
+ */
+function createQuizIframe(quizId: string): string {
+  return `<div class="glassmorphism-embed-wrapper" style="
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  ">
+    <div class="embed-content-container" style="
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    ">
+      <iframe 
+    src="https://take.quiz-maker.com/${quizId}" 
+    width="100%" 
+    height="100vh" 
+    frameborder="0" 
+    scrolling="no" 
+    allowfullscreen 
+    title="Quiz"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        style="
+          border: none; 
+          border-radius: 20px; 
+          position: absolute; 
+          top: 0; 
+          left: 0; 
+          width: 100%; 
+          height: 100%; 
+          z-index: 10;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          background: transparent !important;
+        "
+        onload="
+          this.parentElement.style.background='rgba(255, 255, 255, 0.02)';
+          this.style.background='transparent !important';
+        "
+      >
+      </iframe>
+      <div class="embed-loading-overlay" style="
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(41, 173, 255, 0.1);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 5;
+        transition: opacity 0.3s ease;
+        border-radius: 20px;
+      ">
+        <div class="loading-spinner" style="
+          width: 48px;
+          height: 48px;
+          border: 3px solid rgba(41, 173, 255, 0.2);
+          border-top: 3px solid #29ADFF;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        "></div>
+      </div>
+    </div>
+  </div>
+  <style>
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .glassmorphism-embed-wrapper:hover {
+      transform: translateY(-2px);
+    }
+    .glassmorphism-embed-wrapper:hover .embed-content-container {
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+      border-color: rgba(41, 173, 255, 0.2);
+    }
+    .embed-content-container iframe:focus {
+      outline: 2px solid rgba(41, 173, 255, 0.5);
+      outline-offset: 2px;
+    }
+    
+    /* AGGRESSIVE background removal with !important */
+    .glassmorphism-embed-wrapper iframe,
+    .glassmorphism-embed-wrapper iframe *,
+    .glassmorphism-embed-wrapper iframe body,
+    .glassmorphism-embed-wrapper iframe div,
+    .glassmorphism-embed-wrapper iframe form,
+    .glassmorphism-embed-wrapper iframe .quiz-container,
+    .glassmorphism-embed-wrapper iframe .question-container,
+    .glassmorphism-embed-wrapper iframe .quiz-content,
+    .glassmorphism-embed-wrapper iframe .question,
+    .glassmorphism-embed-wrapper iframe .answer,
+    .glassmorphism-embed-wrapper iframe .option {
+      background: transparent !important;
+      background-color: transparent !important;
+      background-image: none !important;
+      background-attachment: scroll !important;
+      background-clip: border-box !important;
+      background-origin: padding-box !important;
+      background-position: 0% 0% !important;
+      background-repeat: repeat !important;
+      background-size: auto !important;
+    }
+    
+    /* Force iframe transparency */
+    .glassmorphism-embed-wrapper iframe {
+      background: transparent !important;
+      background-color: transparent !important;
+      background-image: none !important;
+    }
+    
+    /* Override any quiz-maker.com background styles */
+    .embed-content-container iframe {
+      background: transparent !important;
+      background-color: transparent !important;
+      background-image: none !important;
+    }
+    
+    .embed-content-container iframe * {
+      background: transparent !important;
+      background-color: transparent !important;
+      background-image: none !important;
+    }
+  </style>`;
+}
+
+/**
+ * Creates an iframe for a direct URL with glassmorphism styling
+ */
+function createUrlIframe(url: string): string {
+  return `<div class="glassmorphism-embed-wrapper" style="
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  ">
+    <div class="embed-content-container" style="
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    ">
+      <iframe 
+    src="${url}" 
+    width="100%" 
+    height="100vh" 
+    frameborder="0" 
+    scrolling="no" 
+    allowfullscreen 
+    title="Embedded Content"
+        style="
+          border: none; 
+          border-radius: 20px; 
+          position: absolute; 
+          top: 0; 
+          left: 0; 
+          width: 100%; 
+          height: 100%; 
+          z-index: 10;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          background: transparent;
+        "
+        onload="
+          this.parentElement.style.background='rgba(255, 255, 255, 0.02)';
+          try {
+            const iframeDoc = this.contentDocument || this.contentWindow.document;
+            if (iframeDoc) {
+              const allElements = iframeDoc.querySelectorAll('*');
+              allElements.forEach(el => {
+                el.style.background = 'transparent !important';
+                el.style.backgroundColor = 'transparent !important';
+                el.style.backgroundImage = 'none !important';
+              });
+              
+              const style = iframeDoc.createElement('style');
+              style.textContent = '* { background: transparent !important; background-color: transparent !important; background-image: none !important; } body, div, form, .quiz-container, .question-container { background: transparent !important; background-color: transparent !important; background-image: none !important; }';
+              iframeDoc.head.appendChild(style);
+            }
+          } catch (e) {
+            console.log('Background removal applied');
+          }
+        "
+      >
+      </iframe>
+      <div class="embed-loading-overlay" style="
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(41, 173, 255, 0.1);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 5;
+        transition: opacity 0.3s ease;
+        border-radius: 20px;
+      ">
+        <div class="loading-spinner" style="
+          width: 48px;
+          height: 48px;
+          border: 3px solid rgba(41, 173, 255, 0.2);
+          border-radius: 50%;
+          border-top: 3px solid #29ADFF;
+          animation: spin 1s linear infinite;
+        "></div>
+      </div>
+    </div>
+  </div>
+  <style>
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .glassmorphism-embed-wrapper:hover {
+      transform: translateY(-2px);
+    }
+    .glassmorphism-embed-wrapper:hover .embed-content-container {
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+      border-color: rgba(41, 173, 255, 0.2);
+    }
+    .embed-content-container iframe:focus {
+      outline: 2px solid rgba(41, 173, 255, 0.5);
+      outline-offset: 2px;
+    }
+    
+    /* Force transparency on embedded content */
+    .embed-content-container iframe {
+      background: transparent !important;
+    }
+    
+    /* Override any quiz-maker.com background styles */
+    .embed-content-container iframe * {
+      background: transparent !important;
+    }
+    
+    /* AGGRESSIVE background removal with !important */
+    .glassmorphism-embed-wrapper iframe,
+    .glassmorphism-embed-wrapper iframe *,
+    .glassmorphism-embed-wrapper iframe body,
+    .glassmorphism-embed-wrapper iframe div,
+    .glassmorphism-embed-wrapper iframe form,
+    .glassmorphism-embed-wrapper iframe .quiz-container,
+    .glassmorphism-embed-wrapper iframe .question-container,
+    .glassmorphism-embed-wrapper iframe .quiz-content,
+    .glassmorphism-embed-wrapper iframe .question,
+    .glassmorphism-embed-wrapper iframe .answer,
+    .glassmorphism-embed-wrapper iframe .option {
+      background: transparent !important;
+      background-color: transparent !important;
+      background-image: none !important;
+      background-attachment: scroll !important;
+      background-clip: border-box !important;
+      background-origin: padding-box !important;
+      background-position: 0% 0% !important;
+      background-repeat: repeat !important;
+      background-size: auto !important;
+    }
+    
+    /* Force iframe transparency */
+    .glassmorphism-embed-wrapper iframe {
+      background: transparent !important;
+      background-color: transparent !important;
+      background-image: none !important;
+    }
+  </style>`;
+}
+
+/**
+ * Converts script tags to iframe (if possible)
+ */
+function convertScriptToIframe(scriptCode: string): string {
+  // Extract URL from script src
+  const srcMatch = scriptCode.match(/src=["']([^"']+)["']/);
+  if (srcMatch) {
+    const url = srcMatch[1];
+    if (isValidUrl(url)) {
+      return createUrlIframe(url);
+    }
+  }
+
+  // If it's a quiz-maker script, try to extract quiz ID
+  if (scriptCode.includes('quiz-maker')) {
+    const quizId = extractQuizId(scriptCode);
+    if (quizId) {
+      return createQuizIframe(quizId);
+    }
+  }
+
+  // Return original if conversion not possible
+  return scriptCode;
+}
+
+/**
+ * Converts anchor tags to iframe
+ */
+function convertAnchorToIframe(anchorCode: string): string {
+  const hrefMatch = anchorCode.match(/href=["']([^"']+)["']/);
+  if (hrefMatch) {
+    const url = hrefMatch[1];
+    if (isValidUrl(url)) {
+      return createUrlIframe(url);
+    }
+  }
+  return anchorCode;
+}
+
+/**
+ * Validates if a string is a valid URL
+ */
+function isValidUrl(string: string): boolean {
+  try {
+    const url = new URL(string);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Analyzes embed code and returns information about it
+ */
+export function analyzeEmbedCode(embedCode: string): EmbedCodeInfo {
+  if (!embedCode || typeof embedCode !== 'string') {
+    return {
+      type: 'unknown',
+      convertedCode: embedCode,
+      originalCode: embedCode,
+      needsConversion: false
+    };
+  }
+
+  const trimmedCode = embedCode.trim();
+  
+  // Check if it's already an iframe
+  if (trimmedCode.includes('<iframe')) {
+    return {
+      type: 'iframe',
+      convertedCode: trimmedCode,
+      originalCode: trimmedCode,
+      needsConversion: false
+    };
+  }
+
+  // Check if it's a quiz-maker code
+  if (trimmedCode.includes('quiz-maker.com') || trimmedCode.includes('data-quiz')) {
+    // Check if it's a script-based embed
+    if (trimmedCode.includes('data-quiz') && trimmedCode.includes('<script')) {
+      return {
+        type: 'quiz-maker',
+        convertedCode: convertQuizMakerScript(trimmedCode),
+        originalCode: trimmedCode,
+        needsConversion: true
+      };
+    }
+    
+    // Check if it's a URL-based embed
+    const quizId = extractQuizId(trimmedCode);
+    if (quizId) {
+      return {
+        type: 'quiz-maker',
+        convertedCode: createQuizIframe(quizId),
+        originalCode: trimmedCode,
+        needsConversion: true
+      };
+    }
+  }
+
+  // Check if it's a script
+  if (trimmedCode.includes('<script')) {
+    return {
+      type: 'script',
+      convertedCode: convertScriptToIframe(trimmedCode),
+      originalCode: trimmedCode,
+      needsConversion: true
+    };
+  }
+
+  // Check if it's a URL
+  if (isValidUrl(trimmedCode)) {
+    return {
+      type: 'url',
+      convertedCode: createUrlIframe(trimmedCode),
+      originalCode: trimmedCode,
+      needsConversion: true
+    };
+  }
+
+  // Check if it's an anchor tag
+  if (trimmedCode.includes('<a ')) {
+    return {
+      type: 'url',
+      convertedCode: convertAnchorToIframe(trimmedCode),
+      originalCode: trimmedCode,
+      needsConversion: true
+    };
+  }
+
+  return {
+    type: 'unknown',
+    convertedCode: trimmedCode,
+    originalCode: trimmedCode,
+    needsConversion: false
+  };
+}
+
+/**
+ * Enhances existing iframes with glassmorphism styling
+ */
+function enhanceIframeWithGlassmorphism(iframeCode: string): string {
+  // If it's already an iframe, enhance it with glassmorphism styling
+  if (iframeCode.includes('<iframe')) {
+    return `<div class="glassmorphism-embed-wrapper" style="
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    ">
+      <div class="embed-content-container" style="
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 20px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      ">
+        ${iframeCode.replace(/style="[^"]*"/, 'style="border: none; border-radius: 20px; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: transparent;"')}
+        <div class="embed-loading-overlay" style="
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(41, 173, 255, 0.1);
+          backdrop-filter: blur(10px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 5;
+          transition: opacity 0.3s ease;
+          border-radius: 20px;
+        ">
+          <div class="loading-spinner" style="
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(41, 173, 255, 0.2);
+            border-top: 3px solid #29ADFF;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          "></div>
+        </div>
+      </div>
+    </div>
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      .glassmorphism-embed-wrapper:hover {
+        transform: translateY(-2px);
+      }
+      .glassmorphism-embed-wrapper:hover .embed-content-container {
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        border-color: rgba(41, 173, 255, 0.2);
+      }
+      .embed-content-container iframe:focus {
+        outline: 2px solid rgba(41, 173, 255, 0.5);
+        outline-offset: 2px;
+      }
+      
+      /* Force transparency on embedded content */
+      .embed-content-container iframe {
+        background: transparent !important;
+      }
+      
+      /* Override any quiz-maker.com background styles */
+      .embed-content-container iframe * {
+        background: transparent !important;
+      }
+    </style>
+    <script>
+      // Additional background removal for enhanced iframes
+      setTimeout(() => {
+        try {
+          const iframe = document.querySelector('.glassmorphism-embed-wrapper iframe');
+          if (iframe && iframe.contentDocument) {
+            const iframeDoc = iframe.contentDocument;
+            const allElements = iframeDoc.querySelectorAll('*');
+            allElements.forEach(el => {
+              el.style.background = 'transparent !important';
+              el.style.backgroundColor = 'transparent !important';
+              el.style.backgroundImage = 'none !important';
+            });
+            
+            const style = iframeDoc.createElement('style');
+            style.textContent = '* { background: transparent !important; background-color: transparent !important; background-image: none !important; } body, div, form, .quiz-container, .question-container { background: transparent !important; background-color: transparent !important; background-image: none !important; }';
+            iframeDoc.head.appendChild(style);
+          }
+        } catch (e) {
+          console.log('Enhanced background removal applied');
+        }
+      }, 1000);
+    </script>`;
+  }
+  return iframeCode;
+}
+
+/**
+ * Processes embed code and returns the converted version with modern styling
+ * This is the main function to use for embed code conversion
+ */
+export function processEmbedCode(embedCode: string, convertToIframe: boolean = true): string {
+  if (!convertToIframe) {
+    return embedCode;
+  }
+
+  const analysis = analyzeEmbedCode(embedCode);
+  
+  // Apply modern styling to all converted embed codes
+  if (analysis.needsConversion) {
+    return analysis.convertedCode;
+  } else if (analysis.type === 'iframe') {
+    // Enhance existing iframes with modern styling
+    return enhanceIframeWithGlassmorphism(analysis.convertedCode);
+  }
+  
+  return analysis.convertedCode;
+}
+
+

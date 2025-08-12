@@ -79,4 +79,44 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ course
     console.error('❌ Error updating course:', error);
     return NextResponse.json({ error: 'Failed to update course', details: error?.message }, { status: 500 });
   }
+}
+
+// Delete a course
+export async function DELETE(req: Request, { params }: { params: Promise<{ courseId: string }> }) {
+  // Prevent execution during build time
+  if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
+    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
+  }
+
+  const session = await auth();
+  const user = session?.user as AdminUser;
+  if (!user?.isAdmin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  }
+  
+  const { courseId } = await params;
+  if (!courseId || !Types.ObjectId.isValid(courseId)) {
+    return NextResponse.json({ error: 'Invalid course ID' }, { status: 400 });
+  }
+  
+  const connection = await safeConnectMongoose();
+  if (!connection) {
+    return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+  }
+
+  try {
+    console.log('🗑️ Deleting course:', courseId);
+    
+    const deletedCourse = await Course.findByIdAndDelete(courseId);
+    
+    if (!deletedCourse) {
+      return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+    }
+    
+    console.log('✅ Course deleted successfully:', deletedCourse.title);
+    return NextResponse.json({ message: 'Course deleted successfully' });
+  } catch (error: any) {
+    console.error('❌ Error deleting course:', error);
+    return NextResponse.json({ error: 'Failed to delete course', details: error?.message }, { status: 500 });
+  }
 } 

@@ -19,13 +19,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PTest App",
+  title: "TestCenter",
   description: "A hybrid purchase and test platform.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "PTest App",
+    title: "TestCenter",
   },
   formatDetection: {
     telephone: false,

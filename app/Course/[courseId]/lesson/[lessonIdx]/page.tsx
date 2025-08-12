@@ -184,6 +184,13 @@ export default function LessonDetailPage({ params }: { params: Promise<{ courseI
           lessonResponse.json()
         ]);
 
+        // Check if course is active - redirect if inactive
+        if (courseData.status === 'inactive') {
+          toast.error('This course is currently unavailable.');
+          router.push('/Course');
+          return;
+        }
+
         console.log('Course data:', courseData);
         console.log('Lesson data:', lessonData);
         console.log('Resolved params:', resolvedParams);
@@ -541,8 +548,8 @@ export default function LessonDetailPage({ params }: { params: Promise<{ courseI
             <h2 className="text-xl font-bold mb-2">Authentication Required</h2>
             <p className="text-gray-600 mb-6">Please log in to access this lesson.</p>
             <Link href="/login">
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                Log In
+              <Button className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700">
+                <span className="font-semibold">Log In</span>
               </Button>
             </Link>
           </div>
@@ -579,9 +586,9 @@ export default function LessonDetailPage({ params }: { params: Promise<{ courseI
             <p className="text-gray-600 mb-6">{error}</p>
             <Button 
               onClick={() => window.location.reload()} 
-              className="bg-blue-600 hover:bg-blue-700"
+              className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700"
             >
-              Retry
+              <span className="font-semibold">Retry</span>
             </Button>
           </div>
         </div>
@@ -600,8 +607,8 @@ export default function LessonDetailPage({ params }: { params: Promise<{ courseI
             <h2 className="text-xl font-bold mb-2">Lesson Not Found</h2>
             <p className="text-gray-600 mb-6">The lesson you're looking for doesn't exist.</p>
             <Link href="/home">
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                Return to Home
+              <Button className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700">
+                <span className="font-semibold">Return to Home</span>
               </Button>
             </Link>
           </div>

@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     if (!userProgress) {
       // If no progress, return popular courses
-      const popularCourses = await Course.find({ isActive: true })
+      const popularCourses = await Course.find({ status: 'active' })
         .sort({ takenCount: -1 })
         .limit(6)
         .select('title description thumbnailUrl price lessons takenCount');
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     // Find courses in similar categories or related topics
     let recommendations = await Course.find({
       _id: { $nin: completedCourseIds },
-      isActive: true
+      status: 'active'
     })
     .sort({ takenCount: -1 })
     .limit(6)
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     if (recommendations.length < 6) {
       const additionalCourses = await Course.find({
         _id: { $nin: [...completedCourseIds, ...recommendations.map(c => c._id.toString())] },
-        isActive: true
+        status: 'active'
       })
       .sort({ takenCount: -1 })
       .limit(6 - recommendations.length)

@@ -153,7 +153,9 @@ export default async function CreateTestPage() {
               </div>
               {tests.length > 3 && (
                 <Button variant="outline" className="w-full mt-4" asChild>
-                  <Link href="/admin/tests">View All Tests</Link>
+                  <Link href="/admin/tests" className="inline-flex items-center justify-center">
+                    <span className="font-semibold">View All Tests</span>
+                  </Link>
                 </Button>
               )}
             </CardContent>

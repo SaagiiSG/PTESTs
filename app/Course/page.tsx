@@ -9,7 +9,8 @@ import { useLanguage } from '@/lib/language';
 import { BookOpen, GraduationCap, Star, Brain, Stethoscope, User } from 'lucide-react';
 
 async function fetchCoursesClient() {
-  const res = await fetch('/api/courses');
+  // Use the API's status filter to only fetch active courses
+  const res = await fetch('/api/courses?status=active');
   if (!res.ok) {
     const text = await res.text();
     console.error("API error (courses):", res.status, text);
@@ -87,9 +88,9 @@ export default function CoursePage() {
               <Button 
                 onClick={() => setCourseSearch('')}
                 variant="outline"
-                className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700"
+                className="inline-flex items-center justify-center bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700"
               >
-                Clear Search
+                <span className="font-semibold">Clear Search</span>
               </Button>
             )}
           </div>
@@ -121,18 +122,18 @@ export default function CoursePage() {
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Link href="/home">
-                <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 font-semibold transition-all duration-300 hover:scale-105">
-                  Browse All Courses
+                <Button size="lg" className="inline-flex items-center justify-center bg-white text-blue-600 hover:bg-gray-100 font-semibold transition-all duration-300 hover:scale-105">
+                  <span className="font-semibold">Browse All Courses</span>
                 </Button>
               </Link>
               <Link href="/test-payment">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 font-semibold transition-all duration-300 hover:scale-105">
-                  Test Payment System
+                <Button size="lg" variant="outline" className="inline-flex items-center justify-center border-white text-white hover:bg-white hover:text-blue-600 font-semibold transition-all duration-300 hover:scale-105">
+                  <span className="font-semibold">Test Payment System</span>
                 </Button>
               </Link>
               <Link href="/test-free-enrollment">
-                <Button size="lg" variant="outline" className="border-green-400 text-green-400 hover:bg-green-400 hover:text-white font-semibold transition-all duration-300 hover:scale-105">
-                  Test Free Enrollment
+                <Button size="lg" variant="outline" className="inline-flex items-center justify-center border-green-400 text-green-400 hover:bg-green-400 hover:text-white font-semibold transition-all duration-300 hover:scale-105">
+                  <span className="font-semibold">Test Free Enrollment</span>
                 </Button>
               </Link>
             </div>

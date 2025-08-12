@@ -56,7 +56,9 @@ const ChangePassword = ({ onChangePassword }) => {
           <label className="block text-sm font-medium">{t('confirmNewPassword')}</label>
           <Input type="password" name="confirmNewPassword" value={form.confirmNewPassword} onChange={handleChange} placeholder={t('confirmNewPassword')} />
         </div>
-        <Button type="submit" className="w-full mt-4">{t('changePassword')}</Button>
+        <Button type="submit" className="inline-flex items-center justify-center w-full mt-4">
+          <span className="font-semibold">{t('changePassword')}</span>
+        </Button>
         {error && <div className="text-red-600 text-center mt-2">{error}</div>}
         {success && <div className="text-green-600 text-center mt-2">{success}</div>}
       </form>

@@ -48,7 +48,7 @@ export default function PrivacyPage() {
         },
         {
           title: "Contact Us",
-          content: "If you have any questions about this Privacy Policy, please contact us at privacy@ppnim.edu.mn"
+          content: "If you have any questions about this Privacy Policy, please contact us at privacy@testcenter.mn"
         }
       ]
     },
@@ -92,7 +92,7 @@ export default function PrivacyPage() {
         },
         {
           title: "Бидэнтэй холбогдох",
-          content: "Хэрэв танд энэхүү Нууцлалын бодлоготой холбоотой асуулт байвал privacy@ppnim.edu.mn хаягаар бидэнтэй холбогдоно уу"
+          content: "Хэрэв танд энэхүү Нууцлалын бодлоготой холбоотой асуулт байвал privacy@testcenter.mn хаягаар бидэнтэй холбогдоно уу"
         }
       ]
     }
@@ -135,7 +135,7 @@ export default function PrivacyPage() {
       <Separator className="my-8" />
       
       <div className="text-center text-gray-600">
-        <p>© 2024 PPNIM. {language === 'mn' ? 'Бүх эрх хуулиар хамгаалагдсан.' : 'All rights reserved.'}</p>
+        <p>© 2024 TestCenter. {language === 'mn' ? 'Бүх эрх хуулиар хамгаалагдсан.' : 'All rights reserved.'}</p>
       </div>
     </div>
   );

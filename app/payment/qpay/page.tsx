@@ -592,9 +592,9 @@ function QPayPaymentContent() {
             <Button 
               variant="outline" 
               onClick={() => router.back()}
-              className="mb-4"
+              className="mb-4 absolute top-4 left-4"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              <ArrowLeft className="w-4 h-4 mr-2 inline-block " />
               Back
             </Button>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Test Payment</h1>
@@ -608,7 +608,7 @@ function QPayPaymentContent() {
           </div>
 
           {/* Main Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="flex flex-col gap-8">
             
 
             {/* QR Code Payment */}
@@ -695,7 +695,7 @@ function QPayPaymentContent() {
                       </ol>
                     </div>
 
-                    {/* QR Text */}
+                    {/* QR Text
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">QR Text</label>
                       <div className="flex gap-2">
@@ -713,9 +713,9 @@ function QPayPaymentContent() {
                           <Copy className="w-4 h-4" />
                         </Button>
                       </div>
-                    </div>
+                    </div> */}
 
-                    {/* Action Buttons */}
+                    {/* Action Buttons
                     <div className="flex gap-3">
                       <Button 
                         onClick={() => openDeeplink(paymentStatus.qrData.qPay_shortUrl || paymentStatus.qrData.deeplink)}
@@ -735,7 +735,7 @@ function QPayPaymentContent() {
                         <ExternalLink className="w-4 h-4 mr-2" />
                         Web Payment
                       </Button>
-                    </div>
+                    </div> */}
 
                     {/* Payment Status Monitor */}
                     <div className={`border rounded-lg p-4 ${

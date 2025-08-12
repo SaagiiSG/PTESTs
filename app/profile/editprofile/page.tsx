@@ -144,8 +144,15 @@ export default function PersonalProfilePage() {
             />
           </div>
         </div>
-        <Button onClick={handleSave} disabled={saving} className="w-full mt-4">
-          {saving ? t('saving') : t('saveChanges')}
+        <Button onClick={handleSave} disabled={saving} className="inline-flex items-center justify-center w-full mt-4">
+          {saving ? (
+            <>
+              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin inline-block mr-2" />
+              <span className="font-semibold">{t('saving')}</span>
+            </>
+          ) : (
+            <span className="font-semibold">{t('saveChanges')}</span>
+          )}
         </Button>
       </form>
     </div>

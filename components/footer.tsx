@@ -89,7 +89,7 @@ const Footer = ({ variant = 'default' }: FooterProps) => {
               <Link href="/admin" className="inline-block group">
                 <Image
                   src={logo}
-                  alt="PPNIM Logo"
+                  alt="TestCenter Logo"
                   width={100}
                   height={50}
                   className="cursor-pointer transition-transform duration-300 group-hover:scale-105"
@@ -106,7 +106,7 @@ const Footer = ({ variant = 'default' }: FooterProps) => {
                 Back to Home
               </Link>
               <span className="text-sm text-muted-foreground">•</span>
-              <span className="text-sm text-muted-foreground">&copy; {currentYear} PPNIM Admin</span>
+              <span className="text-sm text-muted-foreground">&copy; {currentYear} TestCenter Admin</span>
             </div>
           </div>
         </div>
@@ -120,7 +120,7 @@ const Footer = ({ variant = 'default' }: FooterProps) => {
       <footer className="bg-background border-t border-border mt-auto">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-            <span>&copy; {currentYear} PPNIM. All rights reserved.</span>
+            <span>&copy; {currentYear} TestCenter. All rights reserved.</span>
             <div className="flex items-center gap-4">
               <Link href="/privacy" className="hover:text-foreground transition-colors duration-200">
                 Privacy
@@ -147,7 +147,7 @@ const Footer = ({ variant = 'default' }: FooterProps) => {
             <Link href="/home" className="inline-block group">
               <Image
                 src={logo}
-                alt="PPNIM Logo"
+                alt="TestCenter Logo"
                 width={120}
                 height={60}
                 className="cursor-pointer transition-transform duration-300 group-hover:scale-105"
@@ -247,7 +247,7 @@ const Footer = ({ variant = 'default' }: FooterProps) => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-4">
-              <span>&copy; {currentYear} PPNIM. All rights reserved.</span>
+              <span>&copy; {currentYear} TestCenter. All rights reserved.</span>
               <span className="hidden sm:inline">•</span>
               <span className="hidden sm:inline">Version 1.0.0</span>
             </div>

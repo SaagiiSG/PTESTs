@@ -164,16 +164,24 @@ const TestCard: React.FC<TestCardProps> = ({
   };
 
   const handleCardClick = async (e: React.MouseEvent) => {
-    // For free tests, directly enroll and redirect to test start page
-    if (price === 0 && !hasAccess) {
-      e.preventDefault();
-      if (!session?.user?.id) {
-        toast.error('Please log in to enroll in this test');
-        return;
-      }
-      
+    e.preventDefault();
+    
+    // If user already has access, redirect directly to test
+    if (hasAccess) {
+      window.location.href = `/test-embed/${_id}`;
+      return;
+    }
+    
+    // If not logged in, show error
+    if (!session?.user?.id) {
+      toast.error('Please log in to access this test');
+      return;
+    }
+    
+    // For free tests, enroll directly
+    if (price === 0) {
       try {
-        console.log('Directly enrolling in free test:', _id);
+        console.log('Enrolling in free test:', _id);
         
         const response = await fetch('/api/public/purchase-free', {
           method: 'POST',
@@ -186,29 +194,28 @@ const TestCard: React.FC<TestCardProps> = ({
           }),
         });
 
+        const data = await response.json();
+        console.log('Free enrollment response:', { status: response.status, data });
+        
         if (response.ok) {
-          const data = await response.json();
-          console.log('Free enrollment successful:', data);
-          
-          if (data.uniqueCode) {
-            toast.success(`Free test enrolled! Your unique code: ${data.uniqueCode}`);
-          } else {
-            toast.success('Free test enrolled successfully!');
-          }
-          
-          // Redirect directly to test start page
-          window.location.href = `/test-embed/${_id}`;
-        } else {
-          const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-          console.error('Free enrollment failed:', errorData);
-          
-          if (errorData.message === 'Test already purchased.') {
+          if (data.alreadyPurchased) {
             // If already purchased, just redirect to test start page
             toast.success('You already have access to this test!');
             window.location.href = `/test-embed/${_id}`;
           } else {
-            toast.error(errorData.message || 'Failed to enroll in free test');
+            // New enrollment
+            if (data.uniqueCode) {
+              toast.success(`Free test enrolled! Your unique code: ${data.uniqueCode}`);
+            } else {
+              toast.success('Free test enrolled successfully!');
+            }
+            
+            // Redirect directly to test start page
+            window.location.href = `/test-embed/${_id}`;
           }
+        } else {
+          console.error('Free enrollment failed:', data);
+          toast.error(data.message || 'Failed to enroll in free test');
         }
       } catch (error) {
         console.error('Error enrolling in free test:', error);
@@ -217,15 +224,14 @@ const TestCard: React.FC<TestCardProps> = ({
       return;
     }
     
-    // For paid tests or tests user already has access to, use existing logic
-    if (!hasAccess && (price !== undefined && price !== null && price > 0)) {
-      e.preventDefault();
-      if (!session?.user?.id) {
-        toast.error('Please log in to purchase this test');
-        return;
-      }
+    // For paid tests, show payment modal
+    if (price && price > 0) {
       setShowPaymentModal(true);
+      return;
     }
+    
+    // Fallback: redirect to test page
+    window.location.href = `/test-embed/${_id}`;
   };
 
   // Rating stars
@@ -501,19 +507,21 @@ const TestCard: React.FC<TestCardProps> = ({
         </Card>
       </div>
 
-      {/* Payment Options Modal */}
-      <PaymentOptionsModal
-        isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
-        itemId={_id}
-        itemType="test"
-        itemTitle={title}
-        itemDescription={descText}
-        price={price || 0}
-        thumbnailUrl={thumbnailUrl}
-        onSuccess={handlePaymentSuccess}
-        onError={handlePaymentError}
-      />
+      {/* Payment Options Modal - Only for paid tests */}
+      {price && price > 0 && (
+        <PaymentOptionsModal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          itemId={_id}
+          itemType="test"
+          itemTitle={title}
+          itemDescription={descText}
+          price={price}
+          thumbnailUrl={thumbnailUrl}
+          onSuccess={handlePaymentSuccess}
+          onError={handlePaymentError}
+        />
+      )}
     </>
   );
 };

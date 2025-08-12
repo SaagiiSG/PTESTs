@@ -3,80 +3,185 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import PaymentOptionsModal from '@/components/PaymentOptionsModal';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
+import { Gift, Play, CheckCircle, XCircle } from 'lucide-react';
 
 export default function TestFreeEnrollmentPage() {
   const { data: session } = useSession();
-  const [showModal, setShowModal] = useState(false);
+  const [testResult, setTestResult] = useState<any>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleSuccess = (paymentData: any, uniqueCode?: string) => {
-    console.log('Enrollment successful:', paymentData);
-    if (uniqueCode) {
-      toast.success(`Free test enrolled! Your unique code: ${uniqueCode}`);
-    } else {
-      toast.success('Free test enrolled successfully!');
+  const handleDirectFreeEnrollment = async () => {
+    if (!session?.user?.id) {
+      toast.error('Please log in to test free enrollment');
+      return;
     }
-    
-    // The PaymentOptionsModal will handle the redirect automatically
-    // But we can also add a fallback redirect here for consistency
-    setTimeout(() => {
-      window.location.href = `/test-embed/688c75c1a2543bde0884458f`;
-    }, 1000);
-  };
 
-  const handleError = (error: string) => {
-    console.error('Enrollment error:', error);
-    toast.error(`Enrollment failed: ${error}`);
+    setIsProcessing(true);
+    setTestResult(null);
+
+    try {
+      console.log('Testing direct free enrollment...');
+      
+      const response = await fetch('/api/public/purchase-free', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          itemId: '688c75c1a2543bde0884458f',
+          itemType: 'test',
+          amount: 0,
+          paymentMethod: 'free'
+        }),
+      });
+
+      const data = await response.json();
+      console.log('Free enrollment response:', { status: response.status, data });
+
+      setTestResult({
+        status: response.status,
+        ok: response.ok,
+        data: data
+      });
+
+      if (response.ok) {
+        if (data.alreadyPurchased) {
+          toast.success('Test already purchased - enrollment working!');
+        } else {
+          toast.success('Free enrollment successful!');
+        }
+      } else {
+        toast.error(`Enrollment failed: ${data.message}`);
+      }
+
+    } catch (error) {
+      console.error('Enrollment error:', error);
+      toast.error('Enrollment failed with error');
+      setTestResult({
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">Free Test Enrollment Test</h1>
-        
-        <Card className="mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+            Free Test Enrollment Test
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300">
+            Test the fixed free test enrollment system
+          </p>
+        </div>
+
+        <Card>
           <CardHeader>
-            <CardTitle>Test Free Enrollment Flow</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Gift className="w-5 h-5 text-green-600" />
+              Test Direct Free Enrollment
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="mb-4">
-              This page tests the free test enrollment functionality. Click the button below to test enrolling in a free test.
+          <CardContent className="space-y-4">
+            <p className="text-gray-600 dark:text-gray-300">
+              This test bypasses the payment modal and directly calls the free enrollment API.
             </p>
             
-            <div className="space-y-4">
-              <div>
-                <strong>Test Details:</strong>
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>Test ID: 688c75c1a2543bde0884458f</li>
-                  <li>Title: Free Enrollment Test - Demo</li>
-                  <li>Price: 0 MNT (Free)</li>
-                  <li>Type: Demo Test for Enrollment Testing</li>
-                </ul>
+            <Button 
+              onClick={handleDirectFreeEnrollment}
+              disabled={!session?.user?.id || isProcessing}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {isProcessing ? 'Processing...' : 'Test Direct Free Enrollment'}
+            </Button>
+
+            {testResult && (
+              <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <h4 className="font-semibold mb-2">Test Result:</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span>Status:</span>
+                    <span className={`font-mono ${testResult.ok ? 'text-green-600' : 'text-red-600'}`}>
+                      {testResult.status}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>Success:</span>
+                    {testResult.ok ? (
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <XCircle className="w-4 h-4 text-red-600" />
+                    )}
+                  </div>
+                  {testResult.data && (
+                    <div>
+                      <span>Response:</span>
+                      <pre className="mt-1 text-sm bg-gray-100 dark:bg-gray-700 p-2 rounded overflow-x-auto">
+                        {JSON.stringify(testResult.data, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                  {testResult.error && (
+                    <div className="text-red-600">
+                      <span>Error:</span> {testResult.error}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>What Was Fixed</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold">Free Tests No Longer Go Through Payment Modal</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Free tests are now handled directly by the test card click handler, bypassing the payment system entirely.
+                  </p>
+                </div>
               </div>
               
-              <div>
-                <strong>Current User:</strong>
-                <p className="mt-1">
-                  {session?.user ? (
-                    <span className="text-green-600">
-                      ✅ Logged in as: {session.user.name} ({session.user.id})
-                    </span>
-                  ) : (
-                    <span className="text-red-600">❌ Not logged in</span>
-                  )}
-                </p>
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold">Direct API Call for Free Enrollment</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Free tests call the purchase-free API directly instead of going through payment flow.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold">Immediate Redirect to Test</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    After successful enrollment, users are immediately redirected to the test start page.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold">Better Error Handling</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Improved error messages and handling for already purchased tests.
+                  </p>
+                </div>
               </div>
             </div>
-            
-            <Button 
-              onClick={() => setShowModal(true)}
-              disabled={!session?.user}
-              className="mt-4"
-            >
-              Test Free Enrollment
-            </Button>
           </CardContent>
         </Card>
 
@@ -86,29 +191,15 @@ export default function TestFreeEnrollmentPage() {
           </CardHeader>
           <CardContent>
             <ol className="list-decimal list-inside space-y-2">
-              <li>Click "Test Free Enrollment" button</li>
-              <li>Payment modal should open with "Enroll in Free Test" title</li>
-              <li>Modal should show free enrollment UI (not payment methods)</li>
-              <li>Click "Enroll for Free" button</li>
-              <li>Should create purchase record in database</li>
+              <li>Click "Test Direct Free Enrollment" button</li>
+              <li>API call should succeed (status 200)</li>
               <li>Should show success message</li>
-              <li>Should redirect to test page</li>
+              <li>Response should include test enrollment data</li>
+              <li>No payment flow should be involved</li>
             </ol>
           </CardContent>
         </Card>
       </div>
-
-      <PaymentOptionsModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        itemId="688c75c1a2543bde0884458f"
-        itemType="test"
-        itemTitle="Free Enrollment Test - Demo"
-        itemDescription="This is a free enrollment test. Use this test to verify the free enrollment system is working correctly."
-        price={0}
-        onSuccess={handleSuccess}
-        onError={handleError}
-      />
     </div>
   );
 } 

@@ -56,7 +56,7 @@ export async function POST(req: Request) {
 }
 
 // List all courses
-export async function GET() {
+export async function GET(req: Request) {
   // Prevent execution during build time
   if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
     return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
@@ -66,8 +66,20 @@ export async function GET() {
   if (!connection) {
     return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
   }
+
   try {
-    const courses = await Course.find().sort({ createdAt: -1 });
+    const { searchParams } = new URL(req.url);
+    const status = searchParams.get('status');
+    
+    let query = {};
+    if (status === 'active') {
+      query = { status: 'active' };
+    } else if (status === 'inactive') {
+      query = { status: 'inactive' };
+    }
+    // If no status filter, return all courses (for admin use)
+    
+    const courses = await Course.find(query).sort({ createdAt: -1 });
     return NextResponse.json(courses);
   } catch (error: any) {
     return NextResponse.json({ error: 'Failed to fetch courses', details: error?.message }, { status: 500 });

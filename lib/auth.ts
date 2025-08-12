@@ -115,17 +115,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         }
         
-        // Completely replace the token with new user data
-        const newToken = {
-          id: userId ? userId.toString() : token.id,
-          email: customUser.email,
-          phoneNumber: customUser.phoneNumber,
-          isAdmin: customUser.isAdmin,
-          iat: Math.floor(Date.now() / 1000),
-          exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
-        };
-        console.log('JWT CALLBACK - COMPLETELY NEW TOKEN CREATED:', newToken);
-        return newToken;
+        // IMPORTANT: Only update the token if we have valid user data
+        if (userId) {
+          const newToken = {
+            ...token, // Preserve existing token data
+            id: userId.toString(),
+            email: customUser.email,
+            phoneNumber: customUser.phoneNumber,
+            isAdmin: customUser.isAdmin,
+            iat: Math.floor(Date.now() / 1000),
+            exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
+          };
+          console.log('JWT CALLBACK - UPDATED TOKEN:', newToken);
+          return newToken;
+        }
       }
       
       // If no user is provided, return the existing token
@@ -138,16 +141,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       try {
         await connectMongoose();
 
-        // Always look up the user by phone number or email to ensure we get the correct user
+        // CRITICAL FIX: Always validate the user from the database using the token ID
         let dbUser = null;
         
-        // First try to find by ID if it exists in the token
         if (token.id) {
           dbUser = await User.findById(token.id);
           console.log('SESSION CALLBACK - found user by ID:', dbUser ? { id: dbUser._id, name: dbUser.name, isAdmin: dbUser.isAdmin } : 'not found');
         }
         
-        // If not found by ID, try by phone number or email
+        // If not found by ID, try by phone number or email as fallback
         if (!dbUser) {
           if ((token as any)?.phoneNumber) {
             dbUser = await User.findOne({ phoneNumber: (token as any).phoneNumber });
@@ -159,10 +161,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         if (dbUser) {
+          // CRITICAL: Always use the database user data, not the token data
           session.user.id = String(dbUser._id);
-          // Check if profile is complete with new fields
-          const needsSetup = !dbUser.name || !dbUser.dateOfBirth || !dbUser.gender || !dbUser.education || !dbUser.family || !dbUser.position;
-          (session.user as any).needsProfileSetup = needsSetup;
+          (session.user as any).needsProfileSetup = !dbUser.name || !dbUser.dateOfBirth || !dbUser.gender || !dbUser.education || !dbUser.family || !dbUser.position;
           (session.user as any).name = dbUser.name;
           (session.user as any).dateOfBirth = dbUser.dateOfBirth;
           (session.user as any).gender = dbUser.gender;
@@ -171,21 +172,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           (session.user as any).position = dbUser.position;
           (session.user as any).email = dbUser.email;
           (session.user as any).phoneNumber = dbUser.phoneNumber;
-          (session.user as any).isAdmin = dbUser.isAdmin;
-          console.log('SESSION CALLBACK - User data populated:', { id: session.user.id, name: (session.user as any).name, email: (session.user as any).email });
+          (session.user as any).isAdmin = dbUser.isAdmin; // CRITICAL: This ensures admin status is always correct
+          console.log('SESSION CALLBACK - User data populated from DB:', { id: session.user.id, name: (session.user as any).name, email: (session.user as any).email, isAdmin: (session.user as any).isAdmin });
         } else {
           console.error('SESSION CALLBACK - No user found for token:', token);
-          // If no user is found, we should still return the session but with limited data
-          // This prevents the session from being completely broken
+          // If no user is found, return limited session data
           if (token.email) {
             (session.user as any).email = token.email;
           }
+          // CRITICAL: Ensure admin status is false if user not found
+          (session.user as any).isAdmin = false;
         }
 
         console.log('SESSION CALLBACK - final session:', { id: session.user.id, name: (session.user as any).name, isAdmin: (session.user as any).isAdmin });
         return session;
       } catch (error) {
         console.error('Session callback error:', error);
+        // CRITICAL: Ensure admin status is false on error
+        (session.user as any).isAdmin = false;
         return session;
       }
     },

@@ -143,7 +143,9 @@ export default async function CreateCoursePage() {
               </div>
               {courses.length > 3 && (
                 <Button variant="outline" className="w-full mt-4" asChild>
-                  <Link href="/admin/courses">View All Courses</Link>
+                  <Link href="/admin/courses" className="inline-flex items-center justify-center">
+                    <span className="font-semibold">View All Courses</span>
+                  </Link>
                 </Button>
               )}
             </CardContent>

@@ -1,14 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { IUser } from '@/app/models/user';
-import { Users, BookOpen, GraduationCap, DollarSign, TrendingUp, Activity, Eye, ShoppingCart, Plus, ArrowRight, Calendar, Clock, UserCheck, Mail, Phone } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Users, BookOpen, GraduationCap, DollarSign, TrendingUp, Activity, Plus, ArrowRight, Settings, BarChart3, Eye, Edit, Trash2, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguage } from '@/lib/language';
-import { getLocalizedTitle } from '@/lib/utils';
+import { LineChart as MuiLineChart } from '@mui/x-charts/LineChart';
+import { BarChart as MuiBarChart } from '@mui/x-charts/BarChart';
 
 interface AdminDashboardClientProps {
   stats: {
@@ -23,273 +25,279 @@ interface AdminDashboardClientProps {
     completeProfiles: number;
     incompleteProfiles: number;
   };
-  admin: IUser;
+  admin: any;
 }
 
 export default function AdminDashboardClient({ stats, admin }: AdminDashboardClientProps) {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
+  const [timeRange, setTimeRange] = useState('30');
+  const [isLoading, setIsLoading] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+
+  // Fetch analytics data
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const response = await fetch(`/api/admin/analytics/trends?days=${timeRange}`);
+        if (response.ok) {
+          const data = await response.json();
+          setAnalyticsData(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch analytics:', error);
+      }
+    };
+
+    fetchAnalytics();
+  }, [timeRange]);
+
+  // Simple data processing - no complex MongoDB objects
+  const safeStats = {
+    totalUsers: Number(stats?.totalUsers) || 0,
+    totalCourses: Number(stats?.totalCourses) || 0,
+    totalTests: Number(stats?.totalTests) || 0,
+    totalRevenue: Number(stats?.totalRevenue) || 0,
+    completeProfiles: Number(stats?.completeProfiles) || 0,
+    incompleteProfiles: Number(stats?.incompleteProfiles) || 0
+  };
+
+  const safeAdmin = {
+    name: String(admin?.name || 'Admin'),
+    email: String(admin?.email || '')
+  };
+
+  const safeRecentUsers = Array.isArray(stats?.recentUsers) ? stats.recentUsers.slice(0, 5) : [];
+  const safeRecentPurchases = Array.isArray(stats?.recentPurchases) ? stats.recentPurchases.slice(0, 5) : [];
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const formatDateOfBirth = (dateString: string) => {
-    if (!dateString) return t('notSet');
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const calculateAge = (dateOfBirth: string) => {
-    if (!dateOfBirth) return null;
-    const birthDate = new Date(dateOfBirth);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
-  const getProfileCompletionBadge = (user: any) => {
-    const hasRequiredFields = user.name && user.dateOfBirth && user.gender && user.education && user.family && user.position;
-    if (hasRequiredFields) {
-      return <Badge variant="default" className="bg-green-100 text-green-800 text-xs">{t('complete')}</Badge>;
-    } else {
-      return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 text-xs">{t('incomplete')}</Badge>;
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch {
+      return 'Invalid Date';
     }
   };
 
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'purchase':
-        return <ShoppingCart className="w-4 h-4 text-green-600" />;
-      case 'user':
-        return <Users className="w-4 h-4 text-blue-600" />;
-      case 'course':
-        return <GraduationCap className="w-4 h-4 text-purple-600" />;
-      case 'test':
-        return <BookOpen className="w-4 h-4 text-orange-600" />;
-      default:
-        return <Activity className="w-4 h-4 text-gray-600" />;
-    }
-  };
+  // Prepare chart data
+  const chartData = analyticsData?.trends || [];
+  const xAxis = chartData.map((item: any) => item.date);
+  const userData = chartData.map((item: any) => item.users);
+  const revenueData = chartData.map((item: any) => item.revenue);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">{t('dashboard')}</h1>
-          <p className="text-gray-600 mt-1">{t('welcomeBack')}, {admin.name || admin.email}</p>
+          <p className="text-gray-600 mt-1">Welcome back, {safeAdmin.name}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Activity className="w-6 h-6 text-blue-600" />
-          </div>
+        <div className="flex items-center gap-4">
+          {/* <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">Last 7 days</SelectItem>
+              <SelectItem value="30">Last 30 days</SelectItem>
+              <SelectItem value="90">Last 90 days</SelectItem>
+            </SelectContent>
+          </Select> */}
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="outline"
+            size="sm"
+          >
+            Refresh
+          </Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* First Row - Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{t('totalUsers')}</p>
-                <p className="text-2xl font-bold">{stats.totalUsers}</p>
-                <p className="text-xs text-green-600 mt-1">+12% {t('fromLastMonth')}</p>
-              </div>
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Users className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{safeStats.totalUsers}</div>
+            <p className="text-xs text-muted-foreground">
+              {safeStats.completeProfiles} complete profiles
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{t('completeProfiles')}</p>
-                <p className="text-2xl font-bold">{stats.completeProfiles}</p>
-                <p className="text-xs text-green-600 mt-1">{stats.totalUsers > 0 ? Math.round((stats.completeProfiles / stats.totalUsers) * 100) : 0}% {t('completionRate')}</p>
-              </div>
-              <div className="p-2 bg-green-100 rounded-lg">
-                <UserCheck className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
+            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{safeStats.totalCourses}</div>
+            <p className="text-xs text-muted-foreground">
+              Active courses
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{t('totalCourses')}</p>
-                <p className="text-2xl font-bold">{stats.totalCourses}</p>
-                <p className="text-xs text-green-600 mt-1">+5% {t('fromLastMonth')}</p>
-              </div>
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <GraduationCap className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Tests</CardTitle>
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{safeStats.totalTests}</div>
+            <p className="text-xs text-muted-foreground">
+              Available tests
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{t('totalRevenue')}</p>
-                <p className="text-2xl font-bold">${stats.totalRevenue.toFixed(2)}</p>
-                <p className="text-xs text-green-600 mt-1">+15% {t('fromLastMonth')}</p>
-              </div>
-              <div className="p-2 bg-green-100 rounded-lg">
-                <DollarSign className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${safeStats.totalRevenue.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              Total earnings
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Users with Profile Info */}
-        <Card className='py-6'>
+      {/* Second Row - Two Big Boxes */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Box 1 - Recent Activities with Tabs */}
+        <Card className="h-96 overflow-hidden">
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                {t('recentUsers')}
-              </span>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/admin/users">
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </Button>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="w-5 h-5" />
+              Recent Activities
             </CardTitle>
-            <CardDescription>{t('latestRegistrations')}</CardDescription>
+            <CardDescription>Latest user and payment activities</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {stats.recentUsers.length > 0 ? (
-                stats.recentUsers.map((user: any, index: number) => (
-                  <div key={user._id} className="p-4 bg-gray-50 rounded-lg border">
-                    {/* User Header */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Users className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">{user.name || t('unnamedUser')}</p>
-                          <p className="text-xs text-gray-500">{user.email}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {getProfileCompletionBadge(user)}
-                        <div className="text-xs text-gray-400">
-                          {formatDate(user.createdAt)}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Profile Information */}
-                    <div className="grid grid-cols-2 gap-3 text-xs">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-3 h-3 text-gray-400" />
-                        <span className="text-gray-600">{t('age')}:</span>
-                        <span className="font-medium">
-                          {calculateAge(user.dateOfBirth) || t('unknown')}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="w-3 h-3 text-gray-400" />
-                        <span className="text-gray-600">{t('gender')}:</span>
-                        <span className="font-medium">{user.gender || t('notSet')}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <GraduationCap className="w-3 h-3 text-gray-400" />
-                        <span className="text-gray-600">{t('education')}:</span>
-                        <span className="font-medium">{user.education || t('notSet')}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="w-3 h-3 text-gray-400" />
-                        <span className="text-gray-600">{t('position')}:</span>
-                        <span className="font-medium">{user.position || t('notSet')}</span>
-                      </div>
-                    </div>
-
-                    {/* Contact & Status */}
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
-                      <div className="flex items-center gap-4 text-xs">
-                        {user.phoneNumber && (
-                          <div className="flex items-center gap-1">
-                            <Phone className="w-3 h-3 text-gray-400" />
-                            <span className="text-gray-600">{user.phoneNumber}</span>
+            <Tabs defaultValue="users" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="users">Users</TabsTrigger>
+                <TabsTrigger value="payments">Payments</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="users" className="mt-4">
+                <div className="space-y-3 max-h-64 overflow-y-auto pb-12">
+                  {safeRecentUsers.length > 0 ? (
+                    safeRecentUsers.map((user: any, index: number) => (
+                      <div key={user._id || index} className="p-3 bg-gray-50 rounded-lg border">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <Users className="w-4 h-4 text-blue-600" />
                           </div>
-                        )}
-                        {user.isEmailVerified && (
-                          <div className="flex items-center gap-1">
-                            <Mail className="w-3 h-3 text-green-500" />
-                            <span className="text-green-600">{t('verified')}</span>
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">
+                              {String(user.name || 'Unnamed User')}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {String(user.email || user.phoneNumber || 'No contact info')}
+                            </p>
                           </div>
-                        )}
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link href={`/admin/users/${user._id}`}>
+                              <Eye className="w-4 h-4" />
+                            </Link>
+                          </Button>
+                        </div>
                       </div>
-                      {user.isAdmin && (
-                        <Badge variant="destructive" className="text-xs">{t('admin')}</Badge>
-                      )}
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Users className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <p>No recent users</p>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm">{t('noUsersYet')}</p>
+                  )}
                 </div>
-              )}
-            </div>
+              </TabsContent>
+              
+              <TabsContent value="payments" className="mt-4">
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {safeRecentPurchases.length > 0 ? (
+                    safeRecentPurchases.map((purchase: any, index: number) => (
+                      <div key={purchase._id || index} className="p-3 bg-gray-50 rounded-lg border">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">
+                              {String(purchase.courseTitle || purchase.testTitle || 'Unknown Item')}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {String(purchase.userName || purchase.userEmail || 'Unknown User')}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold text-green-600">
+                              ${(Number(purchase.amount) || 0).toFixed(2)}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatDate(purchase.createdAt || purchase.purchaseDate)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <DollarSign className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <p>No recent purchases</p>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
-        <Card className='py-6'>
+        {/* Box 2 - Quick Actions Grid */}
+        <Card className="h-96">
           <CardHeader>
-            <CardTitle>{t('quickActions')}</CardTitle>
-            <CardDescription>{t('commonAdminTasks')}</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Quick Actions
+            </CardTitle>
+            <CardDescription>Common administrative tasks</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <Button asChild className="w-full justify-start">
+            <div className="flex flex-wrap h-full justify-between gap-4">
+              {/* Row 1 */}
+              <Button asChild variant="outline" className="w-[48%] h-[100%] p-4 flex-col gap-2">
                 <Link href="/admin/courses">
-                  <Plus className="w-4 h-4 mr-2" />
-                  {t('createCourse')}
+                  <Plus className="w-6 h-6 text-white " />
+                  <span className="text-sm font-medium dark:text-white">Create Course </span>
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="w-full justify-start">
+              
+              <Button asChild variant="outline" className="w-[48%] h-20 p-4 flex-col gap-2 border-2">
                 <Link href="/admin/tests">
-                  <Plus className="w-4 h-4 mr-2" />
-                  {t('createTest')}
+                  <BookOpen className="w-6 h-6" />
+                  <span className="text-sm font-medium">Create Test</span>
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="w-full justify-start">
+              
+              {/* Row 2 */}
+              <Button asChild variant="outline" className="w-[48%] h-20 p-4 flex-col gap-2 border-2">
                 <Link href="/admin/users">
-                  <Users className="w-4 h-4 mr-2" />
-                  {t('userManagement')}
+                  <Users className="w-6 h-6" />
+                  <span className="text-sm font-medium">Manage Users</span>
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="w-full justify-start">
+              
+              <Button asChild variant="outline" className="w-[48%] h-20 p-4 flex-col gap-2 border-2">
                 <Link href="/admin/analytics">
-                  <TrendingUp className="w-4 h-4 mr-2" />
-                  {t('analytics')}
+                  <BarChart3 className="w-6 h-6" />
+                  <span className="text-sm font-medium">View Analytics</span>
                 </Link>
               </Button>
             </div>
@@ -297,85 +305,69 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
         </Card>
       </div>
 
-      {/* Recent Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Courses */}
-        <Card className='py-6'>
+      {/* Third Row - Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* User Registration Trends */}
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <GraduationCap className="w-5 h-5" />
-                {t('recentCourses')}
-              </span>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/admin/courses">
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </Button>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              User Registration Trends
             </CardTitle>
+            <CardDescription>New user registrations over time</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {stats.recentCourses.length > 0 ? (
-                stats.recentCourses.map((course: any) => (
-                  <div key={course._id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <GraduationCap className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{course.title}</p>
-                      <p className="text-xs text-gray-500">{course.lessons?.length || 0} {t('lessons')}</p>
-                    </div>
-                    <div className="text-sm font-semibold text-green-600">${course.price || 0}</div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-6 text-gray-500">
-                  <GraduationCap className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm">{t('noCoursesFound')}</p>
-                </div>
-              )}
-            </div>
+            {chartData.length > 0 ? (
+              <div className="h-64">
+                <MuiLineChart
+                  xAxis={[{ data: xAxis, scaleType: 'band' }]}
+                  series={[
+                    {
+                      data: userData,
+                      label: 'New Users',
+                      color: '#3b82f6'
+                    }
+                  ]}
+                  height={250}
+                />
+              </div>
+            ) : (
+              <div className="h-64 flex items-center justify-center text-gray-500">
+                <p>No data available</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Recent Tests */}
-        <Card className='py-6'>
+        {/* Revenue Trends */}
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5" />
-                {t('recentTests')}
-              </span>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/admin/tests">
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </Button>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5" />
+              Revenue Trends
             </CardTitle>
+            <CardDescription>Daily revenue over time</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {stats.recentTests.length > 0 ? (
-                stats.recentTests.map((test: any) => (
-                  <div key={test._id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                      <BookOpen className="w-5 h-5 text-orange-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{getLocalizedTitle(test.title, language)}</p>
-                      <p className="text-xs text-gray-500">{test.questions?.length || 0} {t('questions')}</p>
-                    </div>
-                    <div className="text-sm font-semibold text-green-600">${test.price || 0}</div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-6 text-gray-500">
-                  <BookOpen className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm">{t('noTestsFound')}</p>
-                </div>
-              )}
-            </div>
+            {chartData.length > 0 ? (
+              <div className="h-64">
+                <MuiBarChart
+                  xAxis={[{ data: xAxis, scaleType: 'band' }]}
+                  series={[
+                    {
+                      data: revenueData,
+                      label: 'Revenue ($)',
+                      color: '#10b981'
+                    }
+                  ]}
+                  height={250}
+                />
+              </div>
+            ) : (
+              <div className="h-64 flex items-center justify-center text-gray-500">
+                <p>No data available</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
