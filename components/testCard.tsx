@@ -438,7 +438,7 @@ const TestCard: React.FC<TestCardProps> = ({
                       )}
                       
                       {/* Access Status Badge */}
-                      {price && (
+                      {typeof price === 'number' && (
                         <Badge className={`font-medium px-3 py-1.5 text-xs flex items-center gap-1.5 ${
                           hasAccess || price === 0
                             ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800' 
@@ -508,7 +508,7 @@ const TestCard: React.FC<TestCardProps> = ({
       </div>
 
       {/* Payment Options Modal - Only for paid tests */}
-      {price && price > 0 && (
+      {price > 0 && (
         <PaymentOptionsModal
           isOpen={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}

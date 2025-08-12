@@ -850,21 +850,23 @@ function QPayPaymentContent() {
                       </Button>
                     </div>
 
-                    {/* Callback Simulate Button - For Testing */}
-                    <div className="border-t pt-4">
-                      <Button 
-                        onClick={() => simulatePaymentCallback()}
-                        className="w-full"
-                        variant="secondary"
-                        size="sm"
-                      >
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Simulate Payment Success (Testing)
-                      </Button>
-                      <p className="text-xs text-gray-500 text-center mt-2">
-                        Use this button to test the payment flow without making real payments
-                      </p>
-                    </div>
+                    {/* Callback Simulate Button - For Testing (Development Only) */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <div className="border-t pt-4">
+                        <Button 
+                          onClick={() => simulatePaymentCallback()}
+                          className="w-full"
+                          variant="secondary"
+                          size="sm"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Simulate Payment Success (Testing)
+                        </Button>
+                        <p className="text-xs text-gray-500 text-center mt-2">
+                          Use this button to test the payment flow without making real payments
+                        </p>
+                      </div>
+                    )}
 
                     {/* Payment Status Monitor */}
                     <div className={`border rounded-lg p-4 ${
