@@ -13,6 +13,34 @@ interface AdminUser {
 // Force this route to be dynamic only (not executed during build)
 export const dynamic = 'force-dynamic';
 
+// Get a single test by ID
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  // Prevent execution during build time
+  if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
+    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
+  }
+
+  const { id } = await params;
+  if (!id || !Types.ObjectId.isValid(id)) {
+    return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
+  }
+  
+  const connection = await safeConnectMongoose();
+  if (!connection) {
+    return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+  }
+
+  try {
+    const test = await Test.findById(id).select('-embedCode'); // Don't expose embed code
+    if (!test) {
+      return NextResponse.json({ error: 'Test not found' }, { status: 404 });
+    }
+    return NextResponse.json(test);
+  } catch (error: any) {
+    return NextResponse.json({ error: 'Failed to fetch test', details: error?.message }, { status: 500 });
+  }
+}
+
 // Update a test
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   // Prevent execution during build time

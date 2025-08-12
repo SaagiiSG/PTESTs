@@ -409,26 +409,26 @@ export default function QPayPayment({
                         onClick={stopPaymentMonitoring}
                         variant="outline"
                         size="sm"
-                        className="inline-flex items-center justify-center flex-1 text-xs"
+                        className="flex-1 text-xs"
                       >
-                        <span className="font-semibold">Stop Monitoring</span>
+                        Stop Monitoring
                       </Button>
                       <Button 
                         onClick={manuallyCheckPayment}
                         disabled={checkingPayment}
                         variant="outline"
                         size="sm"
-                        className="inline-flex items-center justify-center flex-1 text-xs"
+                        className="flex-1 text-xs"
                       >
                         {checkingPayment ? (
                           <>
-                            <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin inline-block mr-1" />
-                            <span className="font-semibold">Checking...</span>
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            Checking...
                           </>
                         ) : (
                           <>
-                            <RefreshCw className="h-3 w-3 inline-block mr-1" />
-                            <span className="font-semibold">Check Now</span>
+                            <RefreshCw className="h-3 w-3 mr-1" />
+                            Check Now
                           </>
                         )}
                       </Button>
@@ -440,10 +440,10 @@ export default function QPayPayment({
                   <Button 
                     onClick={resetPayment} 
                     variant="outline" 
-                    className="inline-flex items-center justify-center w-full"
+                    className="w-full"
                   >
-                    <RefreshCw className="h-4 w-4 inline-block mr-2" />
-                    <span className="font-semibold">Generate New QR</span>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Generate New QR
                   </Button>
                 </div>
               </div>
@@ -451,10 +451,10 @@ export default function QPayPayment({
               <Button 
                 onClick={resetPayment} 
                 variant="outline" 
-                className="inline-flex items-center justify-center w-full"
+                className="w-full"
               >
-                <RefreshCw className="h-4 w-4 inline-block mr-2" />
-                <span className="font-semibold">Generate New QR</span>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Generate New QR
               </Button>
             </div>
           )}
@@ -467,8 +467,8 @@ export default function QPayPayment({
               <p className="text-gray-600 mb-4">
                 Your payment of ₮{Number(amount).toLocaleString()} has been processed.
               </p>
-              <Button onClick={resetPayment} className="inline-flex items-center justify-center w-full">
-                <span className="font-semibold">Make Another Payment</span>
+              <Button onClick={resetPayment} className="w-full">
+                Make Another Payment
               </Button>
             </div>
           )}
@@ -481,8 +481,8 @@ export default function QPayPayment({
               {paymentStatus.error && (
                 <p className="text-gray-600 mb-4">{paymentStatus.error}</p>
               )}
-              <Button onClick={resetPayment} className="inline-flex items-center justify-center w-full">
-                <span className="font-semibold">Try Again</span>
+              <Button onClick={resetPayment} className="w-full">
+                Try Again
               </Button>
             </div>
           )}

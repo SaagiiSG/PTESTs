@@ -52,6 +52,8 @@ function QPayPaymentContent() {
   const { data: session } = useSession();
   const isMobile = useIsMobile();
   
+  console.log('🚀 QPayPaymentContent component mounted');
+  
   const invoiceId = searchParams.get('invoiceId');
   const itemId = searchParams.get('itemId');
   const itemType = searchParams.get('itemType');
@@ -99,8 +101,39 @@ function QPayPaymentContent() {
 
   // Generate QR code on component mount
   useEffect(() => {
+    console.log('🔧 useEffect triggered - invoiceId:', invoiceId);
     if (invoiceId) {
-      generateQRCode();
+      console.log('Invoice ID available, checking for existing QR data...');
+      
+      // Check sessionStorage for existing QR data
+      if (typeof window !== 'undefined') {
+        console.log('🔍 Checking sessionStorage for existing QR data...');
+        const storedQRData = sessionStorage.getItem(`qrData_${invoiceId}`);
+        
+        if (storedQRData) {
+          try {
+            const qrData = JSON.parse(storedQRData);
+            console.log('✅ QR data found in sessionStorage:', qrData);
+            console.log('Setting payment status to qr_generated...');
+            
+            setPaymentStatus({
+              status: 'qr_generated',
+              qrData: qrData
+            });
+            
+            console.log('Payment status set, starting payment check...');
+            startPaymentCheck(invoiceId);
+            
+            console.log('Cleaning up sessionStorage...');
+            sessionStorage.removeItem(`qrData_${invoiceId}`);
+            return;
+          } catch (error) {
+            console.error('❌ Failed to parse QR data from sessionStorage:', error);
+          }
+        } else {
+          console.log('❌ No QR data found in sessionStorage for key:', `qrData_${invoiceId}`);
+        }
+      }
     } else {
       // If no invoiceId, show error
       setPaymentStatus({ status: 'failed', error: 'No invoice ID provided' });
@@ -122,6 +155,14 @@ function QPayPaymentContent() {
       startPaymentCheck(invoiceId!);
     }
   }, [isMobile, paymentStatus.status, paymentStatus.qrData, isMonitoring, invoiceId]);
+
+  // Debug: Log current payment status
+  useEffect(() => {
+    console.log('🔄 Payment status changed:', paymentStatus);
+    console.log('Status:', paymentStatus.status);
+    console.log('QR Data:', paymentStatus.qrData);
+    console.log('Stack trace:', new Error().stack);
+  }, [paymentStatus]);
 
   const fetchTestInfo = async () => {
     try {
@@ -145,11 +186,19 @@ function QPayPaymentContent() {
   };
 
   const generateQRCode = async () => {
-    if (!invoiceId) return;
+    console.log('🚀 generateQRCode() called with invoiceId:', invoiceId);
+    
+    if (!invoiceId) {
+      console.log('❌ No invoiceId, returning early');
+      return;
+    }
 
+    console.log('📝 Setting payment status to loading...');
     setPaymentStatus({ status: 'loading' });
 
     try {
+      console.log('🔍 Starting QR code generation logic...');
+      
       // Check if this is a test invoice
       if (invoiceId.startsWith('TEST_INV_')) {
         console.log('Test invoice detected, using mock QR data');
@@ -283,28 +332,44 @@ function QPayPaymentContent() {
 
       // For test payments, try to get QR data from sessionStorage first
       if (typeof window !== 'undefined') {
+        console.log('🔍 Checking sessionStorage for test payment...');
+        console.log('Looking for key:', `qrData_${invoiceId}`);
+        console.log('Current itemType:', itemType);
+        
         const storedQRData = sessionStorage.getItem(`qrData_${invoiceId}`);
         if (storedQRData) {
           try {
             const qrData = JSON.parse(storedQRData);
-            console.log('QR data from sessionStorage for test payment:', qrData);
+            console.log('✅ QR data found in sessionStorage:', qrData);
+            console.log('Setting payment status to qr_generated...');
             
             setPaymentStatus({
               status: 'qr_generated',
               qrData: qrData
             });
-
+            
+            console.log('🎯 setPaymentStatus called with qr_generated status');
+            console.log('QR Data being set:', qrData);
+            console.log('Stack trace:', new Error().stack);
+            console.log('Payment status set, showing success toast...');
             toast.success('Test QR Code loaded successfully!');
+            
+            console.log('Starting payment check...');
             startPaymentCheck(invoiceId);
             
-            // Clean up sessionStorage after using the data
+            console.log('Cleaning up sessionStorage...');
             sessionStorage.removeItem(`qrData_${invoiceId}`);
+            console.log('✅ Returning early, should not reach fallback');
             return;
           } catch (error) {
-            console.error('Failed to parse QR data from sessionStorage:', error);
+            console.error('❌ Failed to parse QR data from sessionStorage:', error);
             // Continue to fallback
           }
+        } else {
+          console.log('❌ No QR data found in sessionStorage for key:', `qrData_${invoiceId}`);
         }
+      } else {
+        console.log('❌ Window not available, skipping sessionStorage check');
       }
       
       // Fallback: create a new test invoice
@@ -564,6 +629,37 @@ function QPayPaymentContent() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const simulatePaymentCallback = async () => {
+    if (!invoiceId) {
+      toast.error('No invoice ID to simulate payment for.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/public/payment/simulate-callback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoiceId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast.success('Simulated payment callback successful!');
+        console.log('Simulated payment callback successful for invoice:', invoiceId);
+        // Optionally, you might want to manually check payment status after a delay
+        // to simulate the real-world scenario where the app might check multiple times.
+        // For now, we'll just show a success toast.
+      } else {
+        toast.error(data.error || 'Failed to simulate payment callback.');
+        console.error('Simulated payment callback failed:', data.error);
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to simulate payment callback.');
+      console.error('Simulated payment callback error:', error);
+    }
+  };
+
   if (!session?.user?.id) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
@@ -592,9 +688,9 @@ function QPayPaymentContent() {
             <Button 
               variant="outline" 
               onClick={() => router.back()}
-              className="mb-4 absolute top-4 left-4"
+              className="mb-4"
             >
-              <ArrowLeft className="w-4 h-4 mr-2 inline-block " />
+              <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Test Payment</h1>
@@ -608,7 +704,7 @@ function QPayPaymentContent() {
           </div>
 
           {/* Main Content */}
-          <div className="flex flex-col gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
 
             {/* QR Code Payment */}
@@ -624,6 +720,15 @@ function QPayPaymentContent() {
               </CardHeader>
               
               <CardContent className="space-y-6">
+                {/* Debug Info */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Debug:</strong> Status: {paymentStatus.status}, 
+                    QR Data: {paymentStatus.qrData ? 'Present' : 'Missing'}, 
+                    Amount: {paymentStatus.qrData?.amount}
+                  </p>
+                </div>
+                
                 {/* Loading State */}
                 {paymentStatus.status === 'loading' && (
                   <div className="text-center py-12">
@@ -635,6 +740,14 @@ function QPayPaymentContent() {
                 {/* QR Code Display */}
                 {paymentStatus.status === 'qr_generated' && paymentStatus.qrData && (
                   <div className="space-y-6">
+                    {/* Debug Info */}
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <p className="text-sm text-green-800">
+                        <strong>QR Display Active:</strong> Status: {paymentStatus.status}, 
+                        QR Data: {paymentStatus.qrData ? 'Present' : 'Missing'}, 
+                        Amount: {paymentStatus.qrData?.amount}
+                      </p>
+                    </div>
                     {/* QR Code */}
                     <div className="text-center">
                       <div className="bg-white p-6 rounded-lg border inline-block shadow-lg">
@@ -695,7 +808,7 @@ function QPayPaymentContent() {
                       </ol>
                     </div>
 
-                    {/* QR Text
+                    {/* QR Text */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">QR Text</label>
                       <div className="flex gap-2">
@@ -713,9 +826,9 @@ function QPayPaymentContent() {
                           <Copy className="w-4 h-4" />
                         </Button>
                       </div>
-                    </div> */}
+                    </div>
 
-                    {/* Action Buttons
+                    {/* Action Buttons */}
                     <div className="flex gap-3">
                       <Button 
                         onClick={() => openDeeplink(paymentStatus.qrData.qPay_shortUrl || paymentStatus.qrData.deeplink)}
@@ -733,9 +846,25 @@ function QPayPaymentContent() {
                         disabled={!paymentStatus.qrData.qPay_shortUrl && !paymentStatus.qrData.web_url}
                       >
                         <ExternalLink className="w-4 h-4 mr-2" />
-                        Web Payment
+                        Open in Browser
                       </Button>
-                    </div> */}
+                    </div>
+
+                    {/* Callback Simulate Button - For Testing */}
+                    <div className="border-t pt-4">
+                      <Button 
+                        onClick={() => simulatePaymentCallback()}
+                        className="w-full"
+                        variant="secondary"
+                        size="sm"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Simulate Payment Success (Testing)
+                      </Button>
+                      <p className="text-xs text-gray-500 text-center mt-2">
+                        Use this button to test the payment flow without making real payments
+                      </p>
+                    </div>
 
                     {/* Payment Status Monitor */}
                     <div className={`border rounded-lg p-4 ${
