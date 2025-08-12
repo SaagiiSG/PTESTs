@@ -65,7 +65,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         await connectMongoose();
 
         const customUser = user as any;
-        let dbUser = await User.findOne({ email: customUser.email }) || await User.findOne({ phoneNumber: customUser.phoneNumber });
+        let dbUser = await User.findOne({ email: customUser.email });
 
         if (!dbUser && account?.provider === 'google') {
           dbUser = await User.create({
@@ -73,125 +73,68 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             email: customUser.email,
           });
           console.log('SIGNIN CALLBACK - Created new Google user:', { id: dbUser._id, name: dbUser.name, email: dbUser.email });
-        } else if (!dbUser && customUser.phoneNumber) {
-          dbUser = await User.findOne({ phoneNumber: customUser.phoneNumber });
-          if (!dbUser) {
-            throw new Error('User not found after phone verification');
-          }
         } else if (!dbUser) {
-          throw new Error('User not found');
+          // For credential logins, the user should already exist.
+          // The authorize callback handles the user lookup.
+          dbUser = await User.findOne({ email: customUser.email });
+          if (!dbUser) {
+            return false; // Deny sign-in if user not found
+          }
         }
 
-        // Ensure the user object has the _id field set
-        customUser._id = dbUser._id;
-        console.log('SIGNIN CALLBACK - returning true for user:', { id: dbUser._id, name: dbUser.name, isAdmin: dbUser.isAdmin });
+        // Ensure the user object passed to the jwt callback has the id
+        user.id = dbUser._id.toString();
+        (user as any).isAdmin = dbUser.isAdmin;
+
+
+        console.log('SIGNIN CALLBACK - returning true for user:', { id: user.id, name: user.name, isAdmin: (user as any).isAdmin });
         return true;
       } catch (error) {
         console.error('signIn callback error:', error);
         return false;
       }
     },
-    async jwt({ token, user, trigger }) {
-      console.log('JWT CALLBACK - trigger:', trigger);
-      console.log('JWT CALLBACK - user:', user ? { id: (user as any)._id, email: (user as any).email, phoneNumber: (user as any).phoneNumber, isAdmin: (user as any).isAdmin } : 'no user');
-      console.log('JWT CALLBACK - token before:', { id: token.id, email: token.email, phoneNumber: (token as any).phoneNumber, isAdmin: (token as any).isAdmin });
-      
-      if (user) {
-        const customUser = user as any;
-        
-        // For Google users, we need to ensure we have the correct user ID
-        let userId = customUser._id;
-        
-        // If _id is not set (which can happen with Google auth), try to find the user by email
-        if (!userId && customUser.email) {
-          try {
+    async jwt({ token, user }) {
+        // On successful sign-in, add the user's ID and admin status to the token
+        if (user) {
+            token.id = user.id;
+            token.isAdmin = (user as any).isAdmin;
+        }
+
+        // If the token has an ID, verify it against the database
+        if (token.id) {
             await connectMongoose();
-            const dbUser = await User.findOne({ email: customUser.email });
-            if (dbUser) {
-              userId = dbUser._id;
+            const dbUser = await User.findById(token.id);
+            if (!dbUser) {
+                // User not found, invalidate the token by returning null
+                return null;
             }
-          } catch (error) {
-            console.error('Error finding user by email in JWT callback:', error);
-          }
+        } else {
+            // No token ID, invalidate the token
+            return null;
         }
-        
-        // IMPORTANT: Only update the token if we have valid user data
-        if (userId) {
-          const newToken = {
-            ...token, // Preserve existing token data
-            id: userId.toString(),
-            email: customUser.email,
-            phoneNumber: customUser.phoneNumber,
-            isAdmin: customUser.isAdmin,
-            iat: Math.floor(Date.now() / 1000),
-            exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
-          };
-          console.log('JWT CALLBACK - UPDATED TOKEN:', newToken);
-          return newToken;
-        }
-      }
-      
-      // If no user is provided, return the existing token
-      console.log('JWT CALLBACK - token after (no user):', { id: token.id, email: token.email, phoneNumber: (token as any).phoneNumber, isAdmin: (token as any).isAdmin });
-      return token;
+
+        return token;
     },
     async session({ session, token }) {
-      console.log('SESSION CALLBACK - token:', { id: token.id, email: token.email, phoneNumber: (token as any).phoneNumber, isAdmin: (token as any).isAdmin });
-      
-      try {
-        await connectMongoose();
+        if (token && token.id) {
+            session.user.id = token.id as string;
+            (session.user as any).isAdmin = token.isAdmin as boolean;
 
-        // CRITICAL FIX: Always validate the user from the database using the token ID
-        let dbUser = null;
-        
-        if (token.id) {
-          dbUser = await User.findById(token.id);
-          console.log('SESSION CALLBACK - found user by ID:', dbUser ? { id: dbUser._id, name: dbUser.name, isAdmin: dbUser.isAdmin } : 'not found');
-        }
-        
-        // If not found by ID, try by phone number or email as fallback
-        if (!dbUser) {
-          if ((token as any)?.phoneNumber) {
-            dbUser = await User.findOne({ phoneNumber: (token as any).phoneNumber });
-            console.log('SESSION CALLBACK - found user by phoneNumber:', dbUser ? { id: dbUser._id, name: dbUser.name, isAdmin: dbUser.isAdmin } : 'not found');
-          } else if (token?.email) {
-            dbUser = await User.findOne({ email: token.email });
-            console.log('SESSION CALLBACK - found user by email:', dbUser ? { id: dbUser._id, name: dbUser.name, isAdmin: dbUser.isAdmin } : 'not found');
-          }
-        }
-
-        if (dbUser) {
-          // CRITICAL: Always use the database user data, not the token data
-          session.user.id = String(dbUser._id);
-          (session.user as any).needsProfileSetup = !dbUser.name || !dbUser.dateOfBirth || !dbUser.gender || !dbUser.education || !dbUser.family || !dbUser.position;
-          (session.user as any).name = dbUser.name;
-          (session.user as any).dateOfBirth = dbUser.dateOfBirth;
-          (session.user as any).gender = dbUser.gender;
-          (session.user as any).education = dbUser.education;
-          (session.user as any).family = dbUser.family;
-          (session.user as any).position = dbUser.position;
-          (session.user as any).email = dbUser.email;
-          (session.user as any).phoneNumber = dbUser.phoneNumber;
-          (session.user as any).isAdmin = dbUser.isAdmin; // CRITICAL: This ensures admin status is always correct
-          console.log('SESSION CALLBACK - User data populated from DB:', { id: session.user.id, name: (session.user as any).name, email: (session.user as any).email, isAdmin: (session.user as any).isAdmin });
+            await connectMongoose();
+            const dbUser = await User.findById(token.id);
+            if (dbUser) {
+                session.user.name = dbUser.name;
+                session.user.email = dbUser.email;
+                (session.user as any).needsProfileSetup = !dbUser.name || !dbUser.dateOfBirth || !dbUser.gender || !dbUser.education || !dbUser.family || !dbUser.position;
+            } else {
+                return null; // User not found, invalidate session
+            }
         } else {
-          console.error('SESSION CALLBACK - No user found for token:', token);
-          // If no user is found, return limited session data
-          if (token.email) {
-            (session.user as any).email = token.email;
-          }
-          // CRITICAL: Ensure admin status is false if user not found
-          (session.user as any).isAdmin = false;
+            return null; // No token or token ID, invalidate session
         }
 
-        console.log('SESSION CALLBACK - final session:', { id: session.user.id, name: (session.user as any).name, isAdmin: (session.user as any).isAdmin });
         return session;
-      } catch (error) {
-        console.error('Session callback error:', error);
-        // CRITICAL: Ensure admin status is false on error
-        (session.user as any).isAdmin = false;
-        return session;
-      }
     },
     async redirect({ url, baseUrl }) {
       // Allow relative callback URLs

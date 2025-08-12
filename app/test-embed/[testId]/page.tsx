@@ -1,113 +1,66 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, Lock, ArrowLeft } from 'lucide-react';
+import { XCircle, LogIn, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { use } from 'react';
 
 export default function TestEmbedPage({ params }: { params: Promise<{ testId: string }> }) {
   const resolvedParams = use(params);
   const [embedCode, setEmbedCode] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [hasAccess, setHasAccess] = useState(false);
-  const [checkingAccess, setCheckingAccess] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState(true);
   const [uniqueCode, setUniqueCode] = useState<string | null>(null);
   const { data: session } = useSession();
   const router = useRouter();
 
   useEffect(() => {
     const checkAccessAndLoadEmbed = async () => {
+      if (!session) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        console.log('🔍 Checking access for test:', resolvedParams.testId);
-        
-        // First check if user has access to this test
         const accessRes = await fetch('/api/verify-purchase', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ testId: resolvedParams.testId }),
         });
 
-        console.log('Access check response status:', accessRes.status);
-
         if (accessRes.ok) {
           const accessData = await accessRes.json();
-          console.log('Access check response:', accessData);
-          console.log('Unique code received:', accessData.uniqueCode);
-          console.log('Has access:', accessData.hasAccess);
           setHasAccess(accessData.hasAccess);
           setUniqueCode(accessData.uniqueCode);
-          
+
           if (accessData.hasAccess) {
-            console.log('✅ User has access, loading embed code...');
-            // User has access, load the embed code
             const embedRes = await fetch(`/api/protected-tests/${resolvedParams.testId}/embed`);
-            
-            console.log('Embed API response status:', embedRes.status);
-            
             if (embedRes.ok) {
               const embedData = await embedRes.json();
-              console.log('Embed data received:', embedData);
-              console.log('Embed code length:', embedData.embedCode?.length || 0);
               setEmbedCode(embedData.embedCode);
             } else {
-              const errorText = await embedRes.text();
-              console.error('Embed API error:', errorText);
               toast.error('Failed to load test content');
-            }
-          } else {
-            console.log('❌ User does not have access');
-            // TEMPORARY: Bypass access check for testing
-            console.log('🔄 TEMPORARY: Bypassing access check for testing...');
-            const embedRes = await fetch(`/api/protected-tests/${resolvedParams.testId}/embed`);
-            if (embedRes.ok) {
-              const embedData = await embedRes.json();
-              console.log('Embed data received (bypass):', embedData);
-              setEmbedCode(embedData.embedCode);
-              setHasAccess(true); // Force access for testing
             }
           }
         } else {
-          const errorText = await accessRes.text();
-          console.error('Access check error:', errorText);
           setHasAccess(false);
-          
-          // Fallback: Try to load embed code anyway for testing
-          console.log('🔄 Fallback: Trying to load embed code despite access check failure...');
-          try {
-            const embedRes = await fetch(`/api/protected-tests/${resolvedParams.testId}/embed`);
-            if (embedRes.ok) {
-              const embedData = await embedRes.json();
-              console.log('Embed data received (fallback):', embedData);
-              setEmbedCode(embedData.embedCode);
-              setHasAccess(true); // Force access for testing
-            }
-          } catch (fallbackError) {
-            console.error('Fallback embed loading failed:', fallbackError);
-          }
         }
       } catch (error) {
         console.error('Error checking access:', error);
         setHasAccess(false);
         toast.error('Failed to verify access');
       } finally {
-        setLoading(false);
-        setCheckingAccess(false);
+        setIsLoading(false);
       }
     };
 
-    if (session) {
-      checkAccessAndLoadEmbed();
-    } else {
-      setLoading(false);
-      setCheckingAccess(false);
-    }
+    checkAccessAndLoadEmbed();
   }, [resolvedParams.testId, session]);
 
-  if (loading || checkingAccess) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
         <div className="text-center">
@@ -123,10 +76,10 @@ export default function TestEmbedPage({ params }: { params: Promise<{ testId: st
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
           <CardContent className="p-6 text-center">
-            <Lock className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
+            <LogIn className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Let's Get Started!</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              You need to be logged in to access this test.
+              Please log in to begin your test.
             </p>
             <Button onClick={() => router.push('/login')} className="inline-flex items-center justify-center w-full">
               <span className="font-semibold">Login</span>
@@ -142,10 +95,10 @@ export default function TestEmbedPage({ params }: { params: Promise<{ testId: st
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
           <CardContent className="p-6 text-center">
-            <Shield className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+            <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Access Required</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              You don't have access to this test. Please purchase it first.
+              It looks like you don't have access to this test. You can purchase it to get started.
             </p>
             <div className="space-y-2">
               <Button 
@@ -170,9 +123,7 @@ export default function TestEmbedPage({ params }: { params: Promise<{ testId: st
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Test Content */}
       <div className="w-full">
-        {/* Back Button */}
         <div className="absolute top-4 left-4 z-100">
           <Link href="/Tests" className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-gray-800 rounded-lg px-3 py-2 shadow-lg">
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -180,7 +131,6 @@ export default function TestEmbedPage({ params }: { params: Promise<{ testId: st
           </Link>
         </div>
 
-        {/* Unique Code Display */}
         {uniqueCode && (
           <div className="absolute top-4 right-4 z-50">
             <div className="flex items-center space-x-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
@@ -207,60 +157,22 @@ export default function TestEmbedPage({ params }: { params: Promise<{ testId: st
         )}
 
         {embedCode ? (
-          <>
-            {/* Debug info */}
-            <div className="absolute top-20 left-4 z-50 bg-blue-100 p-2 rounded text-xs debug-info">
-              ✅ Embed code loaded ({embedCode.length} chars)
-              <br />
-              Preview: {embedCode.substring(0, 100)}...
-            </div>
-            
-            <div 
-              className="w-full h-[150vh] pt-16 bg-white"
-              style={{ 
-                position: 'relative',
-                overflow: 'visible'
-              }}
-              dangerouslySetInnerHTML={{ __html: embedCode }}
-              ref={(el) => {
-                if (el && embedCode) {
-                  console.log('🎯 Embed code loaded, executing scripts...');
-                  // Execute any scripts in the embed code
-                  const scripts = el.querySelectorAll('script');
-                  scripts.forEach(script => {
-                    const newScript = document.createElement('script');
-                    if (script.src) {
-                      newScript.src = script.src;
-                      console.log('📜 Loading external script:', script.src);
-                    } else {
-                      newScript.textContent = script.textContent;
-                      console.log('📜 Loading inline script:', script.textContent?.substring(0, 50) + '...');
-                    }
-                    document.head.appendChild(newScript);
-                  });
-                  
-                  // Hide the debug info when content loads
-                  const debugInfo = document.querySelector('.debug-info');
-                  if (debugInfo) {
-                    setTimeout(() => {
-                      (debugInfo as HTMLElement).style.display = 'none';
-                    }, 3000);
-                  }
-                }
-              }}
-            />
-          </>
+          <div 
+            className="w-full h-[150vh] pt-16 bg-white"
+            style={{ 
+              position: 'relative',
+              overflow: 'visible'
+            }}
+            dangerouslySetInnerHTML={{ __html: embedCode }}
+          />
         ) : (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600 dark:text-gray-400">Loading test content...</p>
-            <p className="text-sm text-gray-500 mt-2">Debug: hasAccess={hasAccess.toString()}, embedCode={embedCode ? 'exists' : 'null'}</p>
-            <p className="text-sm text-gray-500 mt-2">Test ID: {resolvedParams.testId}</p>
-            <p className="text-sm text-gray-500 mt-2">Session: {session ? 'logged in' : 'not logged in'}</p>
           </div>
         )}
         
       </div>
     </div>
   );
-} 
+}

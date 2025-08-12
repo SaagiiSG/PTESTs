@@ -81,29 +81,9 @@ export default function AdminSidebarNav({ isCollapsed, onToggle }: AdminSidebarN
   const isActive = (href: string) => pathname === href;
 
   return (
-    <nav className="flex flex-col gap-4">
-      {/* Collapse Toggle Button */}
-      <div className="flex justify-end mb-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onToggle}
-          className="h-8 w-8 p-0"
-        >
-          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </Button>
-      </div>
-
-      {/* Simple Admin Header */}
-      <div className="mb-4 p-3 border-b">
-        <div className="flex items-center gap-2">
-          <Shield className="w-5 h-5 text-blue-600" />
-          {!isCollapsed && <h3 className="font-medium text-sm">Admin</h3>}
-        </div>
-      </div>
-
+    <nav className="flex flex-col h-full w-full">
       {/* Navigation Items */}
-      <div className="space-y-1">
+      <div className="space-y-3 flex-1 w-full">
         {navItems.map(({ name, href, icon: Icon }) => {
           const active = isActive(href);
           return (
@@ -111,11 +91,11 @@ export default function AdminSidebarNav({ isCollapsed, onToggle }: AdminSidebarN
               key={name}
               asChild
               variant={active ? "default" : "ghost"}
-              className={`w-full justify-start h-10 px-3 ${isCollapsed ? 'px-2' : 'px-3'}`}
+              className={`w-full justify-start h-14 ${isCollapsed ? 'px-3 mx-auto w-16' : 'px-4'}`}
               title={isCollapsed ? t(name) : undefined}
             >
               <Link href={href} className="flex items-center gap-3 w-full">
-                <Icon className="w-4 h-4" />
+                <Icon className={`${isCollapsed ? 'w-12 h-12' : 'w-8 h-8'}`} />
                 {!isCollapsed && <span className="text-sm">{t(name)}</span>}
               </Link>
             </Button>
@@ -124,8 +104,8 @@ export default function AdminSidebarNav({ isCollapsed, onToggle }: AdminSidebarN
       </div>
       
       {/* Theme and Language Controls */}
-      <div className="space-y-2">
-        {!isCollapsed && <LangToggle variant="compact" className="w-full h-8" />}
+      <div className="space-y-2 mt-auto w-full">
+      <LangToggle variant="compact" className="w-full h-8" />
       </div>
     </nav>
   );

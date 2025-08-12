@@ -46,35 +46,11 @@ export default function LoginPage() {
       identifier = `+${values.countryCodeDigits}${values.identifier}`;
     }
 
-    // Aggressive session clearing
-    console.log('Clearing all sessions and storage...');
-    
-    // Clear all browser storage
-    localStorage.clear();
-    sessionStorage.clear();
-    
-    // Clear all cookies including NextAuth specific ones
-    document.cookie.split(";").forEach(function(c) { 
-      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-    });
-    
-    // Clear NextAuth specific cookies
-    document.cookie = "next-auth.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie = "next-auth.csrf-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie = "next-auth.callback-url=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    
-    // First sign out to clear any existing session
-    await signOut({ redirect: false });
-
-    console.log('Signing in with:', { identifier, isEmail });
     const result = await signIn('credentials', {
       redirect: false,
       [isEmail ? 'email' : 'phoneNumber']: identifier,
       password: values.password,
-      callbackUrl: `/home?t=${Date.now()}`, // Force new session
     });
-
-    console.log('SIGN IN RESULT →', result);
 
     if (result?.error) {
       toast.error(result.error || 'Login failed. Please check your credentials.');

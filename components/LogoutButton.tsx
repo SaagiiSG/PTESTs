@@ -25,10 +25,10 @@ export default function LogoutButton() {
     <Button
       variant="ghost"
       onClick={handleLogout}
-      className="px-4 py-4 h-10 rounded-lg mt-4 text-md border-red-600 bg-red-200/80 border-[1px] hover:bg-red-200/100"
+      className="px-4 py-4 h-10 rounded-lg mt-4 text-md dark:bg-red-600/80 border-red-600 bg-red-200/80 border-[1px] hover:bg-red-200/100 w-32"
     >
-      <span className="flex flex-row items-center justify-center gap-2">
-        <LogOut />
+      <span className="flex flex-row items-center justify-center gap-2 dark:text-white text-black">
+        <LogOut className="w-4 h-4" />
         <span>Log out</span>
       </span>
     </Button>
