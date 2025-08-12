@@ -55,25 +55,25 @@ function SettingsPageContent() {
                     onClick={() => setTheme('light')}
                     className="h-9 px-3"
                   >
-                    <Sun className="w-4 h-4 mr-2" />
+                    <Sun className="w-4 h-4 mr-2 inline-block" />
                     Light
                   </Button>
                   <Button
                     variant={theme === 'dark' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setTheme('dark')}
-                    className="h-9 px-3"
+                    className="h-9 px-3 inline-block"
                   >
-                    <Moon className="w-4 h-4 mr-2" />
+                    <Moon className="w-4 h-4 mr-2 inline-block" />
                     Dark
                   </Button>
                   <Button
                     variant={theme === 'system' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setTheme('system')}
-                    className="h-9 px-3"
+                    className="h-9 px-3 inline-block"
                   >
-                    <Globe className="w-4 h-4 mr-2" />
+                    <Globe className="w-4 h-4 mr-2 inline-block" />
                     System
                   </Button>
                 </div>

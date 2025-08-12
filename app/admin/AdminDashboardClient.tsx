@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, BookOpen, GraduationCap, DollarSign, TrendingUp, Activity, Plus, ArrowRight, Settings, BarChart3, Eye, Edit, Trash2, Download } from 'lucide-react';
+import { Users, BookOpen, GraduationCap, DollarSign, TrendingUp, Activity, Plus, ArrowRight, Settings, BarChart3, Eye, Edit, Trash2, Download, TestTube } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguage } from '@/lib/language';
 import { LineChart as MuiLineChart } from '@mui/x-charts/LineChart';
@@ -33,6 +33,44 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
   const [timeRange, setTimeRange] = useState('30');
   const [isLoading, setIsLoading] = useState(false);
   const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [recentPayments, setRecentPayments] = useState<any[]>([]);
+  const [isLoadingPayments, setIsLoadingPayments] = useState(true);
+  const [totalTests, setTotalTests] = useState<number>(0);
+  const [totalRevenue, setTotalRevenue] = useState<number>(0);
+  const [monthlyRevenue, setMonthlyRevenue] = useState<any>({});
+  const [monthlyUsers, setMonthlyUsers] = useState<any>({});
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Fetch dashboard data (total tests and revenue)
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        console.log('🔄 Fetching dashboard data...');
+        
+        // Fetch total tests
+        const testsResponse = await fetch('/api/admin/tests');
+        if (testsResponse.ok) {
+          const testsData = await testsResponse.json();
+          console.log('📝 Tests data:', testsData);
+          setTotalTests(testsData.totalTests || 0);
+        }
+
+        // Fetch revenue data
+        const revenueResponse = await fetch('/api/admin/analytics/payments');
+        if (revenueResponse.ok) {
+          const revenueData = await revenueResponse.json();
+          console.log('💰 Revenue data:', revenueData);
+          setTotalRevenue(revenueData.totalRevenue || 0);
+          setMonthlyRevenue(revenueData.monthlyRevenue || {});
+          setMonthlyUsers(revenueData.monthlyUsers || {});
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch dashboard data:', error);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   // Fetch analytics data
   useEffect(() => {
@@ -50,6 +88,37 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
 
     fetchAnalytics();
   }, [timeRange]);
+
+  // Fetch recent payments
+  useEffect(() => {
+    const fetchRecentPayments = async () => {
+      try {
+        setIsLoadingPayments(true);
+        console.log('🔄 Fetching recent payments...');
+        const response = await fetch('/api/admin/analytics/payments');
+        if (response.ok) {
+          const data = await response.json();
+          console.log('📊 Recent payments API response:', data);
+          if (data.recentPayments && Array.isArray(data.recentPayments)) {
+            // Take the 3 most recent payments
+            const recent3 = data.recentPayments.slice(0, 3);
+            console.log('💰 Processed recent 3 payments:', recent3);
+            setRecentPayments(recent3);
+          } else {
+            console.log('❌ No recent payments data found in response');
+          }
+        } else {
+          console.error('❌ Failed to fetch recent payments:', response.status);
+        }
+      } catch (error) {
+        console.error('❌ Error fetching recent payments:', error);
+      } finally {
+        setIsLoadingPayments(false);
+      }
+    };
+
+    fetchRecentPayments();
+  }, []);
 
   // Simple data processing - no complex MongoDB objects
   const safeStats = {
@@ -107,11 +176,59 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
             </SelectContent>
           </Select> */}
           <Button 
-            onClick={() => window.location.reload()} 
+            onClick={() => {
+              // Refresh all dashboard data
+              const refreshAllData = async () => {
+                try {
+                  setIsRefreshing(true);
+                  console.log('🔄 Refreshing all dashboard data...');
+                  
+                  // Refresh dashboard data
+                  const testsResponse = await fetch('/api/admin/tests');
+                  if (testsResponse.ok) {
+                    const testsData = await testsResponse.json();
+                    setTotalTests(testsData.totalTests || 0);
+                  }
+
+                  const revenueResponse = await fetch('/api/admin/analytics/payments');
+                  if (revenueResponse.ok) {
+                    const revenueData = await revenueResponse.json();
+                    setTotalRevenue(revenueData.totalRevenue || 0);
+                    setMonthlyRevenue(revenueData.monthlyRevenue || {});
+                    setMonthlyUsers(revenueData.monthlyUsers || {});
+                  }
+
+                  // Refresh recent payments
+                  if (revenueResponse.ok) {
+                    const revenueData = await revenueResponse.json();
+                    if (revenueData.recentPayments && Array.isArray(revenueData.recentPayments)) {
+                      const recent3 = revenueData.recentPayments.slice(0, 3);
+                      setRecentPayments(recent3);
+                    }
+                  }
+
+                  console.log('✅ All dashboard data refreshed!');
+                } catch (error) {
+                  console.error('❌ Error refreshing dashboard data:', error);
+                } finally {
+                  setIsRefreshing(false);
+                }
+              };
+
+              refreshAllData();
+            }} 
             variant="outline"
             size="sm"
+            disabled={isRefreshing}
           >
-            Refresh
+            {isRefreshing ? (
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                Refreshing...
+              </div>
+            ) : (
+              'Refresh'
+            )}
           </Button>
         </div>
       </div>
@@ -144,28 +261,42 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
           </CardContent>
         </Card>
 
+        {/* Total Tests Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Tests</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
+            <TestTube className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{safeStats.totalTests}</div>
+            <div className="text-2xl font-bold">
+              {isRefreshing ? (
+                <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              ) : (
+                totalTests
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
-              Available tests
+              Available tests for users
             </p>
           </CardContent>
         </Card>
 
+        {/* Total Revenue Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${safeStats.totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              {isRefreshing ? (
+                <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              ) : (
+                `₮${totalRevenue.toLocaleString()}`
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
-              Total earnings
+              Total platform revenue
             </p>
           </CardContent>
         </Card>
@@ -186,7 +317,45 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
             <Tabs defaultValue="users" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="users">Users</TabsTrigger>
-                <TabsTrigger value="payments">Payments</TabsTrigger>
+                <TabsTrigger value="payments" className="flex items-center gap-2">
+                  <DollarSign className="w-4 h-4" />
+                  Recent Payments
+                  <Button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      // Refresh recent payments
+                      const fetchRecentPayments = async () => {
+                        try {
+                          setIsLoadingPayments(true);
+                          console.log('🔄 Manually refreshing recent payments...');
+                          const response = await fetch('/api/admin/analytics/payments');
+                          if (response.ok) {
+                            const data = await response.json();
+                            console.log('📊 Refreshed payments API response:', data);
+                            if (data.recentPayments && Array.isArray(data.recentPayments)) {
+                              const recent3 = data.recentPayments.slice(0, 3);
+                              console.log('💰 Refreshed recent 3 payments:', recent3);
+                              setRecentPayments(recent3);
+                            }
+                          }
+                        } catch (error) {
+                          console.error('❌ Error refreshing payments:', error);
+                        } finally {
+                          setIsLoadingPayments(false);
+                        }
+                      };
+                      fetchRecentPayments();
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 hover:bg-gray-200"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </Button>
+                </TabsTrigger>
               </TabsList>
               
               <TabsContent value="users" className="mt-4">
@@ -224,25 +393,32 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
               </TabsContent>
               
               <TabsContent value="payments" className="mt-4">
+             
+                
                 <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {safeRecentPurchases.length > 0 ? (
-                    safeRecentPurchases.map((purchase: any, index: number) => (
-                      <div key={purchase._id || index} className="p-3 bg-gray-50 rounded-lg border">
+                  {isLoadingPayments || isRefreshing ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <DollarSign className="w-12 h-12 mx-auto mb-2 text-gray-300 animate-spin" />
+                      <p>Loading recent payments...</p>
+                    </div>
+                  ) : recentPayments.length > 0 ? (
+                    recentPayments.map((payment: any, index: number) => (
+                      <div key={payment._id || index} className="p-3 bg-gray-50 rounded-lg border">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <p className="font-medium text-sm">
-                              {String(purchase.courseTitle || purchase.testTitle || 'Unknown Item')}
+                              {String(payment.itemName || payment.courseTitle || payment.testTitle || 'Unknown Item')}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {String(purchase.userName || purchase.userEmail || 'Unknown User')}
+                              {String(payment.customerName || payment.userName || payment.userEmail || 'Unknown User')}
                             </p>
                           </div>
                           <div className="text-right">
                             <p className="font-semibold text-green-600">
-                              ${(Number(purchase.amount) || 0).toFixed(2)}
+                              ₮{(Number(payment.payment_amount) || 0).toLocaleString()}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {formatDate(purchase.createdAt || purchase.purchaseDate)}
+                              {formatDate(payment.payment_date || payment.createdAt)}
                             </p>
                           </div>
                         </div>
@@ -251,7 +427,7 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
                   ) : (
                     <div className="text-center py-8 text-gray-500">
                       <DollarSign className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                      <p>No recent purchases</p>
+                      <p>No recent payments</p>
                     </div>
                   )}
                 </div>
@@ -274,7 +450,7 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
               {/* Row 1 */}
               <Button asChild variant="outline" className="w-[48%] h-[100%] p-4 flex-col gap-2">
                 <Link href="/admin/courses">
-                  <Plus className="w-6 h-6 text-white " />
+                  <Plus className="w-6 h-6 dark:text-white text-black" />
                   <span className="text-sm font-medium dark:text-white">Create Course </span>
                 </Link>
               </Button>
@@ -317,13 +493,31 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
             <CardDescription>New user registrations over time</CardDescription>
           </CardHeader>
           <CardContent>
-            {chartData.length > 0 ? (
+            {isRefreshing ? (
+              <div className="h-64 flex items-center justify-center">
+                <div className="space-y-4">
+                  <div className="h-48 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mx-auto animate-pulse"></div>
+                </div>
+              </div>
+            ) : Object.keys(monthlyUsers).length > 0 ? (
               <div className="h-64">
                 <MuiLineChart
-                  xAxis={[{ data: xAxis, scaleType: 'band' }]}
+                  xAxis={[{ 
+                    data: Object.keys(monthlyUsers).map(monthKey => {
+                      try {
+                        const [year, month] = monthKey.split('-');
+                        const date = new Date(parseInt(year), parseInt(month) - 1);
+                        return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                      } catch (error) {
+                        return monthKey;
+                      }
+                    }), 
+                    scaleType: 'band' 
+                  }]}
                   series={[
                     {
-                      data: userData,
+                      data: Object.values(monthlyUsers),
                       label: 'New Users',
                       color: '#3b82f6'
                     }
@@ -333,7 +527,7 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
               </div>
             ) : (
               <div className="h-64 flex items-center justify-center text-gray-500">
-                <p>No data available</p>
+                <p>No user data available</p>
               </div>
             )}
           </CardContent>
@@ -346,17 +540,35 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
               <DollarSign className="w-5 h-5" />
               Revenue Trends
             </CardTitle>
-            <CardDescription>Daily revenue over time</CardDescription>
+            <CardDescription>Monthly revenue from actual payments</CardDescription>
           </CardHeader>
           <CardContent>
-            {chartData.length > 0 ? (
+            {isRefreshing ? (
+              <div className="h-64 flex items-center justify-center">
+                <div className="space-y-4">
+                  <div className="h-48 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mx-auto animate-pulse"></div>
+                </div>
+              </div>
+            ) : Object.keys(monthlyRevenue).length > 0 ? (
               <div className="h-64">
                 <MuiBarChart
-                  xAxis={[{ data: xAxis, scaleType: 'band' }]}
+                  xAxis={[{ 
+                    data: Object.keys(monthlyRevenue).map(monthKey => {
+                      try {
+                        const [year, month] = monthKey.split('-');
+                        const date = new Date(parseInt(year), parseInt(month) - 1);
+                        return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                      } catch (error) {
+                        return monthKey;
+                      }
+                    }), 
+                    scaleType: 'band' 
+                  }]}
                   series={[
                     {
-                      data: revenueData,
-                      label: 'Revenue ($)',
+                      data: Object.values(monthlyRevenue),
+                      label: 'Monthly Revenue (₮)',
                       color: '#10b981'
                     }
                   ]}
@@ -365,7 +577,7 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
               </div>
             ) : (
               <div className="h-64 flex items-center justify-center text-gray-500">
-                <p>No data available</p>
+                <p>No revenue data available</p>
               </div>
             )}
           </CardContent>

@@ -7,17 +7,58 @@ import User from '@/app/models/user';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('🔍 Analytics Courses API called');
+    
     const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    console.log('📋 Session data:', {
+      exists: !!session,
+      user: session?.user ? {
+        id: session.user.id,
+        email: session.user.email,
+        name: (session.user as any).name,
+        isAdmin: (session.user as any).isAdmin
+      } : 'no user'
+    });
+    
+    if (!session?.user?.email && !(session?.user as any)?.phoneNumber) {
+      console.log('❌ No session or user email/phone found');
+      return NextResponse.json({ error: 'Unauthorized - No session' }, { status: 401 });
     }
 
-    // Check if user is admin
+    // Check if user is admin - try multiple authentication methods
     await connectMongoose();
-    const user = await User.findOne({ email: session.user.email });
-    if (!user?.isAdmin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    let user = null;
+    
+    if (session.user.email) {
+      user = await User.findOne({ email: session.user.email });
+    } else if ((session.user as any).phoneNumber) {
+      user = await User.findOne({ phoneNumber: (session.user as any).phoneNumber });
     }
+    
+    // Fallback: try to find user by ID if we have it
+    if (!user && session.user.id) {
+      user = await User.findById(session.user.id);
+    }
+    
+    console.log('👤 User lookup result:', {
+      found: !!user,
+      email: user?.email,
+      phone: user?.phoneNumber,
+      isAdmin: user?.isAdmin,
+      name: user?.name,
+      id: user?._id
+    });
+    
+    if (!user?.isAdmin) {
+      console.log('❌ User not found or not admin');
+      return NextResponse.json({ 
+        error: 'Forbidden - Not admin', 
+        userFound: !!user,
+        isAdmin: user?.isAdmin 
+      }, { status: 403 });
+    }
+
+    console.log('✅ Admin user authenticated, proceeding with analytics...');
 
     // Get all courses
     const courses = await Course.find({});
@@ -28,12 +69,12 @@ export async function GET(request: NextRequest) {
     // Calculate course statistics
     const courseStats = courses.map(course => {
       const courseProgresses = allUserProgress.filter(up => 
-        up.courses.some(cp => cp.courseId.toString() === course._id.toString())
+        up.courses?.some(cp => cp.courseId?.toString() === course._id.toString())
       );
       
       const totalEnrollments = courseProgresses.length;
       const completedEnrollments = courseProgresses.filter(up => {
-        const courseProgress = up.courses.find(cp => cp.courseId.toString() === course._id.toString());
+        const courseProgress = up.courses?.find(cp => cp.courseId?.toString() === course._id.toString());
         return courseProgress?.isCompleted || false;
       }).length;
       
@@ -44,7 +85,7 @@ export async function GET(request: NextRequest) {
       let completedCount = 0;
       
       courseProgresses.forEach(up => {
-        const courseProgress = up.courses.find(cp => cp.courseId.toString() === course._id.toString());
+        const courseProgress = up.courses?.find(cp => cp.courseId?.toString() === course._id.toString());
         if (courseProgress?.isCompleted && courseProgress.totalTimeSpent) {
           totalTime += courseProgress.totalTimeSpent;
           completedCount++;

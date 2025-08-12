@@ -36,9 +36,9 @@ export default function AdminLayoutClient({ children, admin }: AdminLayoutClient
           {/* Admin Info Card */}
           {admin && (
             <div className={`mb-6 p-4 bg-gray-100 rounded-2xl shadow flex flex-col items-center text-center ${
-              isSidebarCollapsed ? 'px-2' : 'px-4'
+              isSidebarCollapsed ? 'px-4 py-4' : 'px-4'
             }`}>
-              <User className="w-10 h-10 text-gray-500 mb-2" />
+              <User className="w-6 h-6 text-gray-500 mb-2" />
               {!isSidebarCollapsed && (
                 <>
                   <div className="font-bold text-gray-800 text-lg">{admin.name || 'Admin'}</div>

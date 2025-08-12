@@ -76,11 +76,41 @@ function CoursesPageContent() {
   const [sortBy, setSortBy] = useState<string>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [loading, setLoading] = useState(true);
+  const [courseRevenue, setCourseRevenue] = useState<number>(0);
 
   // Fetch real courses from API
   useEffect(() => {
     fetchCourses();
+    fetchCourseRevenue();
   }, []);
+
+  // Fetch real course revenue from payments
+  const fetchCourseRevenue = async () => {
+    try {
+      // Get all payments and filter for course payments only
+      const response = await fetch('/api/admin/analytics/payments');
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Filter for course payments only (not test payments)
+        let courseRevenue = 0;
+        if (data.recentPayments) {
+          data.recentPayments.forEach((payment: any) => {
+            // Check if this payment is for a course (not a test)
+            if (payment.courseId || payment.courseTitle || 
+                (payment.itemType && payment.itemType === 'course') ||
+                (payment.description && payment.description.toLowerCase().includes('course'))) {
+              courseRevenue += payment.payment_amount || 0;
+            }
+          });
+        }
+        
+        setCourseRevenue(courseRevenue);
+      }
+    } catch (error) {
+      console.error('Failed to fetch course revenue:', error);
+    }
+  };
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -517,10 +547,11 @@ function CoursesPageContent() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Value</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Course Revenue</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  ₮{courses.reduce((total, course) => total + (course.price || 0), 0).toLocaleString()}
+                  ₮{courseRevenue.toLocaleString()}
                 </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Actual revenue</p>
               </div>
               <div className="p-2 bg-yellow-100 rounded-lg">
                 <Award className="w-6 h-6 text-yellow-600" />
@@ -564,7 +595,7 @@ function CoursesPageContent() {
               
               <Button
                 variant="outline"
-                size="md"
+                size="sm"
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                 className="px-3"
               >

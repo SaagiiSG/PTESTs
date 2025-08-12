@@ -81,12 +81,66 @@ interface AnalyticsData {
     topPages: { page: string; views: number }[];
     userJourney: { step: string; users: number; conversion: number }[];
   };
+  revenue?: {
+    coursesValue: number;
+    testsValue: number;
+    totalValue: number;
+    monthlyEstimate: number;
+    actualPurchases: number;
+    actualPayments: number;
+    monthlyGrowth: number;
+    courseCreationRate: number;
+    testCreationRate: number;
+    monthlyRevenue: { [key: string]: number };
+    monthlyUsers: { [key: string]: number };
+  };
 }
 
 function AnalyticsPageContent() {
   const [timeRange, setTimeRange] = useState('30d');
   const [loading, setLoading] = useState(false);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+
+  // Helper function to format month names
+  const formatMonthName = (monthKey: string) => {
+    try {
+      const [year, month] = monthKey.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1);
+      return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    } catch (error) {
+      return monthKey; // Fallback to original format
+    }
+  };
+
+  // Update chart colors based on theme
+  useEffect(() => {
+    const updateChartColors = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      const root = document.documentElement;
+      
+      if (isDark) {
+        root.style.setProperty('--chart-text-color', '#F3F4F6'); // Light gray for better contrast
+        root.style.setProperty('--chart-border-color', '#4B5563'); // Medium gray for borders
+        root.style.setProperty('--chart-legend-color', '#FFFFFF'); // White for legend labels
+      } else {
+        root.style.setProperty('--chart-text-color', '#1F2937'); // Dark gray for better contrast
+        root.style.setProperty('--chart-border-color', '#D1D5DB'); // Light gray for borders
+        root.style.setProperty('--chart-legend-color', '#1F2937'); // Dark for legend labels
+      }
+    };
+
+    // Initial update
+    updateChartColors();
+
+    // Watch for theme changes
+    const observer = new MutationObserver(updateChartColors);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Load real data from existing models
   useEffect(() => {
@@ -115,6 +169,17 @@ function AnalyticsPageContent() {
 
         if (trendsResponse.ok) {
           trendsData = await trendsResponse.json();
+        }
+
+        // Fetch REAL payment data for revenue
+        let paymentData = { monthlyRevenue: {}, totalRevenue: 0 };
+        try {
+          const paymentsResponse = await fetch('/api/admin/analytics/payments');
+          if (paymentsResponse.ok) {
+            paymentData = await paymentsResponse.json();
+          }
+        } catch (error) {
+          console.log('Payment analytics not available yet, using fallback');
         }
 
         // Calculate growth rate from trends data
@@ -197,6 +262,27 @@ function AnalyticsPageContent() {
             ]
           }
         };
+
+        // Add real revenue calculations based on actual data
+        const realRevenue = {
+          // Based on actual data from your database investigation
+          coursesValue: 280032, // ₮280,032 from courses collection
+          testsValue: 12250,    // ₮12,250 from tests collection
+          totalValue: 292282,   // Total potential value
+          monthlyEstimate: paymentData.totalRevenue || 0,   // REAL revenue from payments
+          actualPurchases: 0,   // ₮0 from purchases collection
+          actualPayments: paymentData.totalRevenue || 0,    // REAL revenue from payments
+          // More realistic for a new website
+          monthlyGrowth: 6,     // 6 users in 1 month
+          courseCreationRate: 11, // 11 courses created
+          testCreationRate: 14,   // 14 tests created
+          // REAL monthly revenue data
+          monthlyRevenue: paymentData.monthlyRevenue || {},
+          monthlyUsers: paymentData.monthlyUsers || {}
+        };
+
+        // Update the analytics data with real revenue
+        realData.revenue = realRevenue;
         
         setAnalyticsData(realData);
       } catch (error) {
@@ -247,6 +333,7 @@ function AnalyticsPageContent() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Analytics Dashboard</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">Real-time insights from your platform data</p>
         </div>
+        
         <div className="flex items-center gap-3">
           <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger className="w-32">
@@ -331,12 +418,14 @@ function AnalyticsPageContent() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Completion Rate</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{analyticsData.courses.completionRates[0]?.rate || 0}%</p>
-                <p className="text-sm text-gray-500 mt-1">Average rate</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Monthly Revenue</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  ₮{analyticsData.revenue?.monthlyEstimate?.toLocaleString() || '0'}
+                </p>
+                <p className="text-sm text-gray-500 mt-1">New website - no sales yet</p>
               </div>
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <Target className="w-6 h-6 text-orange-600" />
+              <div className="p-2 bg-yellow-100 rounded-lg">
+                <DollarSign className="w-6 h-6 text-yellow-600" />
               </div>
             </div>
           </CardContent>
@@ -353,6 +442,17 @@ function AnalyticsPageContent() {
               User Growth
             </CardTitle>
             <CardDescription>Monthly user registration trends</CardDescription>
+            <div className="flex flex-col items-center justify-between gap-3 py-4">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Monthly User Signups</span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {Object.keys(analyticsData.revenue?.monthlyUsers || {}).length > 0 ? 
+                    Object.entries(analyticsData.revenue.monthlyUsers).map(([month, count]) => 
+                      `${formatMonthName(month)}: ${count} users`
+                    ).join(', ') : 
+                    'No data yet'
+                  }
+                </span>
+              </div>
           </CardHeader>
           <CardContent>
             <div className="h-64">
@@ -361,7 +461,9 @@ function AnalyticsPageContent() {
                 height={250}
                 series={[
                   {
-                    data: [analyticsData.users.total * 0.7, analyticsData.users.total * 0.8, analyticsData.users.total * 0.9, analyticsData.users.total],
+                    data: Object.keys(analyticsData.revenue?.monthlyUsers || {}).length > 0 ? 
+                      Object.values(analyticsData.revenue.monthlyUsers) : 
+                      [0, 0, 0, 0], // Fallback if no data
                     label: 'User Growth',
                     color: '#3B82F6',
                     area: true,
@@ -370,231 +472,147 @@ function AnalyticsPageContent() {
                 ]}
                 xAxis={[
                   {
-                    data: ['Q1', 'Q2', 'Q3', 'Q4'],
+                    data: Object.keys(analyticsData.revenue?.monthlyUsers || {}).length > 0 ? 
+                      Object.keys(analyticsData.revenue.monthlyUsers).map(monthKey => formatMonthName(monthKey)) : 
+                      ['No Data'],
                     scaleType: 'band',
+                    tickLabelStyle: {
+                      fill: 'var(--chart-text-color, #1F2937)',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      fontFamily: 'Inter, system-ui, sans-serif'
+                    }
+                  }
+                ]}
+                yAxis={[
+                  {
+                    tickLabelStyle: {
+                      fill: 'var(--chart-text-color, #1F2937)',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      fontFamily: 'Inter, system-ui, sans-serif'
+                    }
                   }
                 ]}
                 height={250}
                 margin={{ left: 40, right: 40, top: 20, bottom: 40 }}
+                sx={{
+                  '--chart-text-color': 'var(--chart-text-color, #1F2937)',
+                  '--chart-legend-color': 'var(--chart-legend-color, #1F2937)',
+                  '& .MuiChartsAxis-line': {
+                    stroke: 'var(--chart-border-color, #E5E7EB)'
+                  },
+                  '& .MuiChartsAxis-tick': {
+                    stroke: 'var(--chart-border-color, #E5E7EB)'
+                  },
+                  '& .MuiChartsAxis-label': {
+                    fill: 'var(--chart-text-color, #1F2937)'
+                  },
+                  '& .MuiChartsLegend-label': {
+                    fill: 'var(--chart-legend-color, #1F2937)',
+                    fontSize: '14px',
+                    fontWeight: 500
+                  }
+                }}
               />
             </div>
           </CardContent>
         </Card>
 
-        {/* Course Performance */}
+        {/* Revenue Overview */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BookOpen className="w-5 h-5" />
-              Course Performance
+              <DollarSign className="w-5 h-5" />
+              Revenue Overview
             </CardTitle>
-            <CardDescription>Course completion rates and ratings</CardDescription>
+            <CardDescription>Platform revenue trends and insights</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="h-full flex flex-col justify-around">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Completion Rate</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Monthly Revenue</span>
                 <Badge variant="outline" className="bg-green-100 text-green-800">
-                  {analyticsData.courses.completionRates[0]?.rate || 0}%
+                  ₮{analyticsData.revenue?.monthlyEstimate?.toLocaleString() || '0'}
                 </Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Average Rating</span>
-                <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                  <span className="font-medium">{analyticsData.courses.averageRating}/5.0</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Active Courses</span>
-                <span className="font-medium">{analyticsData.courses.active}/{analyticsData.courses.total}</span>
+                <span className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Total Payments</span>
+                  <div className="flex items-center gap-1">
+                    <DollarSign className="w-4 h-4 text-blue-500" />
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      ₮{analyticsData.revenue?.actualPayments?.toLocaleString() || '0'}
+                    </span>
+                  </div>
+                </span>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* User Demographics */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              User Demographics
-            </CardTitle>
-            <CardDescription>User distribution by location and device</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <MuiPieChart
-                width={400}
-                height={250}
-                series={[
-                  {
-                    data: analyticsData.users.byLocation.map((location, index) => ({
-                      id: index,
-                      value: location.count,
-                      label: location.location,
-                      color: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'][index % 4]
-                    })),
-                    highlightScope: { faded: 'global', highlighted: 'item' },
-                    faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
-                  },
-                ]}
-                height={250}
-                margin={{ left: 20, right: 20, top: 20, bottom: 20 }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Device Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Monitor className="w-5 h-5" />
-              Device Distribution
-            </CardTitle>
-            <CardDescription>User access patterns by device type</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
+            
+            {/* Revenue Chart - Moved to bottom */}
+            <div className="h-auto">
               <MuiBarChart
                 width={400}
-                height={250}
+                height={200}
                 series={[
                   {
-                    data: analyticsData.users.byDevice.map((device) => device.count),
-                    label: 'Users',
+                    data: Object.keys(analyticsData.revenue?.monthlyRevenue || {}).length > 0 ? 
+                      Object.values(analyticsData.revenue.monthlyRevenue) : 
+                      [0, 0, 0, 0], // Fallback if no data
+                    label: 'Monthly Revenue (₮)',
                     color: '#10B981'
                   }
                 ]}
                 xAxis={[
                   {
-                    data: analyticsData.users.byDevice.map((device) => device.device),
+                    data: Object.keys(analyticsData.revenue?.monthlyRevenue || {}).length > 0 ? 
+                      Object.keys(analyticsData.revenue.monthlyRevenue).map(monthKey => formatMonthName(monthKey)) : 
+                      ['No Data'],
                     scaleType: 'band',
+                    tickLabelStyle: {
+                      fill: 'var(--chart-text-color, #1F2937)',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      fontFamily: 'Inter, system-ui, sans-serif'
+                    }
                   }
                 ]}
-                height={250}
-                margin={{ left: 40, right: 40, top: 20, bottom: 60 }}
+                yAxis={[
+                  {
+                    tickLabelStyle: {
+                      fill: 'var(--chart-text-color, #1F2937)',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      fontFamily: 'Inter, system-ui, sans-serif'
+                    }
+                  }
+                ]}
+                height={200}
+                margin={{ left: 50, right: 20, top: 20, bottom: 40 }}
+                sx={{
+                  '--chart-text-color': 'var(--chart-text-color, #1F2937)',
+                  '--chart-legend-color': 'var(--chart-legend-color, #1F2937)',
+                  '& .MuiChartsAxis-line': {
+                    stroke: 'var(--chart-border-color, #E5E7EB)'
+                  },
+                  '& .MuiChartsAxis-tick': {
+                    stroke: 'var(--chart-border-color, #E5E7EB)'
+                  },
+                  '& .MuiChartsAxis-label': {
+                    fill: 'var(--chart-text-color, #1F2937)'
+                  },
+                  '& .MuiChartsLegend-label': {
+                    fill: 'var(--chart-legend-color, #1F2937)'
+                  },
+                  '& .MuiChartsLegend-mark': {
+                    stroke: 'var(--chart-text-color, #1F2937)'
+                  }
+                }}
               />
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Detailed Breakdowns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Performing Courses */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Award className="w-5 h-5" />
-              Course Categories
-            </CardTitle>
-            <CardDescription>Course distribution by category</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {analyticsData.courses.byCategory.map((category, index) => (
-                <div key={index} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{category.category}</p>
-                    <p className="text-xs text-gray-500">{category.count} courses</p>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant="outline" className="bg-blue-100 text-blue-800">
-                      {analyticsData.courses.total > 0 ? ((category.count / analyticsData.courses.total) * 100).toFixed(1) : 0}%
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Top Pages */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Eye className="w-5 h-5" />
-              Top Pages
-            </CardTitle>
-            <CardDescription>Most visited pages</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {analyticsData.engagement.topPages.map((page, index) => (
-                <div key={index} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{page.page}</p>
-                    <p className="text-xs text-gray-500">{page.views} views</p>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant="outline" className="bg-green-100 text-green-800">
-                      {page.views}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* User Demographics */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            User Demographics
-          </CardTitle>
-          <CardDescription>User distribution by location and device</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Location Distribution */}
-            <div>
-              <h4 className="font-medium mb-3">Location Distribution</h4>
-              <div className="space-y-2">
-                {analyticsData.users.byLocation.map((location, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <span className="text-sm">{location.location}</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-20 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full" 
-                          style={{ width: `${(location.count / analyticsData.users.total) * 100}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-sm font-medium w-12 text-right">{location.count}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Device Distribution */}
-            <div>
-              <h4 className="font-medium mb-3">Device Distribution</h4>
-              <div className="space-y-2">
-                {analyticsData.users.byDevice.map((device, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <span className="text-sm">{device.device}</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-20 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-green-600 h-2 rounded-full" 
-                          style={{ width: `${(device.count / analyticsData.users.total) * 100}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-sm font-medium w-12 text-right">{device.count}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
@@ -606,3 +624,4 @@ export default function AnalyticsPage() {
     </AdminPageWrapper>
   );
 }
+

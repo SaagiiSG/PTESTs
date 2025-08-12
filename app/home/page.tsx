@@ -27,15 +27,30 @@ async function fetchProtectedTestsClient() {
 
 async function fetchCoursesClient() {
   // Use the API's status filter to only fetch active courses
+  console.log('🔍 Fetching courses from API...');
   const res = await fetch('/api/courses?status=active');
+  console.log('📡 API response status:', res.status);
+  
   if (!res.ok) {
     const text = await res.text();
     console.error("API error (courses):", res.status, text);
     return [];
   }
-  const data = await res.json();
   
+  const data = await res.json();
+  console.log('📚 Raw courses data:', data);
   console.log(`📚 Active courses loaded: ${data.length} courses`);
+  
+  // Log each course for debugging
+  data.forEach((course: any, index: number) => {
+    console.log(`📖 Course ${index + 1}:`, {
+      id: course._id,
+      title: course.title,
+      status: course.status,
+      hasStatus: 'status' in course
+    });
+  });
+  
   return data;
 }
 

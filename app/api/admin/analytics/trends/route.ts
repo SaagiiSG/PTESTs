@@ -9,13 +9,25 @@ import Purchase from '@/app/models/purchase';
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.email) {
+    if (!session?.user?.email && !(session?.user as any)?.phoneNumber) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if user is admin
     await connectMongoose();
-    const user = await User.findOne({ email: session.user.email });
+    let user = null;
+    
+    if (session.user.email) {
+      user = await User.findOne({ email: session.user.email });
+    } else if ((session.user as any).phoneNumber) {
+      user = await User.findOne({ phoneNumber: (session.user as any).phoneNumber });
+    }
+    
+    // Fallback: try to find user by ID if we have it
+    if (!user && session.user.id) {
+      user = await User.findById(session.user.id);
+    }
+    
     if (!user?.isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }

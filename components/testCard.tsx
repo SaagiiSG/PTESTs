@@ -296,13 +296,13 @@ const TestCard: React.FC<TestCardProps> = ({
 
   return (
     <>
-      <div className={`block w-full ${className}`} onClick={handleCardClick}>
+      <div className={`block w-full ${className} relative overflow-hidden`} onClick={handleCardClick}>
         <Card 
-          className={`${getCardClasses()}`}
+          className={`${getCardClasses()} relative overflow-hidden isolate contain-layout`}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          <div className="flex flex-col sm:flex-row items-stretch h-full overflow-visible">
+          <div className="flex flex-col sm:flex-row items-stretch h-full overflow-hidden relative">
             {/* Image Section - Left Side */}
             <div className={`${getImageClasses()} sm:flex sm:items-stretch sm:self-stretch`}>
               {isLocalImage ? (
@@ -377,7 +377,7 @@ const TestCard: React.FC<TestCardProps> = ({
                   </div>
                   
                   {/* Price badge */}
-                  {typeof price === 'number' && (
+                  {typeof price === 'number' && price > 0 && (
                     <div className="flex-shrink-0">
                       <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white font-bold px-3 py-1.5 shadow-lg">
                         ₮{price}

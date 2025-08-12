@@ -73,15 +73,23 @@ export async function GET(req: Request) {
     
     let query = {};
     if (status === 'active') {
-      query = { status: 'active' };
+      // Include courses with status 'active' OR courses without status field (treat as active)
+      query = { 
+        $or: [
+          { status: 'active' },
+          { status: { $exists: false } }
+        ]
+      };
     } else if (status === 'inactive') {
       query = { status: 'inactive' };
     }
     // If no status filter, return all courses (for admin use)
     
     const courses = await Course.find(query).sort({ createdAt: -1 });
+    console.log(`📚 Found ${courses.length} courses with query:`, JSON.stringify(query));
     return NextResponse.json(courses);
   } catch (error: any) {
+    console.error('❌ Error fetching courses:', error);
     return NextResponse.json({ error: 'Failed to fetch courses', details: error?.message }, { status: 500 });
   }
 } 
