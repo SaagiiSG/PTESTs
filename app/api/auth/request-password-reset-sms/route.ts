@@ -19,6 +19,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Phone number is required' }, { status: 400 });
     }
 
+    // Validate phone number format
+    const phoneRegex = /^\+[1-9]\d{1,14}$/;
+    if (!phoneRegex.test(phoneNumber)) {
+      return NextResponse.json({ 
+        error: 'Invalid phone number format. Please use international format (e.g., +15551234567)' 
+      }, { status: 400 });
+    }
+
+    console.log('📱 Password reset request for phone:', phoneNumber);
+
     const connection = await safeConnectMongoose();
     if (!connection) {
       return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
@@ -30,6 +40,8 @@ export async function POST(req: Request) {
       // Don't reveal if user exists or not for security
       return NextResponse.json({ message: 'If an account with this phone number exists, a verification code has been sent' });
     }
+
+    console.log('✅ User found:', { userId: user._id, name: user.name });
 
     // Generate a 6-digit verification code
     const code = Math.floor(100000 + Math.random() * 900000).toString();

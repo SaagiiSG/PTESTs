@@ -1,56 +1,64 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
-import { safeConnectMongoose } from '@/lib/mongodb';
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/auth';
+import { connectMongoose } from '@/lib/mongodb';
 import User from '@/app/models/user';
 
-// Force this route to be dynamic only (not executed during build)
-export const dynamic = 'force-dynamic';
-
-export async function GET() {
-  // Prevent execution during build time
-  if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
-    return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
-  }
-
+export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
+    console.log('🔍 Debug Session API called');
     
-    if (!session) {
+    const session = await auth();
+    console.log('📋 Session data:', {
+      exists: !!session,
+      user: session?.user ? {
+        id: session.user.id,
+        email: session.user.email,
+        name: (session.user as any).name,
+        isAdmin: (session.user as any).isAdmin
+      } : 'no user'
+    });
+    
+    if (!session?.user?.id) {
       return NextResponse.json({ 
-        message: "No session found",
-        session: null 
-      });
+        error: 'No session or user ID found',
+        session: session
+      }, { status: 401 });
     }
 
-    const connection = await safeConnectMongoose();
-    if (!connection) {
-      return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+    // Check if user exists in database
+    await connectMongoose();
+    const user = await User.findById(session.user.id);
+    
+    if (!user) {
+      return NextResponse.json({ 
+        error: 'User not found in database',
+        sessionUserId: session.user.id
+      }, { status: 404 });
     }
-    
-    // Get the actual user from database
-    const dbUser = await User.findById(session.user.id);
-    
+
     return NextResponse.json({
-      message: "Session debug info",
+      success: true,
       session: {
-        user: session.user,
-        expires: session.expires
+        id: session.user.id,
+        email: session.user.email,
+        name: (session.user as any).name,
+        isAdmin: (session.user as any).isAdmin
       },
-      databaseUser: dbUser ? {
-        _id: dbUser._id,
-        name: dbUser.name,
-        email: dbUser.email,
-        phoneNumber: dbUser.phoneNumber,
-        isAdmin: dbUser.isAdmin
-      } : null,
-      sessionUserId: session.user.id,
-      dbUserId: dbUser?._id
+      databaseUser: {
+        id: user._id,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        name: user.name,
+        isAdmin: user.isAdmin,
+        createdAt: user.createdAt
+      }
     });
+
   } catch (error) {
-    console.error('Debug session error:', error);
-    return NextResponse.json({ 
-      message: "Error getting session",
-      error: error.message 
-    }, { status: 500 });
+    console.error('Error in debug session:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 } 

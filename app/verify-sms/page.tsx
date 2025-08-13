@@ -157,7 +157,7 @@ export default function VerifySMSPage() {
                       <MessageSquare className="w-10 h-10 text-white" />
                     </div>
                     <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                      <CheckCircle className="w-4 h-4 text-white" />
+                      <CheckCircle className="w-4 h-4 text-white inline-block" />
                     </div>
                   </div>
                   
@@ -180,14 +180,14 @@ export default function VerifySMSPage() {
                   
                   <div className="flex items-center gap-3 text-left">
                     <div className="w-8 h-8 bg-purple-500/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-purple-400/30">
-                      <CheckCircle className="w-4 h-4 text-purple-300" />
+                      <CheckCircle className="w-4 h-4 text-purple-300 inline-block" />
                     </div>
                     <span className="text-white/90 drop-shadow-sm">{t("quickAndSecure")}</span>
                   </div>
                   
                   <div className="flex items-center gap-3 text-left">
                     <div className="w-8 h-8 bg-blue-500/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-blue-400/30">
-                      <Clock className="w-4 h-4 text-blue-300" />
+                      <Clock className="w-4 h-4 text-blue-300 inline-block" />
                     </div>
                     <span className="text-white/90 drop-shadow-sm">{t("expiresIn10Minutes")}</span>
                   </div>
@@ -244,7 +244,7 @@ export default function VerifySMSPage() {
                       </>
                     ) : (
                       <>
-                        {t("verifyCode")} <CheckCircle className="w-5 h-5 ml-2" />
+                        {t("verifyCode")} <CheckCircle className="w-5 h-5 ml-2 inline-block" />
                       </>
                     )}
                   </Button>
@@ -270,12 +270,12 @@ export default function VerifySMSPage() {
                         </>
                       ) : resendCountdown > 0 ? (
                         <>
-                          <Clock className="w-4 h-4 mr-2" />
+                          <Clock className="w-4 h-4 mr-2 inline-block" />
                           {t("wait")} {resendCountdown}s
                         </>
                       ) : (
                         <>
-                          <Send className="w-4 h-4 mr-2" />
+                          <Send className="w-4 h-4 mr-2 inline-block" />
                           {t("resendCode")}
                         </>
                       )}
@@ -287,7 +287,7 @@ export default function VerifySMSPage() {
                     variant="ghost"
                     className="w-full text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
                   >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    <ArrowLeft className="w-4 h-4 mr-2 inline-block" />
                     {t("backToVerification")}
                   </Button>
                 </div>

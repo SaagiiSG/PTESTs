@@ -17,6 +17,7 @@ import Silk from '@/components/Silk/Silk';
 
 // Collect both email and phone; user chooses later how to verify
 const formSchema = z.object({
+  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Please enter a valid email address.' }),
   countryCodeDigits: z.string().min(1, { message: 'Country code is required.' }),
   phoneNumber: z.string().min(8, { message: 'Phone number must be at least 8 characters.' }),
@@ -31,6 +32,7 @@ export default function SignUpPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: '',
       email: '',
       countryCodeDigits: '976',
       phoneNumber: '',
@@ -56,6 +58,7 @@ export default function SignUpPage() {
       ? `+${values.countryCodeDigits}${values.phoneNumber}`
       : '';
     console.log('Submitting signup:', { 
+      name: values.name,
       email: values.email,
       phoneNumber: formattedPhone,
     });
@@ -65,6 +68,7 @@ export default function SignUpPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          name: values.name,
           email: values.email,
           phoneNumber: formattedPhone,
           password: values.password,
@@ -181,6 +185,24 @@ export default function SignUpPage() {
                 )}
 
                 <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit(onSubmit, onInvalid)(e as any); }} className="space-y-6">
+                  {/* Name Field */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      {t('fullName') || 'Full Name'}
+                    </label>
+                    <Input
+                      type="text"
+                      {...form.register('name')}
+                      className="h-12 rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-purple-500 dark:focus:border-purple-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      placeholder={t('enterFullName') || 'Enter your full name'}
+                      required
+                    />
+                    {form.formState.errors.name && (
+                      <p className="text-red-500 text-sm">{form.formState.errors.name.message}</p>
+                    )}
+                  </div>
+
                   {/* Email Field */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">

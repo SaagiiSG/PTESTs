@@ -66,7 +66,7 @@ const Footer = ({ variant = 'default' }: FooterProps) => {
   ];
 
   const socialLinks = [
-    { href: "https://www.facebook.com/psychometrics.mongolia", icon: Facebook, label: "Facebook" },
+    { href: "https://www.facebook.com/psychometrics.mn", icon: Facebook, label: "Facebook" },
     { href: "https://psychometrics.mn/", icon: Globe, label: "Website" },
     // { href: "https://twitter.com", icon: Twitter, label: "Twitter" },
     // { href: "https://instagram.com", icon: Instagram, label: "Instagram" },

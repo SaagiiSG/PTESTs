@@ -211,7 +211,7 @@ export default function HomePage() {
   }, [filteredTests]);
 
   return (
-    <div className='w-full h-auto flex flex-col gap-6 pb-8 mt-8 page-transition'>
+    <div className='w-full h-auto flex flex-col gap-4 sm:gap-6 pb-8 mt-4 sm:mt-8 page-transition'>
       {/* Show loading state while checking profile completeness */}
       {loadingUser ? (
         <div className="flex items-center justify-center min-h-[400px]">
@@ -225,16 +225,16 @@ export default function HomePage() {
           {/* Header with Language Toggle */}
           <div className="flex justify-between items-center fade-in">
             <div className="flex flex-col gap-1">
-              <h1 className="text-xl font-semibold text-gray-800 dark:text-white">
+              <h1 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white">
                 {user ? `${t('welcomeBack')}, ${user.name}!` : t('welcomeBack')}
               </h1>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">Ready to continue your learning journey?</p>
+              <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">Ready to continue your learning journey?</p>
             </div>
           </div>
 
-          <div className='w-full h-auto flex flex-col lg:flex-row gap-6'>
+          <div className='w-full h-auto flex flex-col lg:flex-row gap-4 sm:gap-6'>
             {/* Left Column - 30% */}
-            <div className="w-full lg:w-[30%] flex flex-col gap-4">
+            <div className="w-full lg:w-[30%] flex flex-col gap-3 sm:gap-4">
               {/* Continue Purchased Course Section */}
               <div className="fade-in">
                 <h2 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">{t('continueLearning')}</h2>
@@ -276,7 +276,7 @@ export default function HomePage() {
                     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white dark:from-gray-900 to-transparent" />
                   </div>
                 ) : (
-                  <div className="text-gray-500 dark:text-gray-400 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700 text-center">
+                  <div className="text-gray-500 dark:text-gray-400 p-4 bg-muted rounded-lg border border-border text-center">
                     <p className="text-sm">{t('noPurchasedCourses')}</p>
                     <p className="text-xs mt-1">{t('startLearning')}</p>
                   </div>
@@ -285,29 +285,29 @@ export default function HomePage() {
             </div>
 
             {/* Right Column - 70% */}
-            <div className="w-full lg:w-[70%] flex flex-col gap-4">
+            <div className="w-full lg:w-[70%] flex flex-col gap-3 sm:gap-4">
               {/* Tabs */}
               <div className="flex mb-2 fade-in gap-2">
                 
                 <Button
                   variant={activeTab === 'tests' ? 'default' : 'outline'}
                   onClick={() => setActiveTab('tests')}
-                  className={`tab-item rounded-full px-4 py-1 text-sm ${activeTab === 'tests' ? 'active font-semibold' : ''}`}
+                  className={`tab-item rounded-full px-3 sm:px-4 py-1 text-xs sm:text-sm ${activeTab === 'tests' ? 'active font-semibold' : ''}`}
                 >
-                  <span className="flex flex-row items-center justify-center gap-2">
-                    <BookOpen />
-                    {t('tests')}
+                  <span className="flex flex-row items-center justify-center gap-1 sm:gap-2">
+                    <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="hidden sm:inline">{t('tests')}</span>
                   </span>
                 </Button>
 
                 <Button
                   variant={activeTab === 'courses' ? 'default' : 'outline'}
                   onClick={() => setActiveTab('courses')}
-                  className={`tab-item rounded-full px-4 py-1 text-sm ${activeTab === 'courses' ? 'active font-semibold' : ''}`}
+                  className={`tab-item rounded-full px-3 sm:px-4 py-1 text-xs sm:text-sm ${activeTab === 'courses' ? 'active font-semibold' : ''}`}
                 >
-                  <span className="flex flex-row items-center justify-center gap-2">
-                    <GraduationCap />
-                    {t('courses')}
+                  <span className="flex flex-row items-center justify-center gap-1 sm:gap-2">
+                    <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="hidden sm:inline">{t('courses')}</span>
                   </span>
                 </Button>
               </div>
@@ -315,7 +315,7 @@ export default function HomePage() {
               {/* Tab Content */}
               {activeTab === 'courses' ? (
                 <section className="fade-in">
-                  <div className='flex gap-2 p-2 px-3 text-[15px] rounded-xl bg-gray-200 dark:bg-gray-700 shadow mb-4 search-input'>
+                  <div className='flex gap-2 p-2 px-3 text-[15px] rounded-xl bg-muted shadow mb-4 search-input'>
                     <Search className="text-gray-500 dark:text-gray-400" />
                     <input
                       type="text"
@@ -359,7 +359,7 @@ export default function HomePage() {
                 </section>
               ) : (
                 <section className="fade-in">
-                  <div className='flex gap-2 p-2 px-3 text-[15px] rounded-xl bg-gray-200 dark:bg-gray-700 shadow mb-4 search-input'>
+                  <div className='flex gap-2 p-2 px-3 text-[15px] rounded-xl bg-muted shadow mb-4 search-input'>
                     <Search className="text-gray-500 dark:text-gray-400" />
                     <input
                       type="text"
@@ -371,61 +371,61 @@ export default function HomePage() {
                   </div>
                   
                   {/* Test Type Filter */}
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="flex flex-wrap gap-2 mb-4 overflow-x-auto pb-2">
                     <button
                       onClick={() => setSelectedTestType('all')}
-                      className={`px-4 py-2 text-sm rounded-lg border transition-all duration-300 flex items-center gap-2 font-medium hover:scale-105 active:scale-95 ${
+                      className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg border transition-all duration-300 flex items-center gap-1 sm:gap-2 font-medium hover:scale-105 active:scale-95 ${
                         selectedTestType === 'all'
                           ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-500 shadow-lg'
-                          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md'
+                          : 'bg-beige-50 dark:bg-beige-800 text-gray-600 dark:text-gray-300 border-beige-300 dark:border-beige-600 hover:bg-beige-100 dark:hover:bg-beige-700 hover:shadow-md'
                       }`}
                     >
                       <BookOpen className={`w-4 h-4 ${selectedTestType === 'all' ? 'text-white' : 'text-blue-500'}`} />
-                      {t('allTypes')}
+                      <span className="hidden sm:inline">{t('allTypes')}</span>
                     </button>
                     <button
                       onClick={() => setSelectedTestType('Talent')}
-                      className={`px-4 py-2 text-sm rounded-lg border transition-all duration-300 flex items-center gap-2 font-medium hover:scale-105 active:scale-95 ${
+                      className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg border transition-all duration-300 flex items-center gap-1 sm:gap-2 font-medium hover:scale-105 active:scale-95 ${
                         selectedTestType === 'Talent'
                           ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-500 shadow-lg'
-                          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md'
+                          : 'bg-beige-50 dark:bg-beige-800 text-gray-600 dark:text-gray-300 border-beige-300 dark:border-beige-600 hover:bg-beige-100 dark:hover:bg-beige-700 hover:shadow-md'
                       }`}
                     >
                       <Star className={`w-4 h-4 ${selectedTestType === 'Talent' ? 'text-white' : 'text-blue-500'}`} />
-                      {t('talent')}
+                      <span className="hidden sm:inline">{t('talent')}</span>
                     </button>
                     <button
                       onClick={() => setSelectedTestType('Aptitude')}
-                      className={`px-4 py-2 text-sm rounded-lg border transition-all duration-300 flex items-center gap-2 font-medium hover:scale-105 active:scale-95 ${
+                      className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg border transition-all duration-300 flex items-center gap-1 sm:gap-2 font-medium hover:scale-105 active:scale-95 ${
                         selectedTestType === 'Aptitude'
                           ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-emerald-500 shadow-lg'
-                          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md'
+                          : 'bg-beige-50 dark:bg-beige-800 text-gray-600 dark:text-gray-300 border-beige-300 dark:border-beige-600 hover:bg-beige-100 dark:hover:bg-beige-700 hover:shadow-md'
                       }`}
                     >
                       <Brain className={`w-4 h-4 ${selectedTestType === 'Aptitude' ? 'text-white' : 'text-emerald-500'}`} />
-                      {t('aptitude')}
+                      <span className="hidden sm:inline">{t('aptitude')}</span>
                     </button>
                     <button
                       onClick={() => setSelectedTestType('Clinic')}
-                      className={`px-4 py-2 text-sm rounded-lg border transition-all duration-300 flex items-center gap-2 font-medium hover:scale-105 active:scale-95 ${
+                      className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg border transition-all duration-300 flex items-center gap-1 sm:gap-2 font-medium hover:scale-105 active:scale-95 ${
                         selectedTestType === 'Clinic'
                           ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white border-purple-500 shadow-lg'
-                          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md'
+                          : 'bg-beige-50 dark:bg-beige-800 text-gray-600 dark:text-gray-300 border-beige-300 dark:border-beige-600 hover:bg-beige-100 dark:hover:bg-beige-700 hover:shadow-md'
                       }`}
                     >
                       <Stethoscope className={`w-4 h-4 ${selectedTestType === 'Clinic' ? 'text-white' : 'text-purple-500'}`} />
-                      {t('clinic')}
+                      <span className="hidden sm:inline">{t('clinic')}</span>
                     </button>
                     <button
                       onClick={() => setSelectedTestType('Personality')}
-                      className={`px-4 py-2 text-sm rounded-lg border transition-all duration-300 flex items-center gap-2 font-medium hover:scale-105 active:scale-95 ${
+                      className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg border transition-all duration-300 flex items-center gap-1 sm:gap-2 font-medium hover:scale-105 active:scale-95 ${
                         selectedTestType === 'Personality'
                           ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white border-orange-500 shadow-lg'
-                          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md'
+                          : 'bg-beige-50 dark:bg-beige-800 text-gray-600 dark:text-gray-300 border-beige-300 dark:border-beige-600 hover:bg-beige-100 dark:hover:bg-beige-700 hover:shadow-md'
                       }`}
                     >
                       <User className={`w-4 h-4 ${selectedTestType === 'Personality' ? 'text-white' : 'text-orange-500'}`} />
-                      {t('personality')}
+                      <span className="hidden sm:inline">{t('personality')}</span>
                     </button>
                   </div>
                   <div className='w-full flex flex-col gap-4'>

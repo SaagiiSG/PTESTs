@@ -19,25 +19,14 @@ export async function GET(request: NextRequest) {
       } : 'no user'
     });
     
-    if (!session?.user?.email && !(session?.user as any)?.phoneNumber) {
-      console.log('❌ No session or user email/phone found');
+    if (!session?.user?.id) {
+      console.log('❌ No session or user ID found');
       return NextResponse.json({ error: 'Unauthorized - No session' }, { status: 401 });
     }
 
-    // Check if user is admin - try multiple authentication methods
+    // Check if user is admin by looking up in database
     await connectMongoose();
-    let user = null;
-    
-    if (session.user.email) {
-      user = await User.findOne({ email: session.user.email });
-    } else if ((session.user as any).phoneNumber) {
-      user = await User.findOne({ phoneNumber: (session.user as any).phoneNumber });
-    }
-    
-    // Fallback: try to find user by ID if we have it
-    if (!user && session.user.id) {
-      user = await User.findById(session.user.id);
-    }
+    const user = await User.findById(session.user.id);
     
     console.log('👤 User lookup result:', {
       found: !!user,

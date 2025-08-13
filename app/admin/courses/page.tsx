@@ -474,7 +474,7 @@ function CoursesPageContent() {
           <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your platform's courses and lessons</p>
         </div>
         <Button onClick={() => setIsCreateModalOpen(true)} className="inline-flex items-center gap-2">
-          <Plus className="w-4 h-4 inline-block text-gray-600 dark:text-white" />
+          <Plus className="w-4 h-4 inline-block dark:text-gray-600 text-white mr-2" />
           <span className="font-semibold">Create Course</span>
         </Button>
       </div>
@@ -595,7 +595,7 @@ function CoursesPageContent() {
               
               <Button
                 variant="outline"
-                size="sm"
+                size="md"
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                 className="px-3"
               >
@@ -728,7 +728,7 @@ function CoursesPageContent() {
             </p>
             {statusFilter === 'all' && (
               <Button onClick={() => setIsCreateModalOpen(true)} className="inline-flex items-center gap-2">
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 inline-block mr-2" />
                 Create First Course
               </Button>
             )}

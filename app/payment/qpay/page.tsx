@@ -680,17 +680,17 @@ function QPayPaymentContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8">
-      <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8">
+      <div className="w-[87%] flex flex-col items-center justify-center container">
+        <div className="w-full mx-auto flex flex-col items-center justify-center">
           {/* Header */}
           <div className="text-center mb-8">
             <Button 
               variant="outline" 
               onClick={() => router.back()}
-              className="mb-4"
+              className="mb-4 absolute top-4 left-4"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              <ArrowLeft className="w-4 h-4 mr-2 inline-block" />
               Back
             </Button>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Test Payment</h1>
@@ -704,7 +704,7 @@ function QPayPaymentContent() {
           </div>
 
           {/* Main Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="gap-8">
             
 
             {/* QR Code Payment */}
@@ -720,14 +720,7 @@ function QPayPaymentContent() {
               </CardHeader>
               
               <CardContent className="space-y-6">
-                {/* Debug Info */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Debug:</strong> Status: {paymentStatus.status}, 
-                    QR Data: {paymentStatus.qrData ? 'Present' : 'Missing'}, 
-                    Amount: {paymentStatus.qrData?.amount}
-                  </p>
-                </div>
+              
                 
                 {/* Loading State */}
                 {paymentStatus.status === 'loading' && (
@@ -740,14 +733,7 @@ function QPayPaymentContent() {
                 {/* QR Code Display */}
                 {paymentStatus.status === 'qr_generated' && paymentStatus.qrData && (
                   <div className="space-y-6">
-                    {/* Debug Info */}
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                      <p className="text-sm text-green-800">
-                        <strong>QR Display Active:</strong> Status: {paymentStatus.status}, 
-                        QR Data: {paymentStatus.qrData ? 'Present' : 'Missing'}, 
-                        Amount: {paymentStatus.qrData?.amount}
-                      </p>
-                    </div>
+                    
                     {/* QR Code */}
                     <div className="text-center">
                       <div className="bg-white p-6 rounded-lg border inline-block shadow-lg">
@@ -829,26 +815,7 @@ function QPayPaymentContent() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-3">
-                      <Button 
-                        onClick={() => openDeeplink(paymentStatus.qrData.qPay_shortUrl || paymentStatus.qrData.deeplink)}
-                        className="flex-1"
-                        variant="outline"
-                        disabled={!paymentStatus.qrData.qPay_shortUrl && !paymentStatus.qrData.deeplink}
-                      >
-                        <Smartphone className="w-4 h-4 mr-2" />
-                        Open in App
-                      </Button>
-                      <Button 
-                        onClick={() => openDeeplink(paymentStatus.qrData.qPay_shortUrl || paymentStatus.qrData.web_url)}
-                        className="flex-1"
-                        variant="outline"
-                        disabled={!paymentStatus.qrData.qPay_shortUrl && !paymentStatus.qrData.web_url}
-                      >
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Open in Browser
-                      </Button>
-                    </div>
+                   
 
                     {/* Callback Simulate Button - For Testing (Development Only) */}
                     {process.env.NODE_ENV === 'development' && (
