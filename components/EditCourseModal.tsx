@@ -222,7 +222,7 @@ export default function EditCourseModal({ isOpen, onClose, onSuccess, course }: 
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-100 rounded-lg">
-                  <ImageIcon className="w-5 h-5 text-green-600" />
+                  <ImageIcon className="w-5 h-5 text-green-600 inline-block" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold">Course Thumbnail</h3>
@@ -241,7 +241,7 @@ export default function EditCourseModal({ isOpen, onClose, onSuccess, course }: 
                       onChange={handleThumbnailChange}
                       className="h-10"
                     />
-                    <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 inline-block" />
                   </div>
                 </div>
 
@@ -278,7 +278,7 @@ export default function EditCourseModal({ isOpen, onClose, onSuccess, course }: 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-purple-100 rounded-lg">
-                    <GraduationCap className="w-5 h-5 text-purple-600" />
+                    <GraduationCap className="w-5 h-5 text-purple-600 inline-block" />
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold">Course Lessons</h3>
@@ -293,7 +293,7 @@ export default function EditCourseModal({ isOpen, onClose, onSuccess, course }: 
                   className="flex items-center gap-2"
                 >
                   <span className="flex flex-row items-center justify-center gap-2">
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-4 h-4 inline-block" />
                     Add Lesson
                   </span>
                 </Button>

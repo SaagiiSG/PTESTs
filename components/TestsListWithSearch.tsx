@@ -153,7 +153,7 @@ export default function TestsListWithSearch() {
                 <p className="text-sm opacity-90">Total Tests</p>
                 <p className="text-2xl font-bold">{tests.length}</p>
               </div>
-              <BookOpen className="w-8 h-8 opacity-80" />
+              <BookOpen className="w-8 h-8 opacity-80 inline-block" />
             </div>
           </div>
           <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-4 rounded-lg">
@@ -162,7 +162,7 @@ export default function TestsListWithSearch() {
                 <p className="text-sm opacity-90">Talent</p>
                 <p className="text-2xl font-bold">{getTestTypeCount('Talent')}</p>
               </div>
-              <Star className="w-8 h-8 opacity-80" />
+              <Star className="w-8 h-8 opacity-80 inline-block" />
             </div>
           </div>
           <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg">
@@ -171,7 +171,7 @@ export default function TestsListWithSearch() {
                 <p className="text-sm opacity-90">Aptitude</p>
                 <p className="text-2xl font-bold">{getTestTypeCount('Aptitude')}</p>
               </div>
-              <Brain className="w-8 h-8 opacity-80" />
+              <Brain className="w-8 h-8 opacity-80 inline-block" />
             </div>
           </div>
           <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-lg">
@@ -180,7 +180,7 @@ export default function TestsListWithSearch() {
                 <p className="text-sm opacity-90">Clinic</p>
                 <p className="text-2xl font-bold">{getTestTypeCount('Clinic')}</p>
               </div>
-              <Stethoscope className="w-8 h-8 opacity-80" />
+              <Stethoscope className="w-8 h-8 opacity-80 inline-block" />
             </div>
           </div>
           <div className="bg-gradient-to-r from-pink-500 to-pink-600 text-white p-4 rounded-lg">
@@ -189,7 +189,7 @@ export default function TestsListWithSearch() {
                 <p className="text-sm opacity-90">Personality</p>
                 <p className="text-2xl font-bold">{getTestTypeCount('Personality')}</p>
               </div>
-              <User className="w-8 h-8 opacity-80" />
+              <User className="w-8 h-8 opacity-80 inline-block" />
             </div>
           </div>
         </div>
@@ -199,7 +199,7 @@ export default function TestsListWithSearch() {
       <div className="flex flex-col lg:flex-row gap-4 mb-6">
         {/* Search */}
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 inline-block" />
           <input
             type="text"
             placeholder="Search for tests..."
@@ -232,7 +232,7 @@ export default function TestsListWithSearch() {
               : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md'
           }`}
         >
-          <BookOpen className={`w-4 h-4 ${selectedTestType === 'all' ? 'text-white' : 'text-blue-500'}`} />
+          <BookOpen className={`w-4 h-4 ${selectedTestType === 'all' ? 'text-white' : 'text-blue-500'} inline-block`} />
           All Types ({tests.length})
         </button>
         <button
@@ -243,7 +243,7 @@ export default function TestsListWithSearch() {
               : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md'
           }`}
         >
-          <Star className={`w-4 h-4 ${selectedTestType === 'Talent' ? 'text-white' : 'text-blue-500'}`} />
+          <Star className={`w-4 h-4 ${selectedTestType === 'Talent' ? 'text-white' : 'text-blue-500'} inline-block`} />
           Talent ({getTestTypeCount('Talent')})
         </button>
         <button
@@ -254,7 +254,7 @@ export default function TestsListWithSearch() {
               : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md'
           }`}
         >
-          <Brain className={`w-4 h-4 ${selectedTestType === 'Aptitude' ? 'text-white' : 'text-emerald-500'}`} />
+          <Brain className={`w-4 h-4 ${selectedTestType === 'Aptitude' ? 'text-white' : 'text-emerald-500'} inline-block`} />
           Aptitude ({getTestTypeCount('Aptitude')})
         </button>
         <button
@@ -265,7 +265,7 @@ export default function TestsListWithSearch() {
               : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md'
           }`}
         >
-          <Stethoscope className={`w-4 h-4 ${selectedTestType === 'Clinic' ? 'text-white' : 'text-purple-500'}`} />
+          <Stethoscope className={`w-4 h-4 ${selectedTestType === 'Clinic' ? 'text-white' : 'text-purple-500'} inline-block`} />
           Clinic ({getTestTypeCount('Clinic')})
         </button>
         <button
@@ -276,7 +276,7 @@ export default function TestsListWithSearch() {
               : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md'
           }`}
         >
-          <User className={`w-4 h-4 ${selectedTestType === 'Personality' ? 'text-white' : 'text-orange-500'}`} />
+          <User className={`w-4 h-4 ${selectedTestType === 'Personality' ? 'text-white' : 'text-orange-500'} inline-block`} />
           Personality ({getTestTypeCount('Personality')})
         </button>
       </div>
@@ -290,7 +290,7 @@ export default function TestsListWithSearch() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-12">
-          <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+          <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600 inline-block" />
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No tests found</h3>
           <p className="text-gray-500 dark:text-gray-400 mb-4">
             Try adjusting your search or filter criteria

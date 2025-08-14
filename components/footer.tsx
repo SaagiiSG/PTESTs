@@ -26,6 +26,8 @@ import {
 import { useLanguage } from '@/lib/language';
 import { usePathname } from 'next/navigation';
 import logo from "@/public/PPNIM-logo-colered.svg";
+import slogo from "@/public/lo.png";
+// import logo3 from "@/public/300x300 En.png";
 
 interface FooterProps {
   variant?: 'default' | 'admin' | 'minimal';
@@ -62,11 +64,12 @@ const Footer = ({ variant = 'default' }: FooterProps) => {
     { href: "https://psychometrics.mn/mn/", label: "Home" },
     { href: "https://psychometrics.mn/", label: "About Us" },
     { href: "https://psychometrics.mn/mn/elements/psychometrics-catalogue/", label: "Psycometrics Tests" },
-    { href: "https://psychometrics.mn/mn/news2/", label: "News" },
+    { href: "https://setgelsudlal.mn/", label: "Psychological Counselling" },
   ];
 
   const socialLinks = [
     { href: "https://www.facebook.com/psychometrics.mn", icon: Facebook, label: "Facebook" },
+    { href: "https://www.facebook.com/psychometrics.mongolia", icon: Facebook, label: "Facebook" },
     { href: "https://psychometrics.mn/", icon: Globe, label: "Website" },
     // { href: "https://twitter.com", icon: Twitter, label: "Twitter" },
     // { href: "https://instagram.com", icon: Instagram, label: "Instagram" },
@@ -87,6 +90,8 @@ const Footer = ({ variant = 'default' }: FooterProps) => {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-4">
               <Link href="/admin" className="inline-block group">
+             
+                
                 <Image
                   src={logo}
                   alt="TestCenter Logo"
@@ -144,18 +149,22 @@ const Footer = ({ variant = 'default' }: FooterProps) => {
           
           {/* Logo and Description */}
           <div className="space-y-4">
-            <Link href="/home" className="inline-block group">
+            <Link href="/home" className="flex items-center justify-center gap-2 group">
+            <Image 
+                src={slogo} 
+                alt="TestCenter Logo" 
+                width={100} 
+                height={50} 
+                className="cursor-pointer transition-transform duration-300 group-hover:scale-105" 
+                />
               <Image
                 src={logo}
                 alt="TestCenter Logo"
-                width={120}
-                height={60}
+                width={100}
+                height={50}
                 className="cursor-pointer transition-transform duration-300 group-hover:scale-105"
               />
             </Link>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit. Soluta quis debitis eveniet voluptatibus ea quos error illum voluptatem? Officia, fugiat.
-            </p>
             
           </div>
 
@@ -187,7 +196,7 @@ const Footer = ({ variant = 'default' }: FooterProps) => {
                     href={contact.href}
                     className="flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 group"
                   >
-                    <Icon className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+                    <Icon className="w-4 h-4 group-hover:scale-110 transition-transform duration-200 inline-block" />
                     <span>{contact.label}</span>
                   </Link>
                 );
@@ -210,7 +219,7 @@ const Footer = ({ variant = 'default' }: FooterProps) => {
                     className="p-2 rounded-lg bg-muted hover:bg-accent transition-colors duration-200 group"
                     aria-label={social.label}
                   >
-                    <Icon className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors duration-200" />
+                    <Icon className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors duration-200 inline-block" />
                   </Link>
                 );
               })}
@@ -233,7 +242,7 @@ const Footer = ({ variant = 'default' }: FooterProps) => {
                   href={item.href}
                   className="flex items-center gap-3 p-3 rounded-lg bg-muted hover:bg-accent transition-colors duration-200 group"
                 >
-                  <Icon className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
+                  <Icon className="w-5 h-5 text-muted-foreground group-hover:text-foreground inline-block" />
                   <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               );

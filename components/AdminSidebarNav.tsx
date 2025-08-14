@@ -95,7 +95,7 @@ export default function AdminSidebarNav({ isCollapsed, onToggle }: AdminSidebarN
               title={isCollapsed ? t(name) : undefined}
             >
               <Link href={href} className="flex items-center gap-3 w-full">
-                <Icon className={`${isCollapsed ? 'w-12 h-12' : 'w-8 h-8'}`} />
+                <Icon className={`${isCollapsed ? 'w-12 h-12' : 'w-8 h-8'} inline-block`} />
                 {!isCollapsed && <span className="text-sm">{t(name)}</span>}
               </Link>
             </Button>

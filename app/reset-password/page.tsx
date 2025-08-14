@@ -143,10 +143,10 @@ function ResetPasswordContent() {
                 <div className="mb-8">
                   <div className="relative inline-block mb-6">
                     <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl flex items-center justify-center mx-auto lg:mx-0 shadow-lg">
-                      <Lock className="w-10 h-10 text-white" />
+                      <Lock className="w-10 h-10 text-white inline-block" />
                     </div>
                     <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                      <Shield className="w-4 h-4 text-white" />
+                      <Shield className="w-4 h-4 text-white inline-block" />
                     </div>
                   </div>
                   
@@ -162,21 +162,21 @@ function ResetPasswordContent() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 text-left">
                     <div className="w-8 h-8 bg-blue-500/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-blue-400/30">
-                      <Lock className="w-4 h-4 text-blue-300" />
+                      <Lock className="w-4 h-4 text-blue-300 inline-block" />
                     </div>
                     <span className="text-white/90 drop-shadow-sm">{t('securePasswordReset')}</span>
                   </div>
                   
                   <div className="flex items-center gap-3 text-left">
                     <div className="w-8 h-8 bg-purple-500/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-purple-400/30">
-                      <Shield className="w-4 h-4 text-purple-300" />
+                      <Shield className="w-4 h-4 text-purple-300 inline-block" />
                     </div>
                     <span className="text-white/90 drop-shadow-sm">{t('strongPasswordRequirements')}</span>
                   </div>
                   
                   <div className="flex items-center gap-3 text-left">
                     <div className="w-8 h-8 bg-blue-500/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-blue-400/30">
-                      <CheckCircle className="w-4 h-4 text-blue-300" />
+                      <CheckCircle className="w-4 h-4 text-blue-300 inline-block" />
                     </div>
                     <span className="text-white/90 drop-shadow-sm">{t('instantAccessAfterReset')}</span>
                   </div>
@@ -191,7 +191,7 @@ function ResetPasswordContent() {
               <CardHeader className="text-center pb-4">
                 <div className="mx-auto mb-4">
                   <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-                    <Lock className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                    <Lock className="w-8 h-8 text-blue-600 dark:text-blue-400 inline-block" />
                   </div>
                 </div>
                 <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -235,7 +235,7 @@ function ResetPasswordContent() {
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                         >
-                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          {showPassword ? <EyeOff className="w-5 h-5 inline-block" /> : <Eye className="w-5 h-5 inline-block" />}
                         </button>
                       </div>
                       {form.formState.errors.password && (
@@ -260,7 +260,7 @@ function ResetPasswordContent() {
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                         >
-                          {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          {showConfirmPassword ? <EyeOff className="w-5 h-5 inline-block" /> : <Eye className="w-5 h-5 inline-block" />}
                         </button>
                       </div>
                       {form.formState.errors.confirmPassword && (
@@ -282,7 +282,7 @@ function ResetPasswordContent() {
                       ) : (
                         <div className="flex items-center justify-center">
                           <span className="text-white"> {t('resetPassword')} </span> 
-                          <ArrowRight className="w-5 h-5 ml-2" />
+                          <ArrowRight className="w-5 h-5 ml-2 inline-block" />
                         </div>
                       )}
                     </Button>

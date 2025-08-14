@@ -4,7 +4,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from './ui/button'
-import logo from "@/public/PPNIM-logo-colered.svg" 
+import logoMongolian from "@/public/lo.png"
+import logoEnglish from "@/public/lo En.png"
 import { Home, BookOpen, GraduationCap, User } from 'lucide-react';
 import LangToggle from './LangToggle';
 import LogoutButton from './LogoutButton';
@@ -12,8 +13,11 @@ import { ThemeToggle } from './ThemeToggle';
 import { useLanguage } from '@/lib/language';
 
 const navbar = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const pathname = usePathname();
+
+  // Select logo based on current language
+  const currentLogo = language === 'mn' ? logoMongolian : logoEnglish;
 
   const navItems = [
     { href: "/home", icon: Home, label: t('home') },
@@ -33,7 +37,7 @@ const navbar = () => {
     <div className='fixed bottom-0 left-0 w-full h-20 z-50 bg-background/95 backdrop-blur-[6px] flex justify-between items-center py-1 px-1 border-t border-border shadow-sm sm:sticky sm:top-0 sm:bottom-auto sm:py-3 sm:px-6 sm:rounded-3xl sm:border-t-0 sm:border-b sm:shadow-md transition-all duration-300'>
       <Link href={"/home"} className="hidden sm:block group">
         <Image
-          src={logo}
+          src={currentLogo}
           alt="TestCenter Logo"
           width={80}
           height={40}

@@ -432,7 +432,7 @@ const TestCard: React.FC<TestCardProps> = ({
                       {/* Test Type Badge */}
                       {testType && (
                         <Badge className={`${testTypeInfo.bgColor} ${testTypeInfo.color} border ${testTypeInfo.borderColor} font-medium px-3 py-1.5 text-xs flex items-center gap-1.5`}>
-                          <TestTypeIcon className="w-3 h-3" />
+                          <TestTypeIcon className="w-3 h-3 inline-block" />
                           {testTypeInfo.label}
                         </Badge>
                       )}
@@ -446,17 +446,17 @@ const TestCard: React.FC<TestCardProps> = ({
                         }`}>
                           {hasAccess ? (
                             <>
-                              <Play className="w-3 h-3" />
+                              <Play className="w-3 h-3 inline-block" />
                               Available
                             </>
                           ) : price === 0 ? (
                             <>
-                              <Gift className="w-3 h-3" />
+                              <Gift className="w-3 h-3 inline-block" />
                               Free
                             </>
                           ) : (
                             <>
-                              <Lock className="w-3 h-3" />
+                              <Lock className="w-3 h-3 inline-block" />
                               Locked
                             </>
                           )}
@@ -484,16 +484,16 @@ const TestCard: React.FC<TestCardProps> = ({
                         {hasAccess ? (
                           <>
                             Start Test
-                            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300 inline-block" />
                           </>
                         ) : price === 0 ? (
                           <>
                             Start Test
-                            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300 inline-block" />
                           </>
                         ) : (
                           <>
-                            <CreditCard className="w-4 h-4 mr-2" />
+                            <CreditCard className="w-4 h-4 mr-2 inline-block" />
                             Purchase
                           </>
                         )}

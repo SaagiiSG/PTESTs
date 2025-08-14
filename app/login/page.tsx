@@ -84,10 +84,10 @@ export default function LoginPage() {
                 <div className="mb-8">
                   <div className="relative inline-block mb-6">
                     <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl flex items-center justify-center mx-auto lg:mx-0 shadow-lg">
-                      <User className="w-10 h-10 text-white" />
+                      <User className="w-10 h-10 text-white inline-block" />
                     </div>
                     <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
-                      <Sparkles className="w-4 h-4 text-white" />
+                      <Sparkles className="w-4 h-4 text-white inline-block" />
                     </div>
                   </div>
                   
@@ -115,7 +115,7 @@ export default function LoginPage() {
                   {/* Email/Phone Field */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
-                      <Mail className="w-4 h-4" />
+                      <Mail className="w-4 h-4 inline-block" />
                       {t('emailOrPhone')}
                     </label>
                     <div className="flex gap-2">
@@ -148,7 +148,7 @@ export default function LoginPage() {
                   {/* Password Field */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                      <Lock className="w-4 h-4" />
+                      <Lock className="w-4 h-4 inline-block" />
                       {t('password')}
                     </label>
                     <div className="relative">
@@ -200,7 +200,7 @@ export default function LoginPage() {
                     ) : (
                       <div className="flex items-center gap-2">
                         {t('login')}
-                        <ArrowRight className="w-5 h-5" />
+                        <ArrowRight className="w-5 h-5 inline-block" />
                       </div>
                     )}
                   </Button>

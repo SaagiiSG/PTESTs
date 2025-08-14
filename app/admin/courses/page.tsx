@@ -387,11 +387,11 @@ function CoursesPageContent() {
   };
 
   const getLessonTypeIcon = (lesson: Lesson) => {
-    if (!lesson) return <BookOpen className="w-4 h-4 text-gray-600" />;
-    if (lesson.video) return <Video className="w-4 h-4 text-blue-600" />;
-    if (lesson.testEmbedCode) return <Target className="w-4 h-4 text-green-600" />;
-    if (lesson.embedCode) return <FileText className="w-4 h-4 text-purple-600" />;
-    return <BookOpen className="w-4 h-4 text-gray-600" />;
+    if (!lesson) return <BookOpen className="w-4 h-4 text-gray-600 inline-block" />;
+    if (lesson.video) return <Video className="w-4 h-4 text-blue-600 inline-block" />;
+    if (lesson.testEmbedCode) return <Target className="w-4 h-4 text-green-600 inline-block" />;
+    if (lesson.embedCode) return <FileText className="w-4 h-4 text-purple-600 inline-block" />;
+    return <BookOpen className="w-4 h-4 text-gray-600 inline-block" />;
   };
 
   const getLessonTypeColor = (lesson: Lesson) => {

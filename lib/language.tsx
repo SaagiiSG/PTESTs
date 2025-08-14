@@ -58,7 +58,7 @@ const translations = {
     createFirstCourse: 'Create Your First Course',
     createFirstTest: 'Create Your First Test',
     // Landing page translations
-    heroTitle: 'Discover Your Professional Potential',
+    heroTitle: 'Test center - Psychological Assessment',
     heroSubtitle: 'Comprehensive assessments and courses designed for career growth and skill development',
     heroCTA: 'Start Your Journey',
     heroSecondary: 'Explore Assessments',
@@ -454,7 +454,7 @@ const translations = {
     createFirstCourse: 'Анхны курсаа үүсгэнэ үү',
     createFirstTest: 'Анхны тестээ үүсгэнэ үү',
     // Landing page translations
-    heroTitle: 'Мэргэжлийн боломжоо нээ',
+    heroTitle: 'Сэтгэл зүйн тестийн үнэлгээ\n- Байгууллагын зан төлөвийн зөвлөх үйлчилгээ',
     heroSubtitle: 'Карьерын хөгжил, ур чадварын хөгжүүлэлтэд зориулсан дэлгэрэнгүй үнэлгээ, курс',
     heroCTA: 'Аялаагаа эхлэх',
     heroSecondary: 'Үнэлгээг судлах',

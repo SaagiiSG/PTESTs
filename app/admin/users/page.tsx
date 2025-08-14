@@ -527,14 +527,14 @@ function UsersPageContent() {
                     </div>
                     {user.family && (
                       <div className="flex items-center gap-2">
-                        <FamilyIcon className="w-3 h-3 text-gray-400" />
+                        <FamilyIcon className="w-3 h-3 text-gray-400 inline-block" />
                         <span className="text-gray-600">{t('family')}:</span>
                         <span className="font-medium">{user.family}</span>
                       </div>
                     )}
                     {user.dateOfBirth && (
                       <div className="flex items-center gap-2">
-                        <Calendar className="w-3 h-3 text-gray-400" />
+                        <Calendar className="w-3 h-3 text-gray-400 inline-block" />
                         <span className="text-gray-600">{t('birthDate')}:</span>
                         <span className="font-medium">{formatDateOfBirth(user.dateOfBirth)}</span>
                       </div>
@@ -546,13 +546,13 @@ function UsersPageContent() {
                     <div className="flex items-center gap-4 text-xs">
                       {user.phoneNumber && (
                         <div className="flex items-center gap-1">
-                          <Phone className="w-3 h-3 text-gray-400" />
+                          <Phone className="w-3 h-3 text-gray-400 inline-block" />
                           <span className="text-gray-600">{user.phoneNumber}</span>
                         </div>
                       )}
                       {user.isEmailVerified && (
                         <div className="flex items-center gap-1">
-                          <Mail className="w-3 h-3 text-green-500" />
+                          <Mail className="w-3 h-3 text-green-500 inline-block" />
                           <span className="text-green-600">{t('verified')}</span>
                         </div>
                       )}
@@ -586,7 +586,7 @@ function UsersPageContent() {
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <Users className="w-4 h-4 text-blue-600" />
+                              <Users className="w-4 h-4 text-blue-600 inline-block" />
                             </div>
                             <div>
                               <p className="font-medium text-sm">{user.name || t('unnamedUser')}</p>
@@ -604,13 +604,13 @@ function UsersPageContent() {
                           <div className="text-sm">
                             {user.phoneNumber && (
                               <div className="flex items-center gap-1 mb-1">
-                                <Phone className="w-3 h-3 text-gray-400" />
+                                <Phone className="w-3 h-3 text-gray-400 inline-block" />
                                 <span>{user.phoneNumber}</span>
                               </div>
                             )}
                             {user.isEmailVerified && (
                               <div className="flex items-center gap-1">
-                                <Mail className="w-3 h-3 text-green-500" />
+                                <Mail className="w-3 h-3 text-green-500 inline-block" />
                                 <span className="text-green-600">Verified</span>
                               </div>
                             )}
@@ -632,7 +632,7 @@ function UsersPageContent() {
                               onClick={(e) => toggleActions(user._id, e)}
                               className="h-8 w-8 p-0"
                             >
-                              <MoreHorizontal className="w-4 h-4" />
+                              <MoreHorizontal className="w-4 h-4 inline-block" />
                             </Button>
                             
                             {activeActions === user._id && (
@@ -669,7 +669,7 @@ function UsersPageContent() {
                                   onClick={() => handleDeleteUser(user._id)}
                                   className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 className="w-4 h-4 inline-block" />
                                   Delete User
                                 </button>
                               </div>

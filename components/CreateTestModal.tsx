@@ -375,7 +375,7 @@ export default function CreateTestModal({ isOpen, onClose, onSuccess }: CreateTe
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-orange-100 rounded-lg">
-                  <ImageIcon className="w-5 h-5 text-orange-600" />
+                  <ImageIcon className="w-5 h-5 text-orange-600 inline-block" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold">Test Thumbnail</h3>
@@ -393,7 +393,7 @@ export default function CreateTestModal({ isOpen, onClose, onSuccess }: CreateTe
                     onChange={handleThumbnailChange}
                     className="h-10"
                   />
-                  <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 inline-block" />
                 </div>
               </div>
 
@@ -416,7 +416,7 @@ export default function CreateTestModal({ isOpen, onClose, onSuccess }: CreateTe
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-indigo-100 rounded-lg">
-                  <Code className="w-5 h-5 text-indigo-600" />
+                  <Code className="w-5 h-5 text-indigo-600 inline-block" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold">Access Codes</h3>
@@ -459,7 +459,7 @@ export default function CreateTestModal({ isOpen, onClose, onSuccess }: CreateTe
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-4 h-4 inline-block" />
                     Create Test
                   </div>
                 )}

@@ -14,6 +14,9 @@ import { useLanguage } from '@/lib/language';
 import { getLocalizedTitle } from '@/lib/utils';
 import { BookOpen, GraduationCap, Star, Brain, Stethoscope, User } from 'lucide-react';
 import { toast } from 'sonner';
+import Image from 'next/image';
+import logoMongolian from "@/public/lo.png";
+import logoEnglish from "@/public/lo En.png";
 
 async function fetchProtectedTestsClient() {
   const res = await fetch('/api/protected-tests');
@@ -71,6 +74,9 @@ export default function HomePage() {
   const [isMobile, setIsMobile] = useState(false);
   const [contentLoaded, setContentLoaded] = useState(false);
   const { t, language } = useLanguage();
+
+  // Select logo based on current language
+  const currentLogo = language === 'mn' ? logoMongolian : logoEnglish;
 
   // Check if user profile is complete
   const isProfileComplete = (user: any) => {
@@ -212,6 +218,20 @@ export default function HomePage() {
 
   return (
     <div className='w-full h-auto flex flex-col gap-4 sm:gap-6 pb-8 mt-4 sm:mt-8 page-transition'>
+      {/* Logo Section - Centered */}
+      <div className="flex justify-center items-center fade-in mb-6">
+        <div className="text-center">
+          <Image
+            src={currentLogo}
+            alt="TestCenter Logo"
+            width={200}
+            height={100}
+            className="mx-auto transition-all duration-500 hover:scale-105"
+            priority
+          />
+        </div>
+      </div>
+
       {/* Show loading state while checking profile completeness */}
       {loadingUser ? (
         <div className="flex items-center justify-center min-h-[400px]">

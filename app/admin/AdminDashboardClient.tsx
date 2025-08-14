@@ -308,7 +308,7 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
         <Card className="h-96 overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Activity className="w-5 h-5" />
+              <Activity className="w-5 h-5 inline-block" />
               Recent Activities
             </CardTitle>
             <CardDescription>Latest user and payment activities</CardDescription>
@@ -318,7 +318,7 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="users">Users</TabsTrigger>
                 <TabsTrigger value="payments" className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" />
+                  <DollarSign className="w-4 h-4 inline-block" />
                   Recent Payments
                   <Button
                     onClick={(e) => {
@@ -365,7 +365,7 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
                       <div key={user._id || index} className="p-3 bg-gray-50 rounded-lg border">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                            <Users className="w-4 h-4 text-blue-600" />
+                            <Users className="w-4 h-4 text-blue-600 inline-block" />
                           </div>
                           <div className="flex-1">
                             <p className="font-medium text-sm">
@@ -377,7 +377,7 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
                           </div>
                           <Button variant="ghost" size="sm" asChild>
                             <Link href={`/admin/users/${user._id}`}>
-                              <Eye className="w-4 h-4" />
+                              <Eye className="w-4 h-4 inline-block" />
                             </Link>
                           </Button>
                         </div>
@@ -385,7 +385,7 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
                     ))
                   ) : (
                     <div className="text-center py-8 text-gray-500">
-                      <Users className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <Users className="w-12 h-12 mx-auto mb-2 text-gray-300 inline-block" />
                       <p>No recent users</p>
                     </div>
                   )}
@@ -398,7 +398,7 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
                 <div className="space-y-3 max-h-64 overflow-y-auto">
                   {isLoadingPayments || isRefreshing ? (
                     <div className="text-center py-8 text-gray-500">
-                      <DollarSign className="w-12 h-12 mx-auto mb-2 text-gray-300 animate-spin" />
+                      <DollarSign className="w-12 h-12 mx-auto mb-2 text-gray-300 animate-spin inline-block" />
                       <p>Loading recent payments...</p>
                     </div>
                   ) : recentPayments.length > 0 ? (
@@ -426,7 +426,7 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
                     ))
                   ) : (
                     <div className="text-center py-8 text-gray-500">
-                      <DollarSign className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <DollarSign className="w-12 h-12 mx-auto mb-2 text-gray-300 inline-block" />
                       <p>No recent payments</p>
                     </div>
                   )}
@@ -440,7 +440,7 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
         <Card className="h-96">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Settings className="w-5 h-5" />
+              <Settings className="w-5 h-5 inline-block" />
               Quick Actions
             </CardTitle>
             <CardDescription>Common administrative tasks</CardDescription>
@@ -450,14 +450,14 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
               {/* Row 1 */}
               <Button asChild variant="outline" className="w-[48%] h-[100%] p-4 flex-col gap-2">
                 <Link href="/admin/courses">
-                  <Plus className="w-6 h-6 dark:text-white text-black" />
+                  <Plus className="w-6 h-6 dark:text-white text-black inline-block" />
                   <span className="text-sm font-medium dark:text-white">Create Course </span>
                 </Link>
               </Button>
               
               <Button asChild variant="outline" className="w-[48%] h-20 p-4 flex-col gap-2 border-2">
                 <Link href="/admin/tests">
-                  <BookOpen className="w-6 h-6" />
+                  <BookOpen className="w-6 h-6 inline-block" />
                   <span className="text-sm font-medium">Create Test</span>
                 </Link>
               </Button>
@@ -465,14 +465,14 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
               {/* Row 2 */}
               <Button asChild variant="outline" className="w-[48%] h-20 p-4 flex-col gap-2 border-2">
                 <Link href="/admin/users">
-                  <Users className="w-6 h-6" />
+                  <Users className="w-6 h-6 inline-block" />
                   <span className="text-sm font-medium">Manage Users</span>
                 </Link>
               </Button>
               
               <Button asChild variant="outline" className="w-[48%] h-20 p-4 flex-col gap-2 border-2">
                 <Link href="/admin/analytics">
-                  <BarChart3 className="w-6 h-6" />
+                  <BarChart3 className="w-6 h-6 inline-block" />
                   <span className="text-sm font-medium">View Analytics</span>
                 </Link>
               </Button>
@@ -487,7 +487,7 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
+              <TrendingUp className="w-5 h-5 inline-block" />
               User Registration Trends
             </CardTitle>
             <CardDescription>New user registrations over time</CardDescription>
@@ -537,7 +537,7 @@ export default function AdminDashboardClient({ stats, admin }: AdminDashboardCli
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5" />
+              <DollarSign className="w-5 h-5 inline-block" />
               Revenue Trends
             </CardTitle>
             <CardDescription>Monthly revenue from actual payments</CardDescription>

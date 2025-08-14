@@ -86,7 +86,7 @@ export default function TestDashboardPage() {
 
                 <div className="space-y-3">
                   <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-green-600" />
+                    <TrendingUp className="w-4 h-4 text-green-600 inline-block" />
                     Course Stats
                   </h3>
                   <div className="grid grid-cols-2 gap-3 text-xs">
@@ -105,7 +105,7 @@ export default function TestDashboardPage() {
 
                 <div className="space-y-2">
                   <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-purple-600" />
+                    <BookOpen className="w-4 h-4 text-purple-600 inline-block" />
                     Lessons
                   </h3>
                   <div className="max-h-80 overflow-y-auto space-y-2">
@@ -118,11 +118,11 @@ export default function TestDashboardPage() {
                         >
                           <div className="flex items-center gap-3">
                             {status === 'current' ? (
-                              <PlayCircle className="w-4 h-4" />
+                              <PlayCircle className="w-4 h-4 inline-block" />
                             ) : status === 'completed' ? (
-                              <CheckCircle className="w-4 h-4 text-green-600" />
+                              <CheckCircle className="w-4 h-4 text-green-600 inline-block" />
                             ) : (
-                              <Circle className="w-4 h-4 text-gray-400" />
+                              <Circle className="w-4 h-4 text-gray-400 inline-block" />
                             )}
                             <span className="truncate">{lesson.title}</span>
                           </div>
@@ -148,11 +148,11 @@ export default function TestDashboardPage() {
                         Lesson {currentIdx + 1}
                       </Badge>
                       <Badge variant="outline" className="text-green-600 border-green-200">
-                        <Clock className="w-3 h-3 mr-1" />
+                        <Clock className="w-3 h-3 mr-1 inline-block" />
                         20 min
                       </Badge>
                       <Badge variant="outline" className="text-purple-600 border-purple-200">
-                        <Users className="w-3 h-3 mr-1" />
+                        <Users className="w-3 h-3 mr-1 inline-block" />
                         150 students
                       </Badge>
                     </div>
@@ -171,7 +171,7 @@ export default function TestDashboardPage() {
                             onClick={() => setLessonRating(star)}
                             className={`text-lg ${star <= lessonRating ? 'text-yellow-400' : 'text-gray-300'} hover:text-yellow-400 transition-colors`}
                           >
-                            <Star className="w-5 h-5 fill-current" />
+                            <Star className="w-5 h-5 fill-current inline-block" />
                           </button>
                         ))}
                         <span className="text-sm text-gray-600 ml-2">({lessonRating}/5)</span>
@@ -185,7 +185,7 @@ export default function TestDashboardPage() {
             <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
               <CardHeader className="pb-4">
                 <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                  <Video className="w-5 h-5 text-blue-600" />
+                  <Video className="w-5 h-5 text-blue-600 inline-block" />
                   Video Lesson
                 </CardTitle>
               </CardHeader>
@@ -193,7 +193,7 @@ export default function TestDashboardPage() {
                 <div className="relative bg-black rounded-lg overflow-hidden">
                   <div className="w-full aspect-video bg-gray-800 flex items-center justify-center">
                     <div className="text-white text-center">
-                      <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                      <Video className="w-16 h-16 mx-auto mb-4 opacity-50 inline-block" />
                       <p className="text-lg">Video Player Placeholder</p>
                       <p className="text-sm opacity-75">This would show the actual video content</p>
                     </div>
@@ -205,7 +205,7 @@ export default function TestDashboardPage() {
             <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                  <Target className="w-5 h-5 text-green-600" />
+                  <Target className="w-5 h-5 text-green-600 inline-block" />
                   Lesson Assessment
                 </CardTitle>
                 <p className="text-gray-600">Test your understanding of this lesson with our interactive assessment.</p>
@@ -213,14 +213,14 @@ export default function TestDashboardPage() {
               <CardContent>
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Target className="w-8 h-8 text-green-600" />
+                    <Target className="w-8 h-8 text-green-600 inline-block" />
                   </div>
                   <h3 className="text-lg font-semibold mb-2">Ready to Test Your Knowledge?</h3>
                   <p className="text-gray-600 mb-6">Complete this assessment to reinforce what you've learned.</p>
                   <Button 
                     className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-8 py-3 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg"
                   >
-                    <PlayCircle className="w-5 h-5 mr-2" />
+                    <PlayCircle className="w-5 h-5 mr-2 inline-block" />
                     Start Assessment
                   </Button>
                 </div>
